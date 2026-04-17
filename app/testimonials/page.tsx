@@ -61,8 +61,14 @@ export default function TestimonialsPage() {
         const data = await response.json();
         
         if (data.success && data.data) {
+          // Map testimonials to match the expected structure (text instead of content)
+          const mappedTestimonials = (data.data.testimonials || []).map((t: any) => ({
+            ...t,
+            text: t.content || t.text || '', // Use content if available, fallback to text
+          }));
+          
           setTestimonialsData({
-            testimonials: data.data.testimonials || [],
+            testimonials: mappedTestimonials,
             title: data.data.title || 'Client Testimonials',
             description: data.data.description || 'Hear what our clients have to say about our services',
           });

@@ -130,12 +130,12 @@ export default function ServiceAreaClient({ serviceSlug: serviceSlugProp, citySl
         
         {/* 5. CTA (Call To Action) */}
         <CTA cta={serviceAreaPage.cta} />
-        
-        {/* 6. Service Overview */}
-        <ServiceOverview overview={serviceOverviewData} />
-        
-        {/* 7. Service Details */}
+
+        {/* 6. Service Details */}
         <ServiceDetails details={serviceDetailsData} />
+        
+        {/* 7. Service Overview */}
+        <ServiceOverview overview={serviceOverviewData} />
         
         {/* 8. Why Choose Us */}
         <WhyChooseUs whyChooseUs={whyChooseUsData} />

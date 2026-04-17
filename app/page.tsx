@@ -6,10 +6,11 @@ import HomeClient from './HomeClient'
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    // Fetch default site
-    const defaultSiteResponse = await api.get('/public/sites/default')
+    // Fetch site based on slug from env
+    const siteSlug = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG || 'default'
+    const defaultSiteResponse = await api.get(`/public/sites/${siteSlug}`)
     
-    if (defaultSiteResponse.success && defaultSiteResponse.data) {
+    if (defaultSiteResponse && !defaultSiteResponse.error) {
       const site: Site = defaultSiteResponse.data
       
       // Fetch pages to find home page

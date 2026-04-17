@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { getImageSrc } from '@/app/lib/utils';
-import { cn } from '@/app/lib/utils';
+import { getImageSrc, cn } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 
 interface AboutProps {
@@ -15,107 +14,106 @@ export const About: React.FC<AboutProps> = ({ about, className }) => {
   const themeColors = useThemeColors();
   const themeFonts = useThemeFonts();
 
-  // More permissive check - render if there's any content
   if (!about || (!about.title && !about.description && !about.image)) return null;
 
-  console.log('🔍 About section data:', about);
-
   const imageUrl = about.image 
-    ? getImageSrc(
-        typeof about.image === 'object' && about.image !== null
-          ? about.image.url
-          : about.image
-      )
+    ? getImageSrc(typeof about.image === 'object' ? about.image.url : about.image)
     : null;
 
   return (
     <section 
-      className={cn('py-20 lg:py-32 overflow-hidden', className)}
-      style={{ backgroundColor: themeColors.pageBackground || '#F5F2ED' }}
+      className={cn('relative min-h-[80vh] flex items-center overflow-hidden', className)}
+      style={{ backgroundColor: themeColors.pageBackground }}
     >
-      <div className="container mx-auto px-6 lg:px-12">
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-          
-          {/* Left side - Image with Floating Badge */}
-          <div className="relative order-2 lg:order-1">
-            {imageUrl ? (
-              <div className="relative">
-                <div 
-                  className="rounded-[40px] overflow-hidden shadow-2xl"
-                  style={{ aspectRatio: '1/1' }}
+      {/* Background Image - Cinematic Full-Width Style */}
+      <div className="absolute inset-0 z-0">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={about.imageAlt || 'Property Background'}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-neutral-200" />
+        )}
+      </div>
+
+      {/* The Signature Content Block */}
+      <div className="container mx-auto px-6 lg:px-12 relative z-10">
+        <div className="grid lg:grid-cols-12">
+          <div 
+            className="lg:col-span-5 p-10 lg:p-20 flex flex-col justify-center min-h-[500px]"
+            style={{ 
+              backgroundColor: themeColors.primaryButton || '#E31E24',
+              color: '#FFFFFF' 
+            }}
+          >
+            <div className="space-y-8">
+              {/* Top Label/Location */}
+              {(about.label || about.location) && (
+                <div className="space-y-2">
+                  {about.label && (
+                    <h3 className="text-[11px] tracking-[0.2em] uppercase font-bold leading-tight">
+                      <TiptapRenderer content={about.label} as="inline" />
+                    </h3>
+                  )}
+                  {about.location && (
+                    <p className="text-[11px] tracking-[0.2em] uppercase opacity-80">
+                      <TiptapRenderer content={about.location} as="inline" />
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Decorative Divider */}
+              {(about.label || about.location) && (
+                <div className="w-full h-px bg-white/30" />
+              )}
+
+              {/* Main Headline */}
+              {about.title && (
+                <h2 
+                  className="text-3xl lg:text-5xl font-light leading-[1.2] uppercase tracking-wide"
+                  style={{ fontFamily: themeFonts.heading }}
                 >
-                  <img
-                    src={imageUrl}
-                    alt={typeof about.image === 'object' ? about.image?.altText || 'Our Story' : 'Our Story'}
-                    className="w-full h-full object-cover"
-                  />
+                  <TiptapRenderer content={about.title} />
+                </h2>
+              )}
+
+              {/* Description/Body */}
+              {about.description && (
+                <div 
+                  className="text-sm lg:text-base leading-relaxed opacity-90 font-light"
+                  style={{ fontFamily: themeFonts.body }}
+                >
+                  <TiptapRenderer content={about.description} />
                 </div>
-                
-                {/* Floating "Quote" Badge - Reference Image Style */}
-                <div className="absolute -bottom-6 right-6 lg:-right-8 bg-white/90 backdrop-blur-md px-8 py-5 rounded-2xl shadow-xl border border-white/20 max-w-[240px]">
-                  <p 
-                    className="text-sm italic text-center"
-                    style={{ color: '#8B6E4E' }}
+              )}
+
+              {/* Action Button */}
+              {about.ctaButton && (
+                <div className="pt-6">
+                  <a 
+                    href={about.ctaButton.href || about.ctaButton.url || '#'}
+                    className="inline-block text-[10px] tracking-[0.4em] uppercase font-bold border-b border-white/40 pb-2 transition-all hover:border-white"
                   >
-                    "A home away from home."
-                  </p>
+                    <TiptapRenderer content={about.ctaButton.text} as="inline" />
+                  </a>
                 </div>
-              </div>
-            ) : (
-              <div className="aspect-square rounded-[40px] bg-neutral-200 flex items-center justify-center italic text-neutral-400">
-                Image Placeholder
-              </div>
-            )}
-          </div>
-
-          {/* Right side - Editorial Content */}
-          <div className="order-1 lg:order-2 space-y-8">
-            {/* Small Label - Reference Style */}
-            <div className="space-y-2">
-              <span 
-                className="text-[10px] tracking-[0.3em] uppercase font-bold"
-                style={{ color: '#8B6E4E' }}
-              >
-                OUR STORY
-              </span>
-              <div className="w-10 h-[1px] bg-[#8B6E4E]/30" />
-            </div>
-
-            {/* Title - Elegant Serif */}
-            {about.title && (
-              <h2 
-                className="text-4xl lg:text-6xl font-serif leading-[1.15]"
-                style={{ 
-                  color: themeColors.lightPrimaryText || '#1A1A1A' 
-                }}
-              >
-                <TiptapRenderer content={about.title} />
-              </h2>
-            )}
-
-            {/* Description - Refined Body Text */}
-            {about.description && (
-              <div 
-                className="text-base lg:text-lg leading-relaxed text-black/70 space-y-4"
-                style={{}}
-              >
-                <TiptapRenderer content={about.description} />
-              </div>
-            )}
-
-            {/* CTA Link - Underlined Style */}
-            <div className="pt-4">
-              <a 
-                href="/about"
-                className="inline-block text-sm font-bold tracking-wider uppercase border-b border-black/20 pb-1 transition-all hover:border-black"
-                style={{ color: themeColors.lightPrimaryText }}
-              >
-                Read More About Us
-              </a>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Vertical Edge Label */}
+      {about.verticalLabel && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden lg:flex items-center rotate-90 origin-right pointer-events-none">
+          <span className="text-[9px] tracking-[0.5em] uppercase font-bold text-white whitespace-nowrap opacity-60">
+            <TiptapRenderer content={about.verticalLabel} as="inline" />
+          </span>
+        </div>
+      )}
     </section>
   );
 };

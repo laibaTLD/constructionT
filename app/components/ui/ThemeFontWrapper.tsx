@@ -20,14 +20,55 @@ export const ThemeFontWrapper: React.FC<ThemeFontWrapperProps> = ({ children }) 
     };
   }, [site?.theme?.headingFont, site?.theme?.bodyFont]);
 
+  const themeStyles = useMemo(() => {
+    const styles: Record<string, string | undefined> = {};
+    
+    // Fonts
+    if (fonts.heading) styles['--wb-heading-font'] = fonts.heading;
+    if (fonts.body) {
+      styles['--wb-body-font'] = fonts.body;
+      styles['fontFamily'] = fonts.body; // Use camelCase for React style object
+    }
+
+    // Colors from Site Theme
+    const theme = site?.theme;
+    if (theme) {
+      // Backgrounds
+      if (theme.pageBackgroundColor) styles['--wb-page-bg'] = theme.pageBackgroundColor;
+      if (theme.sectionBackgroundColorLight) styles['--wb-section-bg-light'] = theme.sectionBackgroundColorLight;
+      if (theme.sectionBackgroundColorDark) styles['--wb-section-bg-dark'] = theme.sectionBackgroundColorDark;
+      if (theme.cardBackgroundColorLight) styles['--wb-card-bg-light'] = theme.cardBackgroundColorLight;
+      if (theme.cardBackgroundColorDark) styles['--wb-card-bg-dark'] = theme.cardBackgroundColorDark;
+
+      // Text colors
+      if (theme.lightPrimaryColor) styles['--wb-text-main'] = theme.lightPrimaryColor;
+      if (theme.lightSecondaryColor) styles['--wb-text-secondary'] = theme.lightSecondaryColor;
+      if (theme.darkPrimaryColor) styles['--wb-text-on-dark'] = theme.darkPrimaryColor;
+      if (theme.darkSecondaryColor) styles['--wb-text-on-dark-secondary'] = theme.darkSecondaryColor;
+
+      // Primary UI Colors (Buttons etc)
+      const primaryColor = theme.primaryButtonColorLight || theme.primaryButtonColorDark;
+      if (primaryColor) {
+        styles['--wb-primary'] = primaryColor;
+        styles['--wb-primary-hover'] = theme.hoverActiveColorLight || primaryColor;
+        
+        // Also map to tailwind primary variables
+        styles['--color-primary-600'] = primaryColor;
+        styles['--color-primary-500'] = primaryColor;
+        styles['--color-primary-400'] = primaryColor;
+        styles['--color-primary-700'] = theme.hoverActiveColorLight || primaryColor;
+      }
+    }
+
+    return styles as React.CSSProperties;
+  }, [site?.theme, fonts]);
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
     const uniqueFonts = Array.from(new Set([fonts.heading, fonts.body].filter(Boolean))) as string[];
     if (uniqueFonts.length === 0) return;
 
-    // Load fonts from Google Fonts. This assumes WebBuilder stores Google Fonts family names.
-    // If a font isn't on Google Fonts, the browser will simply fall back.
     const familiesParam = uniqueFonts
       .map((f) => `family=${encodeURIComponent(f).replace(/%20/g, '+')}:wght@300;400;500;600;700;800;900`)
       .join('&');
@@ -45,17 +86,7 @@ export const ThemeFontWrapper: React.FC<ThemeFontWrapperProps> = ({ children }) 
   }, [fonts.heading, fonts.body]);
 
   return (
-    <div
-      style={
-        fonts.body || fonts.heading
-          ? ({
-              fontFamily: fonts.body,
-              ['--wb-heading-font' as any]: fonts.heading,
-              ['--wb-body-font' as any]: fonts.body,
-            } as React.CSSProperties)
-          : undefined
-      }
-    >
+    <div style={themeStyles}>
       {children}
     </div>
   );

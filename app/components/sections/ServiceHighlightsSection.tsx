@@ -1,13 +1,16 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn } from '@/app/lib/utils';
-import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import CountUp from 'react-countup';
-import { useInView } from 'react-intersection-observer';
+import { useThemeColors } from '@/app/hooks/useTheme';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface ServiceHighlightsSectionProps {
   serviceHighlightsSection: Page['serviceHighlightsSection'];
@@ -19,144 +22,162 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
   className
 }) => {
   const themeColors = useThemeColors();
-  const themeFonts = useThemeFonts();
-  const { site } = useWebBuilder();
+  const sectionRef = useRef<HTMLElement>(null);
+  const headlineRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
-  const { ref: sectionRef, inView } = useInView({
-    triggerOnce: true,
-    threshold: 0.25,
-  });
+  useEffect(() => {
+    const isEnabled = serviceHighlightsSection?.enabled === true || serviceHighlightsSection != null;
+    if (!isEnabled) return;
 
-  // Check if section exists and is enabled
+    const ctx = gsap.context(() => {
+      // 1. Headline Reveal
+      gsap.fromTo(headlineRef.current?.children || [],
+        { y: 30, opacity: 0 },
+        { 
+          y: 0, opacity: 1, 
+          stagger: 0.1, 
+          duration: 1, 
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: headlineRef.current,
+            start: 'top 90%',
+          }
+        }
+      );
+
+      // 2. Highlights Items Reveal & Counter
+      const items = gridRef.current?.querySelectorAll('.highlight-item');
+      if (items) {
+        items.forEach((item) => {
+          const numberObj = { val: 0 };
+          const numberEl = item.querySelector('.big-number');
+          const targetValue = parseInt(numberEl?.getAttribute('data-value') || '0', 10);
+          const suffix = numberEl?.getAttribute('data-suffix') || '';
+
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: item,
+              start: 'top 90%',
+            }
+          });
+
+          tl.fromTo(item,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 1, ease: 'power3.out' }
+          );
+
+          if (!isNaN(targetValue) && numberEl) {
+            tl.to(numberObj, {
+              val: targetValue,
+              duration: 2.5,
+              ease: 'power2.out',
+              onUpdate: () => {
+                const formatted = Math.round(numberObj.val).toLocaleString();
+                numberEl.textContent = formatted + suffix;
+              }
+            }, "-=0.6");
+          }
+        });
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [serviceHighlightsSection]);
+
   const isEnabled = serviceHighlightsSection?.enabled === true || serviceHighlightsSection != null;
+  if (!isEnabled) return null;
 
-  if (!isEnabled) {
-    return null;
-  }
+  const brandColor = themeColors.primaryButton;
+  const primaryTextColor = themeColors.lightPrimaryText;
+  const secondaryTextColor = themeColors.lightSecondaryText;
 
-  // Sort highlights by order
-  const sortedHighlights = [...(serviceHighlightsSection.highlights || [])]
+  const highlights = [...(serviceHighlightsSection.highlights || [])]
     .sort((a, b) => (a.order || 0) - (b.order || 0))
-    .slice(0, 4); // Usually 4 items as per reference
-
-  const sectionTitle = useMemo(() => {
-    if (!serviceHighlightsSection.title) return null;
-    return typeof serviceHighlightsSection.title === 'string'
-      ? serviceHighlightsSection.title
-      : null;
-  }, [serviceHighlightsSection.title]);
+    .slice(0, 4);
 
   const parseCounter = (raw: unknown) => {
-    if (typeof raw !== 'string') return null as null | { value: number; suffix: string };
+    if (typeof raw !== 'string') return null;
     const s = raw.trim();
-    if (!s) return null;
     const match = s.match(/([0-9][0-9,\.]*)(\+?)/);
     if (!match) return null;
-    const value = Number(match[1].replace(/,/g, ''));
-    if (Number.isNaN(value)) return null;
-    const suffix = match[2] || '';
-    return { value, suffix };
+    const valueStr = match[1].replace(/,/g, '');
+    const value = parseInt(valueStr, 10);
+    return isNaN(value) ? null : { value, suffix: match[2] || '' };
   };
 
   return (
     <section
-      className={cn('py-16 lg:py-24 relative overflow-hidden', className)}
-      style={{
-        backgroundColor: serviceHighlightsSection.backgroundColor || themeColors.sectionBackground
-      }}
+      ref={sectionRef}
+      className={cn('relative py-3 md:py-8 lg:py-12 overflow-hidden', className)}
+      style={{ backgroundColor: themeColors.sectionBackground || '#FFFFFF' }}
     >
-      <div ref={sectionRef} className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-12 gap-10 items-start">
-          {/* Left column */}
-          <div className="lg:col-span-5">
-            {serviceHighlightsSection.title && (
-              <h2
-                className="text-4xl md:text-5xl font-semibold leading-tight"
-                style={{ color: themeColors.lightPrimaryText }}
-              >
-                {sectionTitle ? sectionTitle : <TiptapRenderer content={serviceHighlightsSection.title} />}
+      <div className="max-w-[1800px] mx-auto px-8 md:px-16 lg:px-24">
+        
+        {/* Header Area */}
+        <div ref={headlineRef} className="mb-12 lg:mb-22">
+           <div className="flex items-center gap-4 mb-6">
+              <div className="w-10 h-[1.5px]" style={{ backgroundColor: brandColor }} />
+              <span className="text-[10px] font-bold tracking-[0.4em] uppercase" style={{ color: primaryTextColor }}>
+                 Highlights
+              </span>
+           </div>
+           {serviceHighlightsSection.title && (
+              <h2 className="text-4xl md:text-5xl lg:text-7xl font-sans tracking-tight uppercase font-light leading-none">
+                 <div className="[&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
+                   {/* Hierarchical styling to match image: First line Red, Subtitle Black */}
+                   <style jsx>{`
+                     h2 :global(p:first-child), h2 :global(span:first-child) {
+                        color: ${brandColor} !important;
+                     }
+                   `}</style>
+                   <TiptapRenderer content={serviceHighlightsSection.title} as="inline" />
+                </div>
               </h2>
-            )}
+           )}
+        </div>
 
-            {serviceHighlightsSection.description && (
-              <div
-                className="mt-4 max-w-md text-sm leading-relaxed"
-                style={{ color: themeColors.lightSecondaryText }}
-              >
-                {typeof serviceHighlightsSection.description === 'string' ? (
-                  serviceHighlightsSection.description
-                ) : (
-                  <TiptapRenderer content={serviceHighlightsSection.description} />
-                )}
-              </div>
-            )}
-          </div>
+        {/* Highlights Display - Using Brand Color for High Impact Data */}
+        <div ref={gridRef} className="flex flex-col md:flex-row flex-wrap items-start justify-between gap-y-20 gap-x-12 lg:gap-x-24">
+          {highlights.map((highlight, index) => {
+            const counter = parseCounter((highlight as any).price);
 
-          {/* Right column - Stats */}
-          <div className="lg:col-span-7">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-16 xl:gap-x-74 gap-y-12">
-              {sortedHighlights.map((highlight, index) => {
-                const counter = parseCounter((highlight as any).price);
-
-                return (
-                  <div key={index} className="min-w-0">
-                    <div
-                      className="text-4xl sm:text-5xl md:text-7xl font-semibold tracking-tight whitespace-nowrap"
-                      style={{ color: themeColors.lightPrimaryText, lineHeight: 1 }}
-                    >
-                      {counter ? (
-                        <>
-                          {inView ? (
-                            <CountUp
-                              end={counter.value}
-                              duration={1.6}
-                              separator="," 
-                              preserveValue={false}
-                            />
-                          ) : (
-                            0
-                          )}
-                          {counter.suffix}
-                        </>
-                      ) : (
-                        <>
-                          {typeof (highlight as any).price === 'string' ? (highlight as any).price : '—'}
-                        </>
-                      )}
-                    </div>
-
-                    {highlight.title && (
-                      <div
-                        className="mt-3 text-base font-medium"
-                        style={{ color: themeColors.lightPrimaryText }}
-                      >
-                        {typeof highlight.title === 'string' ? (
-                          highlight.title
-                        ) : (
-                          <TiptapRenderer content={highlight.title} as="inline" />
-                        )}
-                      </div>
-                    )}
-
-                    {highlight.description && (
-                      <div
-                        className="mt-2 text-sm leading-relaxed max-w-xs"
-                        style={{ color: themeColors.lightSecondaryText }}
-                      >
-                        {typeof highlight.description === 'string' ? (
-                          highlight.description
-                        ) : (
-                          <TiptapRenderer content={highlight.description} />
-                        )}
-                      </div>
-                    )}
+            return (
+              <div key={index} className="highlight-item flex flex-col group min-w-[200px] flex-1">
+                <div className="relative mb-8">
+                  <div 
+                     className="big-number text-5xl md:text-6xl lg:text-[5.5vw] font-extralight tracking-[0.1em] leading-none whitespace-nowrap"
+                     data-value={counter?.value || 0}
+                     data-suffix={counter?.suffix || ''}
+                     style={{ color: brandColor }} // High Impact Brand Color as per image design
+                  >
+                     {counter ? '0' : ((highlight as any).price || '—')}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div 
+                    className="w-12 h-[1px] opacity-20 transition-all duration-700 group-hover:w-full group-hover:bg-primary"
+                    style={{ backgroundColor: brandColor }}
+                  />
+                </div>
+
+                <div className="">
+                  {highlight.title && (
+                    <h4 className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.4em] leading-tight" style={{ color: primaryTextColor }}>
+                      <TiptapRenderer content={highlight.title} as="inline" />
+                    </h4>
+                  )}
+                  {highlight.description && (
+                    <div className="text-[10px] md:text-[11px] font-light tracking-[0.1em] leading-relaxed opacity-60 uppercase max-w-[240px]" style={{ color: secondaryTextColor }}>
+                      <TiptapRenderer content={highlight.description} as="inline" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
   );
 };
+
+export default ServiceHighlightsSection;

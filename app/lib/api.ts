@@ -81,16 +81,28 @@ export const projectApi = {
 // Testimonials API
 export const testimonialApi = {
   getTestimonialsBySite: async (siteSlug: string): Promise<{ title?: string; description?: string; testimonials: any[] }> => {
-    const response = await api.get(`/api/testimonials?siteSlug=${siteSlug}`);
-    return response.data?.data ?? response.data ?? { testimonials: [] };
+    const response = await api.get(`/testimonials?siteSlug=${siteSlug}`);
+    console.log('[testimonialApi] Raw response:', response);
+    console.log('[testimonialApi] response.data:', response.data);
+    // Handle both { data: { testimonials: [] } } and { testimonials: [] } structures
+    const data = response.data?.data ?? response.data ?? { testimonials: [] };
+    console.log('[testimonialApi] Extracted data:', data);
+    return data;
   },
 };
 
 // Service Area Pages API
 export const serviceAreaApi = {
   getServiceAreaPagesBySite: async (siteSlug: string): Promise<any[]> => {
-    const response = await api.get(`/public/sites/${siteSlug}/service-area-pages`);
-    return response.data?.data ?? response.data ?? [];
+    // Try both endpoint patterns for compatibility
+    try {
+      const response = await api.get(`/public/sites/${siteSlug}/service-area-pages`);
+      return response.data?.data ?? response.data ?? [];
+    } catch (err) {
+      // Fallback to empty array if endpoint doesn't exist
+      console.warn('Service area pages endpoint not available');
+      return [];
+    }
   },
 };
 

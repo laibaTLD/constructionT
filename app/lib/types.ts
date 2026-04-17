@@ -245,7 +245,7 @@ export interface Page {
       name: string;
       role?: string;
       company?: string;
-      content?: any;
+      text?: any;
       rating?: number;
       avatar?: string;
       videoUrl?: string;

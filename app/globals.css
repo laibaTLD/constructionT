@@ -3,16 +3,34 @@
 @tailwind utilities;
 
 :root {
+  /* Default Primary Palette - overridden dynamically by WebBuilder */
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-200: #bfdbfe;
   --color-primary-300: #93c5fd;
   --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
+  --color-primary-500: #E31E24;
+  --color-primary-600: #E31E24;
+  --color-primary-700: #C2181D;
+  --color-primary-800: #A11418;
+  --color-primary-900: #801013;
+
+  /* Theme-specific variables that map to the primary color */
+  --wb-primary: var(--color-primary-600);
+  --wb-primary-hover: var(--color-primary-700);
+  
+  /* Backgrounds & Text (will be overridden by site data) */
+  --wb-page-bg: #ffffff;
+  --wb-section-bg-light: #f9fafb;
+  --wb-section-bg-dark: #111827;
+  --wb-card-bg-light: #ffffff;
+  --wb-card-bg-dark: #1f2937;
+  
+  --wb-text-main: #111827;
+  --wb-text-secondary: #4b5563;
+  --wb-text-on-dark: #ffffff;
+  --wb-text-on-dark-secondary: #d1d5db;
+
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
   --color-gray-200: #e5e7eb;
@@ -23,6 +41,7 @@
   --color-gray-700: #374151;
   --color-gray-800: #1f2937;
   --color-gray-900: #111827;
+
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
@@ -36,8 +55,8 @@ html {
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #111827;
-  background-color: #ffffff;
+  color: var(--wb-text-main);
+  background-color: var(--wb-page-bg);
 }
 
 .container-main {
@@ -75,10 +94,10 @@ body {
 }
 
 .card {
-  background-color: #ffffff;
+  background-color: var(--wb-card-bg-light);
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  border: 1px solid #f3f4f6;
+  border: 1px solid var(--color-gray-200);
   transition: all 0.3s ease-out;
 }
 
@@ -95,17 +114,17 @@ body {
   border-radius: 0.5rem;
   font-weight: 500;
   transition: all 0.2s;
-  background-color: #2563eb;
+  background-color: var(--wb-primary);
   color: #ffffff;
 }
 
 .btn-primary:hover {
-  background-color: #1d4ed8;
+  background-color: var(--wb-primary-hover);
 }
 
 .btn-primary:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px #ffffff;
+  box-shadow: 0 0 0 2px var(--color-primary-300), 0 0 0 4px #ffffff;
 }
 
 .btn-secondary {
@@ -116,13 +135,13 @@ body {
   border-radius: 0.5rem;
   font-weight: 500;
   transition: all 0.2s;
-  background-color: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background-color: var(--wb-page-bg);
+  color: var(--wb-text-secondary);
+  border: 1px solid var(--color-gray-300);
 }
 
 .btn-secondary:hover {
-  background-color: #f9fafb;
+  background-color: var(--wb-section-bg-light);
 }
 
 .btn-secondary:focus {

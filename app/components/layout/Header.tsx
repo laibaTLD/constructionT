@@ -1,410 +1,207 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import { getImageSrc } from '@/app/lib/utils';
-import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { getImageSrc, cn } from '@/app/lib/utils';
+import { useThemeColors } from '@/app/hooks/useTheme';
+import { Page } from '@/app/lib/types';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export const Header: React.FC = () => {
-  const { site, pages, services, serviceAreaPages } = useWebBuilder();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
-  const [hoveredService, setHoveredService] = useState<string | null>(null);
+  const { site, pages } = useWebBuilder();
   const themeColors = useThemeColors();
-  const themeFonts = useThemeFonts();
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const servicesDropdownRef = useRef<HTMLDivElement>(null);
-  
-  // Delay timeouts for smoother hover
-  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const serviceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const headerRef = useRef<HTMLElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => setIsScrolled(window.scrollY > 60);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Clear timeouts on unmount
   useEffect(() => {
-    return () => {
-      if (dropdownTimeoutRef.current) clearTimeout(dropdownTimeoutRef.current);
-      if (serviceTimeoutRef.current) clearTimeout(serviceTimeoutRef.current);
-    };
+    const ctx = gsap.context(() => {
+      // Gentle entrance
+      gsap.fromTo(headerRef.current,
+        { y: -20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.5, ease: 'power3.out', delay: 0.8 }
+      );
+    }, headerRef);
+    return () => ctx.revert();
   }, []);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(event.target as Node)) {
-        setIsServicesDropdownOpen(false);
-      }
+  // Specific Order: Home | About | Blog | Service | Serving Areas | Testimonials | Contact
+  const orderedNavPages = useMemo(() => {
+    if (!pages) return [];
+
+    // Explicit requested order mapping
+    const orderMap: Record<string, number> = {
+      'home': 1,
+      'about': 2,
+      'blog-list': 3,
+      'service-list': 4,
+      'serving-areas': 5,
+      'testimonials': 6,
+      'contact': 7
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    const published = pages.filter(p => p.status === 'published');
+
+    return published.sort((a, b) => {
+      const aVal = orderMap[a.pageType] || 99;
+      const bVal = orderMap[b.pageType] || 99;
+      return aVal - bVal;
+    });
+  }, [pages]);
 
   if (!site) return null;
 
-  const publishedPages = pages.filter(page => page.status === 'published');
-  const contactPage = publishedPages.find(p => p.slug.includes('contact'));
-  
-  // Define the order for navigation pages
-  const pageOrder = ['home', 'about', 'service-list', 'blog-list'];
-  
-  // Sort pages according to the defined order, then by name for remaining pages
-  const navPages = publishedPages
-    .filter(p => !p.slug.includes('contact'))
-    .sort((a, b) => {
-      const aIndex = pageOrder.indexOf(a.pageType);
-      const bIndex = pageOrder.indexOf(b.pageType);
-      
-      // If both are in the defined order, sort by that order
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex;
-      }
-      
-      // If only one is in the defined order, prioritize it
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
-      
-      // For remaining pages, sort alphabetically
-      return a.name.localeCompare(b.name);
-    });
+  const brandName = (site?.business?.name || site?.name || '').toUpperCase();
+  const brandColor = themeColors.primaryButton;
+
+  // Format address specifically to avoid ReactNode error
+  const addressString = site.business?.address
+    ? typeof site.business.address === 'string'
+      ? site.business.address
+      : `${site.business.address.street || ''} ${site.business.address.city || ''} ${site.business.address.state || ''}`.trim()
+    : '';
 
   return (
-    <header 
-      className={`fixed top-0 left-0 w-full z-[100] transition-all duration-500 ${
-        isScrolled ? 'py-4' : 'py-8'
-      }`}
-    >
-      <div className="container mx-auto px-6 lg:px-12">
-        {/* Main Nav Pill - Glassmorphism effect */}
-        <div 
-          className={`flex items-center justify-between px-6 lg:px-10 h-20 rounded-full border transition-all duration-500 shadow-2xl ${
-            isScrolled 
-              ? 'bg-white/10 backdrop-blur-xl border-black/5' 
-              : 'bg-white/90 backdrop-blur-md border-white/20'
-          }`}
-          style={{ color: isScrolled ? themeColors.darkPrimaryText : themeColors.primaryButton }}
-        >
-          {/* Logo Section */}
-          <Link href="/" className="flex items-center gap-3 shrink-0">
-            {site.theme.logoUrl ? (
+    <>
+      <header
+        ref={headerRef}
+        className={cn(
+          'fixed top-0 left-0 w-full z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] px-8 md:px-16 lg:px-20',
+          isScrolled ? 'py-4 bg-white/95 backdrop-blur-md shadow-[0_1px_10px_rgba(0,0,0,0.05)]' : 'py-8 md:py-12 bg-transparent',
+          isMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        )}
+      >
+        <div className="max-w-[1800px] mx-auto flex items-center justify-between">
+
+          <Link href="/" className="group flex items-center outline-none">
+            {site.theme?.logoUrl ? (
               <img
                 src={getImageSrc(site.theme.logoUrl)}
-                alt={site.business.name}
-                className="h-10 w-auto object-contain"
+                alt={brandName}
+                className={cn(
+                  "h-12 md:h-10 w-auto transition-all duration-500",
+                  isScrolled ? "brightness-100" : "brightness-0 invert"
+                )}
               />
             ) : (
-              <span 
-                className="text-xl font-black uppercase tracking-tighter"
-                style={{ fontFamily: themeFonts.heading, color: isScrolled ? themeColors.darkPrimaryText : themeColors.lightPrimaryText }}
-              >
-                {site.business.name || 'Buildify'}
+              <span className={cn(
+                "text-xs md:text-sm font-medium tracking-[0.5em] uppercase transition-colors duration-500",
+                isScrolled ? "text-black" : "text-white"
+              )}>
+                {brandName}
               </span>
             )}
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
-            {navPages.map((page) => {
-              // Check if this is the services page
-              if (page.pageType === 'service-list') {
-                return (
-                  <div
-                    key={page.slug}
-                    ref={servicesDropdownRef}
-                    className="relative"
-                    onMouseEnter={() => {
-                      // Clear any existing timeout
-                      if (dropdownTimeoutRef.current) {
-                        clearTimeout(dropdownTimeoutRef.current);
-                      }
-                      setIsServicesDropdownOpen(true);
-                    }}
-                    onMouseLeave={() => {
-                      // Add delay before closing
-                      dropdownTimeoutRef.current = setTimeout(() => {
-                        setIsServicesDropdownOpen(false);
-                      }, 200); // 200ms delay
-                    }}
-                  >
-                    <Link
-                      href={`/${page.slug}`}
-                      className={`text-xs font-bold uppercase tracking-[0.2em] transition-all hover:opacity-50 flex items-center gap-1 ${
-                        isScrolled ? 'text-black' : 'text-white'
-                      }`}
-                      style={{ color: isScrolled ? themeColors.darkSecondaryText : themeColors.primaryButton }}
-                    >
-                      {page.name}
-                      {/* Add dropdown arrow indicator */}
-                      <svg 
-                        className="w-3 h-3 transition-transform duration-200" 
-                        style={{ transform: isServicesDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                        fill="currentColor" 
-                        viewBox="0 0 20 20"
-                      >
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </Link>
-
-                    {/* Dropdown Menu */}
-                    {isServicesDropdownOpen && (
-                      <div 
-                        className="absolute top-full left-0 mt-3 w-80 rounded-2xl shadow-2xl border py-3 z-50 backdrop-blur-xl"
-                        style={{ 
-                          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.98)',
-                          borderColor: isScrolled ? `${themeColors.darkSecondaryText}20` : `${themeColors.primaryButton}30`
-                        }}
-                        onMouseEnter={() => {
-                          // Clear any existing timeout when entering dropdown
-                          if (dropdownTimeoutRef.current) {
-                            clearTimeout(dropdownTimeoutRef.current);
-                          }
-                        }}
-                        onMouseLeave={() => {
-                          // Add delay before closing when leaving dropdown
-                          dropdownTimeoutRef.current = setTimeout(() => {
-                            setIsServicesDropdownOpen(false);
-                          }, 200);
-                        }}
-                      >
-                        {/* Services Section */}
-                        {services && services.length > 0 && (
-                          <div className="py-2">
-                            <div 
-                              className="px-5 py-2 text-xs font-black uppercase tracking-[0.3em] border-b"
-                              style={{ 
-                                color: themeColors.primaryButton,
-                                borderColor: `${themeColors.primaryButton}20`,
-                                fontFamily: themeFonts.body
-                              }}
-                            >
-                              Services
-                            </div>
-                            {services
-                              .filter(service => service.status === 'published')
-                              .map((service) => {
-                                // Get service areas from the service's own serviceAreas field
-                                const serviceAreasForService = service.serviceAreas || [];
-
-                                return (
-                                  <div
-                                    key={service.slug}
-                                    className="relative group"
-                                    onMouseEnter={() => {
-                                      // Clear any existing timeout
-                                      if (serviceTimeoutRef.current) {
-                                        clearTimeout(serviceTimeoutRef.current);
-                                      }
-                                      setHoveredService(service._id);
-                                    }}
-                                    onMouseLeave={() => {
-                                      // Add delay before closing nested dropdown
-                                      serviceTimeoutRef.current = setTimeout(() => {
-                                        setHoveredService(null);
-                                      }, 150); // 150ms delay for nested dropdown
-                                    }}
-                                  >
-                                    <Link
-                                      href={`/service/${service.slug}`}
-                                      className="block px-5 py-3 transition-all duration-300 hover:bg-gray-50"
-                                      style={{ 
-                                        color: themeColors.darkSecondaryText,
-                                        fontFamily: themeFonts.body
-                                      }}
-                                      onClick={() => setIsServicesDropdownOpen(false)}
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium">{service.name}</span>
-                                        {serviceAreasForService.length > 0 && (
-                                          <svg 
-                                            className="w-3 h-3 transition-transform duration-200" 
-                                            style={{ 
-                                              color: themeColors.primaryButton,
-                                              transform: hoveredService === service._id ? 'rotate(180deg)' : 'rotate(0deg)'
-                                            }}
-                                            fill="currentColor" 
-                                            viewBox="0 0 20 20"
-                                          >
-                                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                          </svg>
-                                        )}
-                                      </div>
-                                    </Link>
-
-                                    {/* Nested Service Areas Dropdown */}
-                                    {serviceAreasForService.length > 0 && hoveredService === service._id && (
-                                      <div 
-                                        className="absolute left-full top-0 ml-2 w-72 rounded-2xl shadow-2xl border py-3 z-50 backdrop-blur-xl"
-                                        style={{ 
-                                          backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.98)',
-                                          borderColor: isScrolled ? `${themeColors.darkSecondaryText}10` : `${themeColors.primaryButton}20`
-                                        }}
-                                        onMouseEnter={() => {
-                                          // Clear any existing timeout when entering nested dropdown
-                                          if (serviceTimeoutRef.current) {
-                                            clearTimeout(serviceTimeoutRef.current);
-                                          }
-                                        }}
-                                        onMouseLeave={() => {
-                                          // Add delay before closing nested dropdown
-                                          serviceTimeoutRef.current = setTimeout(() => {
-                                            setHoveredService(null);
-                                          }, 150);
-                                        }}
-                                      >
-                                        <div 
-                                          className="px-5 py-2 text-xs font-black uppercase tracking-[0.3em] border-b"
-                                          style={{ 
-                                            color: themeColors.primaryButton,
-                                            borderColor: `${themeColors.primaryButton}20`,
-                                            fontFamily: themeFonts.body
-                                          }}
-                                        >
-                                          Service Areas
-                                        </div>
-                                        {serviceAreasForService.map((area, index) => {
-                                          // Generate slug for service area including region for uniqueness
-                                          const regionName = area.region || '';
-                                          const citySlug = regionName 
-                                            ? `${String(area.city).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${String(regionName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
-                                            : String(area.city)
-                                                .toLowerCase()
-                                                .replace(/[^a-z0-9]+/g, '-')
-                                                .replace(/^-|-$/g, '');
-                                          
-                                          return (
-                                            <Link
-                                              key={index}
-                                              href={`/service/${service.slug}/service-areas/${citySlug}`}
-                                              className="block px-5 py-3 transition-all duration-300 hover:bg-gray-50"
-                                              style={{ 
-                                                color: themeColors.darkSecondaryText,
-                                                fontFamily: themeFonts.body
-                                              }}
-                                              onClick={() => setIsServicesDropdownOpen(false)}
-                                            >
-                                              <span className="text-sm font-medium">{area.city}, {area.region}</span>
-                                            </Link>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              // Regular navigation items
-              return (
-                <Link
-                  key={page.slug}
-                  href={page.pageType === 'home' ? '/' : `/${page.slug}`}
-                  className={`text-xs font-bold uppercase tracking-[0.2em] transition-all hover:opacity-50 ${
-                    isScrolled ? 'text-black' : 'text-white'
-                  }`}
-                  style={{ color: isScrolled ? themeColors.darkSecondaryText : themeColors.primaryButton }}
-                >
-                  {page.name}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Action Section */}
-          <div className="flex items-center gap-2">
-            <Link
-              href={contactPage ? `/${contactPage.slug}` : '#'}
-              className="hidden md:flex items-center h-12 px-8 rounded-full font-bold text-[10px] uppercase tracking-[0.2em] transition-all"
-              style={{
-                backgroundColor: isScrolled ? themeColors.darkPrimaryText : themeColors.primaryButton,
-                color: isScrolled ? themeColors.primaryButton : themeColors.darkPrimaryText
-              }}
-            >
-              {contactPage?.name || 'Contact Us'}
-            </Link>
-            
-            {/* Arrow Button - Architectural style */}
-            <div 
-              className="w-12 h-12 flex items-center justify-center rounded-full border transition-all"
-              style={{ 
-                borderColor: isScrolled ? `${themeColors.darkPrimaryText}20` : `${themeColors.primaryButton}30`,
-                color: isScrolled ? themeColors.lightPrimaryText : themeColors.primaryButton
-              }}
-            >
-              <ArrowUpRight size={18} />
-            </div>
-
-            {/* Mobile Toggle */}
+          <div className="flex items-center gap-12 lg:gap-16">
             <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 transition-colors"
-              style={{ color: isScrolled ? themeColors.darkPrimaryText : themeColors.primaryButton }}
+              onClick={() => setIsMenuOpen(true)}
+              className="flex items-center gap-4 group outline-none"
             >
-              <Menu size={24} />
+              <span className={cn(
+                "text-[9px] font-bold tracking-[0.3em] uppercase transition-colors duration-500",
+                isScrolled ? "text-black" : "text-white"
+              )}>Menu</span>
+              <div className="flex flex-col gap-1.5">
+                <div className="w-6 h-[1.5px] transition-all duration-500" style={{ backgroundColor: brandColor }} />
+                <div className="w-6 h-[1.5px] transition-all duration-500" style={{ backgroundColor: brandColor }} />
+              </div>
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Fullscreen Overlay */}
-        {isMobileMenuOpen && (
-          <div 
-            ref={mobileMenuRef}
-            className="fixed inset-0 bg-white z-[200] flex flex-col p-10 animate-in fade-in zoom-in duration-300"
-          >
-            <div className="flex justify-between items-center mb-16">
-              <span className="text-xl font-black uppercase tracking-tighter" style={{ color: themeColors.darkPrimaryText }}>
-                {site.business.name}
-              </span>
-              <button 
-                onClick={() => setIsMobileMenuOpen(false)} 
-                className="p-2"
-                style={{ color: themeColors.darkPrimaryText }}
-              >
-                <X size={32} />
-              </button>
-            </div>
-            
-            <div className="flex flex-col space-y-6">
-              {navPages.map((page) => (
-                <Link
-                  key={page.slug}
-                  href={page.pageType === 'home' ? '/' : `/${page.slug}`}
-                  className="text-4xl font-black uppercase tracking-tighter text-black hover:italic"
-                  style={{ fontFamily: themeFonts.heading, color: themeColors.darkPrimaryText }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {page.name}
-                </Link>
-              ))}
-              
-              {/* Add Contact button at the end of mobile menu */}
-              {contactPage && (
-                <Link
-                  href={`/${contactPage.slug}`}
-                  className="text-4xl font-black uppercase tracking-tighter text-black hover:italic"
-                  style={{ fontFamily: themeFonts.heading, color: themeColors.darkPrimaryText }}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {contactPage.name}
-                </Link>
-              )}
-            </div>
-          </div>
+      <div
+        className={cn(
+          "fixed inset-0 z-[200] pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.85,0,0.15,1)]",
+          isMenuOpen ? "opacity-100" : "opacity-0 invisible"
         )}
+      >
+        {/* TOP FRAME - Links start from left */}
+        <div
+          className={cn(
+            "absolute top-0 left-0 w-full h-[70px] md:h-[80px] flex items-center justify-between px-8 md:px-12 lg:px-16 z-[210] pointer-events-auto transition-transform duration-700 delay-100",
+            isMenuOpen ? "translate-y-0" : "-translate-y-full"
+          )}
+          style={{ backgroundColor: brandColor, color: 'white' }}
+        >
+          {/* Navigation Container Aligned Left */}
+          <div className="flex-1 flex items-center gap-4 md:gap-8 lg:gap-10 overflow-x-auto no-scrollbar">
+            {orderedNavPages.map((p) => (
+              <Link
+                key={p.slug}
+                href={p.pageType === 'home' ? '/' : `/${p.slug}`}
+                className="text-[8px] md:text-[9px] font-bold tracking-[0.3em] uppercase whitespace-nowrap hover:opacity-60 transition-opacity"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {p.name}
+              </Link>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="flex items-center gap-3 group outline-none ml-8 shrink-0"
+          >
+            <span className="text-[8px] font-bold tracking-[0.2em] uppercase hidden md:inline">Close</span>
+            <div className="relative w-8 h-8 flex items-center justify-center rounded-full border border-white/20 group-hover:bg-white/10 transition-all">
+              <div className="absolute w-3.5 h-[1.2px] bg-white rotate-45" />
+              <div className="absolute w-3.5 h-[1.2px] bg-white -rotate-45" />
+            </div>
+          </button>
+        </div>
+
+        <div
+          className={cn(
+            "absolute top-0 left-0 w-4 md:w-8 lg:w-10 h-full transition-transform duration-700",
+            isMenuOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+          style={{ backgroundColor: brandColor }}
+        />
+
+        <div
+          className={cn(
+            "absolute top-0 right-0 w-4 md:w-8 lg:w-10 h-full transition-transform duration-700",
+            isMenuOpen ? "translate-x-0" : "translate-x-full"
+          )}
+          style={{ backgroundColor: brandColor }}
+        />
+
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 w-full h-8 md:h-12 lg:h-16 flex items-center justify-center px-8 transition-transform duration-700",
+            isMenuOpen ? "translate-y-0" : "translate-y-full"
+          )}
+          style={{ backgroundColor: brandColor, color: 'white' }}
+        >
+          <div className="text-[7px] md:text-[8px] font-light tracking-[0.4em] uppercase opacity-60 text-center">
+            {addressString} &bull; {site.business.email}
+          </div>
+        </div>
       </div>
-    </header>
+
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        body { 
+          transition: transform 0.7s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+        ${isMenuOpen ? 'body { transform: scale(0.98); overflow: hidden; height: 100vh; }' : ''}
+      `}</style>
+    </>
   );
 };

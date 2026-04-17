@@ -1,205 +1,176 @@
 'use client';
 
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
-import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { getImageSrc, cn } from '@/app/lib/utils';
-import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
+import { Project } from '@/app/lib/types';
+import { getImageSrc } from '@/app/lib/utils';
 import { SeoHead } from '@/app/components/ui/SeoHead';
 import { truncate } from '@/app/lib/seo';
-import { ArrowUpRight } from 'lucide-react';
+import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
 
-export default function ProjectsListingPage() {
-  const { site, projects, loading } = useWebBuilder();
-  const themeColors = useThemeColors();
-  const themeFonts = useThemeFonts();
+export default function ProjectDetailPage() {
+    const { site, projects, loading: siteLoading } = useWebBuilder();
+    const themeColors = useThemeColors();
+    const themeFonts = useThemeFonts();
+    const [loading, setLoading] = useState(true);
 
-  // Filter published projects only
-  const publishedProjects = (projects || []).filter(p => p.status === 'published');
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const sectionsRef = useRef<HTMLDivElement>(null);
 
-  const siteName = site?.business?.name || site?.name || 'Projects';
-  const seoTitle = `Projects | ${siteName}`;
-  const seoDescription = truncate(
-    site?.business?.description || `Browse all projects from ${siteName}`,
-    160
-  );
+    useEffect(() => {
+        if (!siteLoading && projects) {
+            setLoading(false);
+        }
+    }, [siteLoading, projects]);
 
-  // Show loading if site not loaded yet or explicit loading state
-  if (loading || !site) {
+    useGSAP(() => {
+        if (loading || !projects || projects.length === 0 || !sectionsRef.current || !scrollContainerRef.current) return;
+
+        gsap.registerPlugin(ScrollTrigger);
+
+        const target = sectionsRef.current;
+
+        // The distance we need to move is the total width minus the visible window width
+        const getScrollAmount = () => {
+            return -(target.scrollWidth - window.innerWidth);
+        };
+
+        const tween = gsap.to(target, {
+            x: getScrollAmount,
+            ease: "none",
+            scrollTrigger: {
+                trigger: scrollContainerRef.current,
+                start: "top top",
+                end: () => `+=${target.scrollWidth}`,
+                pin: true,
+                scrub: 1, // Smoothly catches up to scroll position
+                invalidateOnRefresh: true, // Recalculates on resize
+            }
+        });
+
+        return () => {
+            tween.kill();
+            ScrollTrigger.getAll().forEach(t => t.kill());
+        };
+    }, { dependencies: [loading, projects?.length], scope: scrollContainerRef });
+
+    if (siteLoading || loading) {
+        return (
+            <div className="h-screen flex items-center justify-center" style={{ backgroundColor: themeColors.pageBackground }}>
+                <div className="animate-pulse opacity-50 uppercase tracking-widest text-xs">Loading Projects...</div>
+            </div>
+        );
+    }
+
+    const publishedProjects = (projects || []).filter(p => p.status === 'published');
+    const siteName = site?.business?.name || site?.name || 'Perspective';
+    const seoTitle = `Projects | ${siteName}`;
+
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: themeColors.pageBackground }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: themeColors.primaryButton }}></div>
-          <p style={{ color: themeColors.secondaryText }}>Loading projects...</p>
-        </div>
-      </div>
-    );
-  }
+        <div className="relative" style={{ backgroundColor: themeColors.pageBackground }}>
+            <SeoHead title={seoTitle} canonicalPath="/project-detail" ogType="website" />
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
-      <SeoHead
-        title={seoTitle}
-        description={seoDescription}
-        canonicalPath="/project-detail"
-        ogType="website"
-      />
-      <Header />
+            <Header />
 
-      <main className="pt-32 pb-16 lg:pt-40 lg:pb-24">
-        <div className="container mx-auto px-6 lg:px-12">
-          
-          {/* Editorial Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 lg:mb-24">
-            <div className="max-w-2xl">
-              <div className="mb-6 flex items-center gap-3">
-                <span 
-                  className="text-[10px] tracking-[0.4em] uppercase font-bold"
-                  style={{ color: themeColors.primaryButton, fontFamily: themeFonts.body }}
+            {/* GSAP Trigger Container */}
+            <main ref={scrollContainerRef} className="h-screen overflow-hidden flex flex-col">
+
+                {/* Content wrapper that actually slides */}
+                <div
+                    ref={sectionsRef}
+                    className="flex h-full w-max will-change-transform"
                 >
-                  Portfolio
-                </span>
-                <div className="w-12 h-[1px]" style={{ backgroundColor: `${themeColors.primaryButton}40` }} />
-              </div>
-              
-              <h1 
-                className="text-4xl lg:text-5xl font-serif leading-tight"
-                style={{ color: themeColors.lightPrimaryText, fontFamily: themeFonts.heading }}
-              >
-                Our Projects
-              </h1>
-            </div>
-
-            <div
-              className="max-w-sm text-base font-light leading-relaxed opacity-70"
-              style={{ color: themeColors.lightSecondaryText, fontFamily: themeFonts.body }}
-            >
-              Explore our portfolio of work showcasing our expertise and dedication to excellence.
-            </div>
-          </div>
-
-          {/* Projects Grid - Editorial Gallery Style */}
-          {publishedProjects.length === 0 ? (
-            <div className="text-center py-16">
-              <p style={{ color: themeColors.secondaryText, fontFamily: themeFonts.body }}>
-                No projects available at this time.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
-              {publishedProjects.map((project, idx) => {
-                const isEven = idx % 2 === 0;
-                
-                return (
-                  <div 
-                    key={project._id}
-                    className={cn(
-                      "group relative flex flex-col",
-                      !isEven && "md:mt-24"
-                    )}
-                  >
-                    <Link 
-                      href={`/projects/${project.slug}`} 
-                      className="block overflow-hidden relative aspect-[4/5] rounded-sm"
-                      style={{ backgroundColor: `${themeColors.secondaryText}15` }}
-                    >
-                      {/* Image with slow zoom on hover */}
-                      {project.featuredImage?.url ? (
-                        <img
-                          src={getImageSrc(project.featuredImage.url)}
-                          alt={project.featuredImage.altText || project.title}
-                          className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
-                        />
-                      ) : (
-                        <div 
-                          className="w-full h-full flex items-center justify-center"
-                          style={{ backgroundColor: `${themeColors.secondaryText}15` }}
-                        >
-                          <span style={{ color: themeColors.secondaryText }}>No Image</span>
-                        </div>
-                      )}
-                      
-                      {/* Subtle Gradient Overlay */}
-                      <div 
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                        style={{ background: `linear-gradient(to top, ${themeColors.darkPrimaryText}40, transparent, transparent)` }}
-                      />
-                      
-                      {/* Floating Action Button */}
-                      <div 
-                        className="absolute top-6 right-6 w-12 h-12 rounded-full flex items-center justify-center opacity-0 -translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 shadow-xl"
-                        style={{ backgroundColor: themeColors.pageBackground }}
-                      >
-                        <ArrowUpRight 
-                          className="w-5 h-5" 
-                          style={{ color: themeColors.darkPrimaryText }}
-                        />
-                      </div>
-
-                      {/* Category Badge - Floating */}
-                      {project.category && (
-                        <div 
-                          className="absolute bottom-6 left-6 px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0"
-                          style={{ 
-                            backgroundColor: `${themeColors.primaryButton}20`,
-                            color: themeColors.primaryButton,
-                            backdropFilter: 'blur(8px)'
-                          }}
-                        >
-                          {project.category}
-                        </div>
-                      )}
-                    </Link>
-
-                    {/* Content Underlay */}
-                    <div className="mt-8">
-                      <div 
-                        className="flex items-center justify-between border-b pb-4"
+                    {/* Intro Panel */}
+                    <section
+                        className="w-[40vw] md:w-[30vw] h-full flex flex-col justify-center px-12 lg:px-20 border-r flex-shrink-0"
                         style={{ borderColor: `${themeColors.secondaryText}15` }}
-                      >
-                        <h3
-                          className="text-2xl lg:text-3xl font-serif"
-                          style={{ color: themeColors.lightPrimaryText, fontFamily: themeFonts.heading }}
+                    >
+                        <h1
+                            className="text-3xl lg:text-5xl font-light tracking-tighter mb-4"
+                            style={{ color: themeColors.lightPrimaryText, fontFamily: themeFonts.heading }}
                         >
-                          {project.title}
-                        </h3>
-                        <span 
-                          className="text-[10px] tracking-widest uppercase font-bold opacity-40"
-                          style={{ color: themeColors.secondaryText }}
+                            {siteName}
+                        </h1>
+                        <p
+                            className="text-xs uppercase tracking-[0.4em] font-medium"
+                            style={{ color: themeColors.primaryButton, fontFamily: themeFonts.body }}
                         >
-                          Explore
-                        </span>
-                      </div>
-                      
-                      {project.shortDescription && (
-                        <div
-                          className="mt-4 text-base font-light leading-relaxed opacity-60 max-w-md"
-                          style={{ color: themeColors.lightSecondaryText, fontFamily: themeFonts.body }}
-                        >
-                          <TiptapRenderer content={project.shortDescription} />
-                        </div>
-                      )}
+                            Selected Projects
+                        </p>
+                    </section>
 
-                      {project.clientName && (
-                        <div 
-                          className="mt-4 text-xs tracking-wider uppercase"
-                          style={{ color: themeColors.secondaryText, fontFamily: themeFonts.body }}
+                    {/* Project Panels */}
+                    {publishedProjects.map((project) => (
+                        <Link
+                            key={project._id}
+                            href={`/project-detail/${project.slug}`}
+                            className="relative w-[85vw] md:w-[45vw] h-full group border-r overflow-hidden flex-shrink-0"
+                            style={{ borderColor: `${themeColors.secondaryText}15` }}
                         >
-                          Client: {project.clientName}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                            <div className="absolute inset-0 bg-zinc-100 overflow-hidden">
+                                {project.featuredImage ? (
+                                    <img
+                                        src={getImageSrc(project.featuredImage.url)}
+                                        alt={project.title}
+                                        className="w-full h-full object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-110"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center opacity-20">No Image</div>
+                                )}
+                                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-500" />
+                            </div>
+
+                            {/* Category Ribbon */}
+                            {project.category && (
+                                <div className="absolute top-12 right-[-40px] rotate-45 w-40 py-1 text-center shadow-lg"
+                                     style={{
+                                        backgroundColor: themeColors.primaryButton,
+                                        color: '#fff',
+                                        fontSize: '10px',
+                                        fontWeight: 'bold',
+                                        letterSpacing: '0.2em',
+                                        zIndex: 10
+                                     }}>
+                                    {project.category.toUpperCase()}
+                                </div>
+                            )}
+
+                            {/* Content Info */}
+                            <div className="absolute bottom-0 left-0 w-full p-12 lg:p-16 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
+                                <h2
+                                    className="text-3xl lg:text-4xl uppercase tracking-[0.1em] mb-2"
+                                    style={{ color: themeColors.pageBackground, fontFamily: themeFonts.heading }}
+                                >
+                                    {project.title}
+                                </h2>
+                                <div className="flex flex-col gap-1">
+                                    <span
+                                        className="text-xs uppercase tracking-[0.3em] opacity-80"
+                                        style={{ color: themeColors.pageBackground, fontFamily: themeFonts.body }}
+                                    >
+                                        {project.location || 'Location'}
+                                    </span>
+                                    <div
+                                        className="w-0 group-hover:w-full h-[1px] transition-all duration-1000 ease-in-out"
+                                        style={{ backgroundColor: themeColors.pageBackground }}
+                                    />
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+
+                    {/* Final Spacer */}
+                    <div className="w-[10vw] h-full flex-shrink-0" />
+                </div>
+            </main>
+
+            <Footer />
         </div>
-      </main>
-
-      <Footer />
-    </div>
-  );
+    );
 }

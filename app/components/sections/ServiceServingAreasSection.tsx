@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { cn } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
+import { ArrowRight } from 'lucide-react';
 
 interface ServiceServingAreasSectionProps {
     service: any;
@@ -14,37 +15,16 @@ export const ServiceServingAreasSection: React.FC<ServiceServingAreasSectionProp
     const themeColors = useThemeColors();
     const themeFonts = useThemeFonts();
     const { site, serviceAreaPages } = useWebBuilder();
-    
-    // Dropdown state for service areas
-    const [hoveredArea, setHoveredArea] = useState<string | null>(null);
-    const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    
-    // Clear timeout on unmount
-    useEffect(() => {
-        return () => {
-            if (dropdownTimeoutRef.current) {
-                clearTimeout(dropdownTimeoutRef.current);
-            }
-        };
-    }, []);
 
     const areas = useMemo(() => {
         const serviceAreas = service.serviceAreas || [];
         const siteAreas = Array.isArray(site?.serviceAreas) ? site!.serviceAreas.filter(Boolean) : [];
-        
-        console.log('ServiceServingAreasSection service:', service?.name || 'No service');
-        console.log('Service areas:', serviceAreas);
-        console.log('Site areas:', siteAreas);
-        console.log('Service area pages:', serviceAreaPages);
         
         // Use service-specific areas if available, otherwise fall back to site areas
         return (Array.isArray(serviceAreas) && serviceAreas.length > 0)
             ? serviceAreas
             : siteAreas;
     }, [service.serviceAreas, site?.serviceAreas, serviceAreaPages]);
-
-    console.log('Final areas to render:', areas);
-    console.log('Areas length:', areas.length);
 
     if (areas.length === 0) return null;
 
@@ -54,195 +34,111 @@ export const ServiceServingAreasSection: React.FC<ServiceServingAreasSectionProp
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
-    const resolvedTitle = `Serving Areas`;
-    const resolvedDescription = `We provide ${service.name} services in the following areas`;
+    const brandColor = themeColors.primaryButton || '#E31E24';
 
     return (
         <section
-            className="py-16 lg:py-24"
-            style={{ backgroundColor: themeColors.sectionBackground }}
+            className="py-24 md:py-32 lg:py-48 border-t border-black/5"
+            style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
         >
-            <div className="container mx-auto px-4">
-                {(resolvedTitle || resolvedDescription) && (
-                    <div className="text-center mb-10">
-                        {resolvedTitle && (
+            <div className="container mx-auto px-6 lg:px-12">
+                <div className="grid lg:grid-cols-12 gap-20 lg:gap-24 items-start">
+
+                    {/* LEFT SIDE: STICKY HEADER */}
+                    <div className="lg:col-span-4 lg:sticky lg:top-36 space-y-10">
+                        <div className="space-y-6">
+                            <span
+                                className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-30"
+                                style={{ color: themeColors.mainText }}
+                            >
+                                Our Reach
+                            </span>
+
                             <h2
-                                className="text-5xl lg:text-5xl font-semibold"
-                                style={{ color: themeColors.lightPrimaryText }}
+                                className="text-3xl md:text-4xl lg:text-6xl font-extralight tracking-[0.1em] uppercase leading-[1.1] text-balance"
+                                style={{
+                                    color: themeColors.mainText,
+                                    fontFamily: themeFonts.heading
+                                }}
                             >
-                                {resolvedTitle}
+                                Serving Areas
                             </h2>
-                        )}
-                        {resolvedDescription && (
-                            <div
-                                className="mt-4 text-base"
-                                style={{ color: themeColors.lightSecondaryText }}
-                            >
-                                {resolvedDescription}
-                            </div>
-                        )}
+                        </div>
+
+                        <div
+                            className="max-w-xs text-xs md:text-sm font-light leading-relaxed tracking-wider opacity-60 uppercase"
+                            style={{ color: themeColors.secondaryText }}
+                        >
+                            We provide {service.name} services in the following areas
+                        </div>
+
+                        {/* Signature Brand Detail */}
+                        <div className="pt-8">
+                            <div className="w-16 h-[2px]" style={{ backgroundColor: brandColor }} />
+                        </div>
                     </div>
-                )}
 
-                <div className="flex items-center justify-center gap-6 mb-10">
-                    <div className="h-px w-32 sm:w-56" style={{ backgroundColor: `${themeColors.inactive}55` }} />
-                    <div
-                        className="h-10 w-10 rounded-full border flex items-center justify-center"
-                        style={{ borderColor: `${themeColors.inactive}55`, color: themeColors.lightPrimaryText, backgroundColor: themeColors.cardBackground }}
-                        aria-hidden="true"
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M10 4l2 2-2 2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M14 4l-2 2 2 2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M6 10l2 2-2 2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M18 10l-2 2 2 2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M10 18l2 2-2 2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M14 18l-2 2 2 2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </div>
-                    <div className="h-px w-32 sm:w-56" style={{ backgroundColor: `${themeColors.inactive}55` }} />
-                </div>
+                    {/* RIGHT SIDE: EDITORIAL LIST OF LOCATIONS */}
+                    <div className="lg:col-span-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 border-t border-black/10">
+                            {areas.map((area: any, idx: number) => {
+                                const cityName = typeof area === 'string' ? area : area.city;
+                                const regionName = typeof area === 'string' ? '' : (area.region || '');
+                                const citySlug = regionName 
+                                    ? `${String(cityName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${String(regionName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                                    : String(cityName)
+                                        .toLowerCase()
+                                        .replace(/[^a-z0-9]+/g, '-')
+                                        .replace(/^-|-$/g, '');
+                                
+                                const areaKey = `${cityName}-${idx}`;
+                                const displayName = `${cityName}${regionName ? `, ${regionName}` : ''}`;
 
-                <div className="max-w-6xl mx-auto">
-                    <div
-                        className="flex justify-center gap-6 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none]"
-                        style={{ scrollSnapType: 'x mandatory' }}
-                    >
-                        <style jsx>{`
-                            div::-webkit-scrollbar { display: none; }
-                        `}</style>
-                        {areas.map((area: any, idx) => {
-                            const cityName = typeof area === 'string' ? area : area.city;
-                            const regionName = typeof area === 'string' ? '' : (area.region || '');
-                            const citySlug = regionName 
-                                ? `${String(cityName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${String(regionName).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
-                                : String(cityName)
-                                    .toLowerCase()
-                                    .replace(/[^a-z0-9]+/g, '-')
-                                    .replace(/^-|-$/g, '');
-                            
-                            const areaKey = `${cityName}-${idx}`;
-
-                            return (
-                                <div
-                                    key={areaKey}
-                                    className="relative"
-                                    onMouseEnter={() => {
-                                        // Clear any existing timeout
-                                        if (dropdownTimeoutRef.current) {
-                                            clearTimeout(dropdownTimeoutRef.current);
-                                        }
-                                        setHoveredArea(areaKey);
-                                    }}
-                                    onMouseLeave={() => {
-                                        // Add delay before closing dropdown
-                                        dropdownTimeoutRef.current = setTimeout(() => {
-                                            setHoveredArea(null);
-                                        }, 200);
-                                    }}
-                                >
+                                return (
                                     <Link
+                                        key={areaKey}
                                         href={`/service/${serviceSlug}/service-areas/${citySlug}`}
-                                        className="group inline-flex items-center gap-2 whitespace-nowrap transition-colors"
-                                        style={{
-                                            color: themeColors.lightPrimaryText,
-                                        }}
+                                        className={cn(
+                                            "group relative border-b border-black/10 py-12 md:py-16 transition-all duration-300 cursor-pointer hover:shadow-lg no-underline",
+                                            idx % 2 === 0 ? "md:border-r md:pr-12 lg:pr-16" : "md:pl-12 lg:pl-16 font-light"
+                                        )}
                                     >
-                                        <span style={{ color: themeColors.hoverActive }} aria-hidden="true">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M12 21s-7-4.5-7-11a7 7 0 1 1 14 0c0 6.5-7 11-7 11z" strokeLinecap="round" strokeLinejoin="round" />
-                                                <circle cx="12" cy="10" r="2.5" />
-                                            </svg>
-                                        </span>
-                                        <span className="text-base font-medium" style={{ scrollSnapAlign: 'start' }}>
-                                            {cityName}{typeof area !== 'string' && area.region ? `, ${area.region}` : ''}
-                                        </span>
-                                        {/* Add dropdown arrow indicator */}
-                                        <svg 
-                                            className="w-3 h-3 transition-transform duration-200" 
-                                            style={{ 
-                                                color: themeColors.hoverActive,
-                                                transform: hoveredArea === areaKey ? 'rotate(180deg)' : 'rotate(0deg)'
-                                            }}
-                                            fill="currentColor" 
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                        </svg>
-                                    </Link>
-                                    
-                                    {/* Dropdown Menu */}
-                                    {hoveredArea === areaKey && (
-                                        <div 
-                                            className="absolute top-full left-0 mt-2 w-64 rounded-2xl shadow-2xl border py-3 z-50 backdrop-blur-xl"
-                                            style={{ 
-                                                backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                                                borderColor: `${themeColors.primaryButton}20`
-                                            }}
-                                            onMouseEnter={() => {
-                                                // Clear any existing timeout when entering dropdown
-                                                if (dropdownTimeoutRef.current) {
-                                                    clearTimeout(dropdownTimeoutRef.current);
-                                                }
-                                            }}
-                                            onMouseLeave={() => {
-                                                // Add delay before closing when leaving dropdown
-                                                dropdownTimeoutRef.current = setTimeout(() => {
-                                                    setHoveredArea(null);
-                                                }, 200);
-                                            }}
-                                        >
-                                            <div 
-                                                className="px-5 py-2 text-xs font-black uppercase tracking-[0.3em] border-b"
-                                                style={{ 
-                                                    color: themeColors.primaryButton,
-                                                    borderColor: `${themeColors.primaryButton}20`,
-                                                    fontFamily: themeFonts.body
-                                                }}
+                                        <div className="flex flex-col gap-6">
+                                            {/* Indexing Number */}
+                                            <span
+                                                className="text-[10px] font-bold tracking-[0.2em] opacity-20 transition-all duration-500 group-hover:opacity-100"
+                                                style={{ color: brandColor }}
                                             >
-                                                Quick Actions
+                                                {(idx + 1).toString().padStart(2, '0')}
+                                            </span>
+
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span
+                                                    className="flex-1 text-xl md:text-2xl lg:text-3xl font-extralight tracking-[0.05em] uppercase transition-all duration-500 group-hover:italic group-hover:translate-x-2"
+                                                    style={{
+                                                        color: themeColors.mainText,
+                                                        fontFamily: themeFonts.heading
+                                                    }}
+                                                >
+                                                    {displayName}
+                                                </span>
+                                                <ArrowRight
+                                                    size={20}
+                                                    className="shrink-0 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-700"
+                                                    style={{ color: brandColor }}
+                                                />
                                             </div>
-                                            
-                                            {/* Dropdown Actions */}
-                                            <div className="py-2">
-                                                <Link
-                                                    href={`/service/${serviceSlug}/service-areas/${citySlug}`}
-                                                    className="block px-5 py-3 transition-all duration-300 hover:bg-gray-50"
-                                                    style={{ 
-                                                        color: themeColors.darkSecondaryText,
-                                                        fontFamily: themeFonts.body
-                                                    }}
-                                                >
-                                                    <span className="text-sm font-medium">View Service Area Details</span>
-                                                </Link>
-                                                
-                                                <Link
-                                                    href={`/contact`}
-                                                    className="block px-5 py-3 transition-all duration-300 hover:bg-gray-50"
-                                                    style={{ 
-                                                        color: themeColors.darkSecondaryText,
-                                                        fontFamily: themeFonts.body
-                                                    }}
-                                                >
-                                                    <span className="text-sm font-medium">Schedule Service in {cityName}</span>
-                                                </Link>
-                                                
-                                                <Link
-                                                    href={`/service/${serviceSlug}`}
-                                                    className="block px-5 py-3 transition-all duration-300 hover:bg-gray-50"
-                                                    style={{ 
-                                                        color: themeColors.darkSecondaryText,
-                                                        fontFamily: themeFonts.body
-                                                    }}
-                                                >
-                                                    <span className="text-sm font-medium">Learn More About {service.name}</span>
-                                                </Link>
+
+                                            {/* Minimalist Detail */}
+                                            <div className="flex items-center gap-4 pt-2">
+                                                <div className="w-6 h-[1px] bg-black/10 transition-all group-hover:w-12" style={{ backgroundColor: `${brandColor}40` }} />
+                                                <span className="text-[10px] font-bold tracking-[0.3em] uppercase opacity-30 group-hover:opacity-60 transition-opacity">Service Available</span>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                    </Link>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>

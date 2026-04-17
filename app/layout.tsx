@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: 'Generated site using Web Builder',
 }
 
+import Preloader from './components/ui/Preloader'
+
 export default function RootLayout({
   children,
 }: {
@@ -22,7 +24,10 @@ export default function RootLayout({
           <WebBuilderProvider>
             <LanguageProvider>
               <ThemeFontWrapper>
-                {children}
+                <main className="min-h-screen">
+                  <Preloader />
+                  {children}
+                </main>
               </ThemeFontWrapper>
             </LanguageProvider>
           </WebBuilderProvider>

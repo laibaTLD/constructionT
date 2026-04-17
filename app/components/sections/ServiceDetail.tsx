@@ -67,52 +67,17 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
                         
                         {/* Left Side: Editorial Content */}
                         <div className="lg:col-span-8 space-y-20">
-                            {/* Decorative Badge */}
-                            <div className="flex items-center gap-3">
-                                <div 
-                                    className="h-px w-12" 
-                                    style={{ backgroundColor: themeColors.primaryButton }}
-                                />
-                                <span 
-                                    className="text-[10px] tracking-[0.3em] uppercase font-bold opacity-60"
-                                    style={{ color: themeColors.lightPrimaryText }}
-                                >
-                                    Service Overview
-                                </span>
-                            </div>
-
                             <ServiceDetailsSection 
                                 service={service} 
                                 galleryImages={galleryImages} 
                             />
                         </div>
 
-                        {/* Right Side: High-End Sticky Sidebar */}
+                        {/* Right Side: Sticky Sidebar */}
                         <aside className="lg:col-span-4 relative">
-                            <div className="lg:sticky lg:top-32 space-y-10">
-                                
-                                {/* Refined Sidebar Navigation */}
-                                <div 
-                                    className="p-8 rounded-[2rem] transition-all duration-500 hover:shadow-xl"
-                                    style={{ 
-                                        backgroundColor: 'transparent'
-                                    }}
-                                >
-                                    
-                                    <OtherServicesCard otherServices={otherServices} />
-                                </div>
-
-                                {/* Quick Action Card */}
-                                <div 
-                                    className="relative p-8 rounded-[2.2rem] transition-all duration-500 hover:shadow-xl"
-                                    style={{ 
-                                        backgroundColor: 'transparent'
-                                    }}
-                                >
-                                    
-                                    <QuickContactCard service={service} />
-                                </div>
-                                
+                            <div className="lg:sticky lg:top-32 space-y-12">
+                                <OtherServicesCard otherServices={otherServices} />
+                                <QuickContactCard service={service} />
                             </div>
                         </aside>
                     </div>

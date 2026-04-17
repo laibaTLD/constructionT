@@ -1,271 +1,183 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Page, BusinessHours } from '@/app/lib/types';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { cn } from '@/app/lib/utils';
+import { ArrowRight } from 'lucide-react';
+import { ContactSideForm } from '@/app/components/ui/ContactSideForm';
+
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun'
+};
 
 interface ServiceContactFormSectionProps {
     service: any;
 }
 
 export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps> = ({ service }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        message: ''
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitMessage, setSubmitMessage] = useState('');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const themeColors = useThemeColors();
+  const themeFonts = useThemeFonts();
+  const { site } = useWebBuilder();
 
-    if (!service.contactForm?.enabled) return null;
+  if (!service.contactForm?.enabled) return null;
 
-    const themeColors = useThemeColors();
-    const themeFonts = useThemeFonts();
-    const { site } = useWebBuilder();
+  const business = site?.business;
+  const address = business?.address;
+  const businessHours = business?.businessHours;
+  
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    if (businessHours?.displayFormat === '12h') {
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    }
+    return time;
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setSubmitMessage('');
+  const formatDayHours = (dayHours: BusinessHours) => {
+    if (!dayHours.isOpen) return 'Closed';
+    if (dayHours.is24Hours) return '24h';
+    if (dayHours.timeRanges && dayHours.timeRanges.length > 0) {
+      return dayHours.timeRanges.map(range => 
+        `${formatTime(range.openTime)} - ${formatTime(range.closeTime)}`
+      ).join(', ');
+    }
+    return '';
+  };
 
-        try {
-            const response = await fetch('/api/contact', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    siteId: site?._id,
-                    serviceId: service._id,
-                    subject: `Service Inquiry: ${service.name || 'Service Contact Form'}`,
-                }),
-            });
+  return (
+    <section 
+      className="py-24 md:py-32 lg:py-40 flex flex-col gap-32 lg:gap-48 border-t border-black/5" 
+      style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
+    >
+      
+      {/* PART 1: "ANY QUESTIONS?" CALL TO ACTION */}
+      <div className="container mx-auto px-6 text-center flex flex-col items-center">
+        <div className="max-w-4xl space-y-4 mb-20 text-center">
+          <h2 
+            className="text-3xl md:text-5xl lg:text-7xl font-extralight tracking-[0.15em] uppercase leading-[1.1]"
+            style={{ fontFamily: themeFonts.heading, color: themeColors.mainText }}
+          >
+            Any questions?<br />
+            Simply ask us.
+          </h2>
+          <h3 
+            className="text-3xl md:text-5xl lg:text-7xl font-light tracking-[0.15em] uppercase italic"
+            style={{ 
+                fontFamily: themeFonts.heading, 
+                color: themeColors.primaryButton || '#E31E24' 
+            }}
+          >
+           {service.name}
+          </h3>
+        </div>
 
-            const result = await response.json();
-
-            if (response.ok) {
-                setSubmitMessage('✅ Thank you for your message! We will get back to you soon.');
-                setFormData({ name: '', email: '', phone: '', message: '' });
-            } else {
-                setSubmitMessage(`❌ ${result.error || 'Failed to send message. Please try again.'}`);
-            }
-        } catch (error) {
-            console.error('Service contact form error:', error);
-            setSubmitMessage('❌ Network error. Please check your connection and try again.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setFormData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
-    };
-
-    return (
-        <section
-            className="py-16 lg:py-24"
-            style={{ backgroundColor: themeColors.sectionBackground }}
+        <button
+          onClick={() => setIsFormOpen(true)}
+          className="group relative flex items-center justify-between px-10 py-6 w-full max-w-[320px] transition-all duration-500 overflow-hidden text-left"
+          style={{ backgroundColor: themeColors.primaryButton || '#E31E24', color: '#FFFFFF' }}
         >
-            <div className="container mx-auto px-4">
-                <div className="max-w-6xl mx-auto">
-                    <div
-                        className="rounded-3xl px-6 py-10 sm:px-10 sm:py-14 lg:px-14 lg:py-16"
-                        style={{ backgroundColor: themeColors.pageBackground }}
-                    >
-                        <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
-                            <div>
-                                <div className="space-y-2">
-                                    <div
-                                        className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.02] tracking-tight uppercase"
-                                        style={{ color: themeColors.lightPrimaryText }}
-                                    >
-                                        Get a
-                                    </div>
-                                    <div
-                                        className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.02] tracking-tight uppercase"
-                                        style={{ color: themeColors.lightSecondaryText }}
-                                    >
-                                        Free Quote
-                                    </div>
-                                </div>
+          <span className="text-[11px] font-bold tracking-[0.4em] uppercase z-10">Get a Quote</span>
+          <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform z-10" />
+          <div className="absolute inset-0 bg-black/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+        </button>
+      </div>
 
-                                <p
-                                    className="mt-6 text-base sm:text-lg max-w-xl"
-                                    style={{ color: themeColors.lightSecondaryText }}
-                                >
-                                    Fill out the form and we&apos;ll get back to you shortly about our {service.name} services.
-                                </p>
+      {/* Slide-out Form Component */}
+      <ContactSideForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
 
-                                {site && (
-                                    <div className="mt-10 space-y-4">
-                                        {site.business?.email && (
-                                            <a
-                                                href={`mailto:${site.business.email}`}
-                                                className="block hover:underline"
-                                                style={{ color: themeColors.lightPrimaryText }}
-                                            >
-                                                {site.business.email}
-                                            </a>
-                                        )}
+      {/* PART 2: "WHERE TO FIND US" MAP SECTION */}
+      <div className="container mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+        
+        {/* Left: Info */}
+        <div className="space-y-16">
+          <h2 
+            className="text-3xl md:text-5xl font-extralight tracking-[0.2em] uppercase leading-tight"
+            style={{ fontFamily: themeFonts.heading, color: themeColors.mainText }}
+          >
+            Where to<br />find us
+          </h2>
 
-                                        {site.business?.phone && (
-                                            <a
-                                                href={`tel:${site.business.phone}`}
-                                                className="block hover:underline"
-                                                style={{ color: themeColors.lightPrimaryText }}
-                                            >
-                                                {site.business.phone}
-                                            </a>
-                                        )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+            {/* Address */}
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase tracking-[0.2em] mb-4 block font-bold opacity-30">Head Office</span>
+                <p className="text-sm md:text-base font-light tracking-wide max-w-sm opacity-80 leading-relaxed uppercase">
+                  {address?.street || 'Avda. Valdemarín 86'}<br />
+                  {address?.city || 'Aravaca'}, {address?.zipCode || '28023'}
+                </p>
+              </div>
 
-                                        {site.business?.address && (
-                                            <div
-                                                className="text-sm sm:text-base"
-                                                style={{ color: themeColors.lightSecondaryText }}
-                                            >
-                                                {site.business.address.street}<br />
-                                                {site.business.address.city}, {site.business.address.state} {site.business.address.zipCode}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <form onSubmit={handleSubmit} className="space-y-7">
-                                    <div>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            name="name"
-                                            required
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            className="w-full bg-transparent px-0 pb-3 outline-none border-b"
-                                            placeholder="Enter your full name"
-                                            style={{
-                                                borderColor: `${themeColors.inactive}66`,
-                                                color: themeColors.lightPrimaryText,
-                                            }}
-                                            onFocus={(e) => {
-                                                e.currentTarget.style.borderColor = themeColors.hoverActive;
-                                            }}
-                                            onBlur={(e) => {
-                                                e.currentTarget.style.borderColor = `${themeColors.inactive}66`;
-                                            }}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            name="email"
-                                            required
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            className="w-full bg-transparent px-0 pb-3 outline-none border-b"
-                                            placeholder="Enter your e-mail"
-                                            style={{
-                                                borderColor: `${themeColors.inactive}66`,
-                                                color: themeColors.lightPrimaryText,
-                                            }}
-                                            onFocus={(e) => {
-                                                e.currentTarget.style.borderColor = themeColors.hoverActive;
-                                            }}
-                                            onBlur={(e) => {
-                                                e.currentTarget.style.borderColor = `${themeColors.inactive}66`;
-                                            }}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <input
-                                            type="tel"
-                                            id="phone"
-                                            name="phone"
-                                            value={formData.phone}
-                                            onChange={handleChange}
-                                            className="w-full bg-transparent px-0 pb-3 outline-none border-b"
-                                            placeholder="Enter your WhatsApp number"
-                                            style={{
-                                                borderColor: `${themeColors.inactive}66`,
-                                                color: themeColors.lightPrimaryText,
-                                            }}
-                                            onFocus={(e) => {
-                                                e.currentTarget.style.borderColor = themeColors.hoverActive;
-                                            }}
-                                            onBlur={(e) => {
-                                                e.currentTarget.style.borderColor = `${themeColors.inactive}66`;
-                                            }}
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <textarea
-                                            id="message"
-                                            name="message"
-                                            required
-                                            rows={3}
-                                            value={formData.message}
-                                            onChange={handleChange}
-                                            className="w-full bg-transparent px-0 pb-3 outline-none border-b resize-none"
-                                            placeholder="Tell us about your project"
-                                            style={{
-                                                borderColor: `${themeColors.inactive}66`,
-                                                color: themeColors.lightPrimaryText,
-                                            }}
-                                            onFocus={(e) => {
-                                                e.currentTarget.style.borderColor = themeColors.hoverActive;
-                                            }}
-                                            onBlur={(e) => {
-                                                e.currentTarget.style.borderColor = `${themeColors.inactive}66`;
-                                            }}
-                                        />
-                                    </div>
-
-                                    <div className="pt-2">
-                                        <button
-                                            type="submit"
-                                            disabled={isSubmitting}
-                                            className="w-full py-3.5 px-6 rounded-full font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                                            style={{
-                                                backgroundColor: themeColors.primaryButton,
-                                                color: themeColors.pageBackground,
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.backgroundColor = themeColors.hoverActive;
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.backgroundColor = themeColors.primaryButton;
-                                            }}
-                                        >
-                                            {isSubmitting ? 'Sending...' : 'Send request'}
-                                        </button>
-                                    </div>
-
-                                    {submitMessage && (
-                                        <div
-                                            className="pt-2 text-sm"
-                                            style={{
-                                                color: submitMessage.includes('Thank you') ? themeColors.lightPrimaryText : themeColors.lightSecondaryText,
-                                            }}
-                                        >
-                                            {submitMessage}
-                                        </div>
-                                    )}
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${address?.street || ''} ${address?.city || ''}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center justify-between px-8 py-4 w-full max-w-[220px] transition-all duration-500 overflow-hidden mt-8"
+                style={{ backgroundColor: themeColors.primaryButton || '#E31E24', color: '#FFFFFF' }}
+              >
+                <span className="text-[10px] font-bold tracking-[0.3em] uppercase z-10">View Map</span>
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform z-10" />
+                <div className="absolute inset-0 bg-black/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+              </a>
             </div>
-        </section>
-    );
+
+            {/* Business Hours */}
+            {businessHours?.isEnabled && (
+              <div className="space-y-6">
+                <span className="text-[10px] uppercase tracking-[0.2em] mb-4 block font-bold opacity-30">Business Hours</span>
+                <div className="space-y-2">
+                  {businessHours.hours.map((day: any) => (
+                    <div key={day.day} className="flex justify-between items-baseline gap-4 text-[11px] uppercase tracking-widest opacity-80 font-light">
+                      <span className="font-semibold opacity-60">{DAY_LABELS[day.day]}</span>
+                      <span className="text-right">{formatDayHours(day)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Architectural Map Overlay */}
+        <div className="relative aspect-[16/10] md:aspect-video lg:aspect-[4/3] w-full overflow-hidden shadow-2xl lg:mt-12">
+          {site?.business?.coordinates ? (
+              <div className="w-full h-full grayscale-[0.9] contrast-[1.1] brightness-[1.1] scale-100 hover:grayscale-0 transition-all duration-1000">
+                <iframe
+                  title="Office Location"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  style={{ border: 0, filter: 'grayscale(1) contrast(1.2) opacity(0.8)' }}
+                  src={`https://maps.google.com/maps?q=${site.business.coordinates.latitude},${site.business.coordinates.longitude}&z=15&output=embed`}
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+          ) : (
+             <div className="w-full h-full bg-gray-100 flex items-center justify-center grayscale">
+                <span className="text-[10px] uppercase tracking-[0.5em] opacity-30 italic">Satellite View Pending</span>
+             </div>
+          )}
+          
+          {/* Subtle architectural frame */}
+          <div className="absolute inset-0 border-[20px] border-white/5 pointer-events-none" />
+        </div>
+      </div>
+    </section>
+  );
 };
+
+export default ServiceContactFormSection;

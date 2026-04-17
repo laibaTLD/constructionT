@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { getImageSrc, cn } from '@/app/lib/utils';
+import { cn } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { useWebBuilder } from '@/app/providers/WebBuilderProvider';;
 import { ArrowLeft, ArrowRight, Quote } from 'lucide-react';
 
 interface TestimonialsSectionProps {
@@ -63,7 +62,7 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
         return () => track.removeEventListener('scroll', handler as any);
     }, [items.length]);
 
-    if (!testimonialsSection?.enabled || items.length === 0) return null;
+    if (!testimonialsSection?.enabled) return null;
 
     return (
         <section
@@ -72,22 +71,30 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
         >
             <div className="container mx-auto px-6">
                 
-                {/* Editorial Label (Meenakshi style) */}
+                {/* Section Header */}
                 <div className="mb-12 flex flex-col items-center text-center">
                     <div className="mb-6 flex items-center gap-3">
-                        <span 
-                            className="text-[10px] tracking-[0.4em] uppercase font-bold"
-                            style={{ color: themeColors.primaryButton }}
-                        >
-                            GUEST STORIES
-                        </span>
+                        {testimonialsSection.description && (
+                            <span 
+                                className="text-[10px] tracking-[0.4em] uppercase font-bold"
+                                style={{ 
+                                    color: themeColors.primaryButton,
+                                    fontFamily: themeFonts.body
+                                }}
+                            >
+                                <TiptapRenderer content={testimonialsSection.description} as="inline" />
+                            </span>
+                        )}
                         <div className="w-12 h-[1px]" style={{ backgroundColor: `${themeColors.primaryButton}40` }} />
                     </div>
                     
                     {testimonialsSection.title && (
                         <h2
-                            className="text-3xl lg:text-4xl font-serif leading-tight max-w-3xl"
-                            style={{ color: themeColors.lightPrimaryText }}
+                            className="text-3xl lg:text-4xl leading-tight max-w-3xl"
+                            style={{ 
+                                color: themeColors.lightPrimaryText,
+                                fontFamily: themeFonts.heading
+                            }}
                         >
                             <TiptapRenderer content={testimonialsSection.title} />
                         </h2>
@@ -101,7 +108,8 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
                         className="flex gap-12 lg:gap-24 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-12 items-center"
                         style={{ scrollbarWidth: 'none' }}
                     >
-                        {items.map((t, idx) => (
+                        {items.map((t, idx) => {
+                            return (
                             <div
                                 key={`${t.name}-${idx}`}
                                 data-testimonial-index={idx}
@@ -117,35 +125,45 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
                                     />
                                     
                                     <div
-                                        className="text-xl md:text-2xl lg:text-3xl font-serif italic leading-relaxed mb-12"
-                                        style={{ color: themeColors.lightPrimaryText }}
+                                        className="text-xl md:text-2xl lg:text-3xl italic leading-relaxed mb-12"
+                                        style={{ 
+                                            color: themeColors.lightPrimaryText,
+                                            fontFamily: themeFonts.body
+                                        }}
                                     >
-                                        <TiptapRenderer content={t.content} />
+                                        <TiptapRenderer content={t.text} />
                                     </div>
 
                                     <div className="flex flex-col items-center">
                                         <span 
                                             className="text-xs tracking-[0.3em] uppercase font-black mb-2"
-                                            style={{ color: themeColors.primaryButton }}
+                                            style={{ 
+                                                color: themeColors.primaryButton,
+                                                fontFamily: themeFonts.heading
+                                            }}
                                         >
                                             {t.name}
                                         </span>
                                         <span 
                                             className="text-[10px] tracking-widest opacity-60 uppercase"
-                                            style={{ color: themeColors.lightSecondaryText }}
+                                            style={{ 
+                                                color: themeColors.lightSecondaryText,
+                                                fontFamily: themeFonts.body
+                                            }}
                                         >
                                             {t.role} {t.company && `• ${t.company}`}
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {/* Minimalist Controls */}
                     <div className="mt-12 flex flex-col items-center gap-8">
                         {/* Progress Line */}
-                        <div className="flex gap-3 h-[2px] w-48 bg-black/5 relative">
+                        <div className="flex gap-3 h-[2px] w-32 md:w-48 bg-black/5 relative">
                             <div 
                                 className="absolute top-0 left-0 h-full transition-all duration-500"
                                 style={{ 

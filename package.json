@@ -1,5 +1,5 @@
 {
-  "name": "home-maintenance-services",
+  "name": "construction",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,12 +9,14 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@tiptap/react": "^2.2.4",
     "@tiptap/starter-kit": "^2.2.4",
     "axios": "^1.6.2",
     "clsx": "^2.0.0",
     "embla-carousel": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "gsap": "^3.14.2",
     "lucide-react": "^0.302.0",
     "next": "16.1.6",
     "react": "19.2.3",
@@ -24,6 +26,9 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@types/estree": "^1.0.8",
+    "@types/linkify-it": "^5.0.0",
+    "@types/mdurl": "^2.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

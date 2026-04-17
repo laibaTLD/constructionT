@@ -1,245 +1,166 @@
 'use client';
 
 import React from 'react';
-import { getImageSrc, cn } from '@/app/lib/utils';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { ArrowUpRight } from 'lucide-react';
+import { useThemeFonts, useThemeColors } from '@/app/hooks/useTheme';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import type { Page } from '@/app/lib/types';
 
 export const Footer: React.FC = () => {
   const { site, pages } = useWebBuilder();
-  const themeColors = useThemeColors();
   const themeFonts = useThemeFonts();
+  const themeColors = useThemeColors();
 
-  const socialLinks = site?.socialLinks || [];
-  const footerColumns = site?.footer?.columns || [];
-  
-  const columnSocialLinks = footerColumns
-    .filter(col => col.title?.toLowerCase().includes('social'))
-    .flatMap(col => col.links || [])
-    .map(link => ({
-      platform: link.label?.toLowerCase() || 'link',
-      url: link.url
-    }));
-  
-  const allSocialLinks = [...socialLinks, ...columnSocialLinks];
-  const copyright = site?.footer?.copyright || '';
+  const business = site?.business;
+  const address = business?.address;
+  const legal = site?.legal;
 
-  // Define the order for navigation pages to match Header
-  const pageOrder = ['home', 'about', 'service-list', 'blog-list'];
+  // Find contact page
+  const contactPage = pages.find(p => p.status === 'published' && (p.slug.includes('contact') || p.pageType === 'contact'));
+  const contactUrl = contactPage ? `/${contactPage.slug}` : '#contact';
 
-  // Sort pages according to the defined order, then by name for remaining pages
-  const navPages = pages
-    .filter(p => p.status === 'published' && !p.slug.includes('contact'))
-    .sort((a, b) => {
-      const aIndex = pageOrder.indexOf(a.pageType);
-      const bIndex = pageOrder.indexOf(b.pageType);
-      
-      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-      if (aIndex !== -1) return -1;
-      if (bIndex !== -1) return 1;
-      return a.name.localeCompare(b.name);
-    });
+  const hasPhone = business?.phone || business?.emergencyPhone;
+  const hasEmail = business?.email || business?.emergencyEmail;
 
-  const contactPage = pages.find(p => p.status === 'published' && p.slug.includes('contact'));
-  const allNavPages = [...navPages, ...(contactPage ? [contactPage] : [])];
-
-  const renderCopyright = () => {
-    if (!copyright) {
-      return `© ${new Date().getFullYear()} ${site?.name}. All rights reserved.`;
-    }
-    if (typeof copyright === 'object' && copyright.type === 'doc') {
-      return <TiptapRenderer content={copyright} as="inline" />;
-    }
-    return String(copyright);
+  const normalizeSlug = (slug: unknown) => {
+    if (typeof slug !== 'string') return '';
+    const trimmed = slug.trim();
+    if (!trimmed) return '';
+    const noSlashes = trimmed.replace(/^\/+|\/+$/g, '');
+    return noSlashes.toLowerCase();
   };
+
+  const footerPages = pages
+    .filter(page => page.status === 'published')
+    .map(page => ({ page, slugKey: normalizeSlug(page.slug) }))
+    .filter(({ slugKey }) => Boolean(slugKey))
+    .filter(({ slugKey }, index, arr) => arr.findIndex(p => p.slugKey === slugKey) === index)
+    .map(({ page }) => page);
+
+  const pageTypeOrder: Array<
+    'home' | 'about' | 'service-list' | 'blog-list' | 'project-list' | 'contact'
+  > = ['home', 'about', 'service-list', 'blog-list', 'project-list', 'contact'];
+
+  const isPage = (p: Page | undefined): p is Page => Boolean(p);
+
+  const footerNavPages: Page[] = pageTypeOrder
+    .map((t) => footerPages.find((p) => p.pageType === t))
+    .filter(isPage);
 
   return (
     <footer
-      className="pt-12 pb-4 overflow-hidden"
-      style={{ 
-        backgroundColor: themeColors.sectionBackgroundDark,
-        color: themeColors.darkPrimaryText 
+      className="py-16 md:py-24 text-white relative overflow-hidden"
+      style={{
+        backgroundColor: themeColors.primaryButton, // Using Theme Color instead of hardcoded Red
+        fontFamily: themeFonts.body
       }}
     >
       <div className="container mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8">
+        {/* Main Footer Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-start">
           
-          {/* Brand Identity Column */}
-          <div className="lg:col-span-5 space-y-10">
-            {site?.theme?.logoUrl ? (
-              <img
-                src={getImageSrc(site.theme.logoUrl)}
-                alt={site?.name || 'Logo'}
-                className="h-20 w-auto object-contain brightness-0 invert"
-                style={{ filter: 'brightness(0) invert(1)' }}
-              />
-            ) : (
-              <h2 className="text-3xl font-serif italic" style={{ fontFamily: themeFonts.heading }}>
-                {site?.name}
-              </h2>
-            )}
-
-            {site?.footer?.description && (
-              <p 
-                className="text-sm opacity-60 leading-relaxed max-w-sm"
-                style={{ fontFamily: themeFonts.body }}
-              >
-                {site.footer.description}
-              </p>
+          {/* Left Column: Brand Identity */}
+          <div className="lg:col-span-7 space-y-8">
+            <h2
+              className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extralight tracking-[0.1em] uppercase leading-[0.9] text-balance"
+              style={{ fontFamily: themeFonts.heading }}
+            >
+              {business?.name || site?.name || 'Site Name'}
+            </h2>
+            
+            {address && (address.street || address.city) && (
+              <div className="text-[8px] md:text-xs uppercase tracking-[0.3em] opacity-80 leading-loose max-w-md">
+                <p>
+                  {address.street}<br />
+                  {address.city}{address.state && `, ${address.state}`} {address.zipCode}
+                </p>
+              </div>
             )}
           </div>
 
-          {/* Navigation & Socials Grid */}
-          <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-12">
+          {/* Right Column: Contact & Action */}
+          <div className="lg:col-span-5 flex flex-col gap-12 lg:pl-12 border-l border-white/10">
             
-            {/* Navigation */}
-            <div className="space-y-6">
-              <span 
-                className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-50"
-                style={{ fontFamily: themeFonts.body }}
-              >
-              </span>
-              <ul className="space-y-4">
-                {allNavPages.map((p, idx) => (
-                  <li key={`${p.slug}-${idx}`}>
-                    <a
-                      href={`/${p.slug === 'home' ? '' : p.slug}`}
-                      className="text-base hover:translate-x-1 inline-block transition-transform duration-300"
-                      style={{ fontFamily: themeFonts.body }}
-                    >
-                      {p.name}
+            {/* Contact Links */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-4">
+              {hasPhone && (
+                <div className="space-y-4">
+                  <span className="text-[9px] uppercase tracking-[0.4em] opacity-50 block">Telephone</span>
+                  <div className="flex flex-col gap-2">
+                    <a href={`tel:${business.phone}`} className="text-sm tracking-[0.15em] hover:opacity-60 transition-opacity">
+                      {business.phone}
                     </a>
-                  </li>
-                ))}
-              </ul>
+                    {business.emergencyPhone && (
+                      <a href={`tel:${business.emergencyPhone}`} className="text-sm tracking-[0.15em] hover:opacity-60 transition-opacity">
+                        {business.emergencyPhone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {hasEmail && (
+                <div className="space-y-4">
+                  <span className="text-[9px] uppercase tracking-[0.4em] opacity-50 block">Email</span>
+                  <div className="flex flex-col gap-2">
+                    <a href={`mailto:${business.email}`} className="text-sm tracking-[0.1em] hover:opacity-60 transition-opacity break-words">
+                      {business.email}
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Socials */}
-            {allSocialLinks.length > 0 && (
-              <div className="space-y-6">
-                <span 
-                  className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-50"
-                  style={{ fontFamily: themeFonts.body }}
+            {/* CTA Button */}
+            {contactPage && (
+              <div className="pt-4">
+                <Link
+                  href={contactUrl}
+                  className="group bg-white text-black px-8 py-5 flex items-center justify-between w-full transition-all duration-500 hover:bg-opacity-90"
+                  style={{ color: themeColors.primaryButton }}
                 >
-                </span>
-                <ul className="space-y-4">
-                  {allSocialLinks.map((link: any, idx: number) => (
-                    <li key={`${link.platform}-${idx}`}>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group flex items-center gap-2 text-base"
-                        style={{ fontFamily: themeFonts.body }}
-                      >
-                        <span className="capitalize">{link.platform}</span>
-                        <ArrowUpRight size={14} className="opacity-0 group-hover:opacity-100 -translate-y-1 transition-all" />
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.4em]">Ask for Info</span>
+                  <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+                </Link>
               </div>
             )}
-
-            {/* Address & Contact */}
-            <div className="space-y-6 col-span-2 md:col-span-1">
-              <span 
-                className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-50 block"
-                style={{ fontFamily: themeFonts.body }}
-              >
-                Find Us
-              </span>
-              <div className="space-y-6">
-                {site?.business?.address && (
-                  <address className="not-italic text-base leading-relaxed opacity-70" style={{ fontFamily: themeFonts.body }}>
-                    {site.business.address.street}<br />
-                    {site.business.address.city}, {site.business.address.state}<br />
-                    {site.business.address.zipCode}
-                  </address>
-                )}
-                
-                <div className="space-y-4 pt-4 border-t border-white/10">
-                  {site?.business?.email && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-widest opacity-40 block">Email Us</span>
-                      <a 
-                        href={`mailto:${site.business.email}`} 
-                        className="block text-sm hover:underline transition-all duration-300 break-all"
-                        style={{ fontFamily: themeFonts.body }}
-                      >
-                        {site.business.email}
-                      </a>
-                    </div>
-                  )}
-                  {site?.business?.phone && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] uppercase tracking-widest opacity-40 block">Call Us</span>
-                      <a 
-                        href={`tel:${site.business.phone}`} 
-                        className="block text-lg font-medium hover:opacity-70 transition-opacity"
-                        style={{ fontFamily: themeFonts.heading }}
-                      >
-                        {site.business.phone}
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-8 pt-2 border-t flex flex-col justify-between items-center gap-6" style={{ borderColor: `${themeColors.inactive}20` }}>
-          <div 
-            className="text-[10px] uppercase tracking-widest opacity-40"
-            style={{ fontFamily: themeFonts.body }}
-          >
-            {renderCopyright()}
-          </div>
+        {/* Horizontal Divider */}
+        <div className="w-full h-px bg-white/10 my-16 md:my-20" />
+
+        {/* Bottom Bar: Legal & Navigation */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-10 md:gap-4 text-[7px] uppercase tracking-[0.2em] font-medium opacity-60">
           
-          <div className="flex gap-8">
-            {/* Debug: Show legal links even if no data is configured */}
-            {site?.legal?.termsOfService?.heading ? (
-              <a 
-                href="/terms-of-service"
-                className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
-              >
-                {site.legal.termsOfService.heading}
-              </a>
-            ) : (
-              <a 
-                href="/terms-of-service"
-                className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
-              >
-                Terms of Service
-              </a>
+          {/* Legal Section */}
+          <div className="flex flex-wrap gap-x-8 gap-y-4">
+             <span>© {new Date().getFullYear()} {business?.name || site?.name}</span>
+            {legal?.termsOfService?.heading && (
+              <Link href="/terms-of-service" className="hover:opacity-100 transition-opacity">
+                {legal.termsOfService.heading}
+              </Link>
             )}
-            {site?.legal?.privacyPolicy?.heading ? (
-              <a 
-                href="/privacy-policy"
-                className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
-              >
-                {site.legal.privacyPolicy.heading}
-              </a>
-            ) : (
-              <a 
-                href="/privacy-policy"
-                className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
-              >
-                Privacy Policy
-              </a>
+            {legal?.privacyPolicy?.heading && (
+              <Link href="/privacy-policy" className="hover:opacity-100 transition-opacity">
+                {legal.privacyPolicy.heading}
+              </Link>
             )}
-            <button 
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="text-[10px] uppercase tracking-[0.3em] font-bold hover:text-white transition-colors"
-              style={{ color: themeColors.primaryButton }}
-            >
-              Back to Top ↑
-            </button>
           </div>
+
+          {/* Navigation Section */}
+          <nav className="flex flex-wrap gap-x-6 gap-y-3 justify-start md:justify-end">
+            {footerNavPages.map((page: Page) => (
+              <Link
+                key={normalizeSlug(page.slug)}
+                href={`/${normalizeSlug(page.slug)}`}
+                className="hover:opacity-100 transition-opacity whitespace-nowrap"
+              >
+                {page.name}
+              </Link>
+            ))}
+          </nav>
         </div>
       </div>
     </footer>

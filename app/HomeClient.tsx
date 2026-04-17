@@ -18,6 +18,7 @@ import { CTA2Section } from '@/app/components/sections/CTA2Section';
 import { CTA3Section } from '@/app/components/sections/CTA3Section';
 import { ServingAreasSection } from '@/app/components/sections/ServingAreasSection';
 import { ContactSection } from './components/sections/ContactSection';
+import { GallerySection } from '@/app/components/sections/GallerySection';
 
 export default function HomeClient() {
   const { site, pages, testimonials, loading, error } = useWebBuilder();
@@ -25,20 +26,19 @@ export default function HomeClient() {
   // Debug testimonials data
   console.log('HomeClient testimonials:', testimonials);
 
-  // Get theme colors from site
+  // Get theme colors from site using the new dynamic CSS variable system
   const themeColors = {
-    primary: site?.theme?.lightPrimaryColor || '#000000',
-    secondary: site?.theme?.lightSecondaryColor || '#EF4444',
-    accent: site?.theme?.lightPrimaryColor || '#3B82F6',
-    // New theme colors
-    mainText: site?.theme?.darkPrimaryColor || '#1F2937',
-    secondaryText: site?.theme?.darkSecondaryColor || '#6B7280',
-    pageBackground: site?.theme?.pageBackgroundColor || '#FFFFFF',
-    sectionBackground: site?.theme?.sectionBackgroundColorLight || '#F9FAFB',
-    cardBackground: site?.theme?.cardBackgroundColorLight || '#FFFFFF',
-    primaryButton: site?.theme?.primaryButtonColorLight || '#3B82F6',
-    hoverActive: site?.theme?.hoverActiveColorLight || '#2563EB',
-    inactive: site?.theme?.inactiveColorLight || '#9CA3AF',
+    primary: 'var(--wb-primary)',
+    secondary: 'var(--wb-primary)', // Using primary as default for secondary if not split
+    accent: 'var(--wb-primary)',
+    mainText: 'var(--wb-text-main)',
+    secondaryText: 'var(--wb-text-secondary)',
+    pageBackground: 'var(--wb-page-bg)',
+    sectionBackground: 'var(--wb-section-bg-light)',
+    cardBackground: 'var(--wb-card-bg-light)',
+    primaryButton: 'var(--wb-primary)',
+    hoverActive: 'var(--wb-primary-hover)',
+    inactive: 'var(--color-gray-400)',
   };
 
   // Get theme fonts from site
@@ -153,10 +153,11 @@ export default function HomeClient() {
         <CTA3Section cta3Section={displayPage.cta3Section} />
         <CompanyDetailSection companyDetailSection={displayPage.companyDetailSection} />
         <ProjectsSection projectsSection={displayPage.projectsSection} />
+        <GallerySection gallerySection={displayPage.gallerySection} />
         <CTA2Section cta2Section={displayPage.cta2Section} />
         
 
-        <TestimonialsSection testimonialsSection={{ enabled: true, testimonials: testimonials?.testimonials || [] }} />
+        <TestimonialsSection testimonialsSection={displayPage.testimonialsSection} />
         <ServingAreasSection />
         <FAQSection faqSection={displayPage.faqSection} />
         <ContactSection contactSection={displayPage.contactSection} />

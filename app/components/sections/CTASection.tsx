@@ -1,169 +1,197 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc, cn } from '@/app/lib/utils';
-import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import { ArrowUpRight } from 'lucide-react';
+import { useThemeColors } from '@/app/hooks/useTheme';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface CTASectionProps {
-    ctaSection: Page['ctaSection'];
-    className?: string;
+  ctaSection: Page['ctaSection'];
+  className?: string;
 }
 
 export const CTASection: React.FC<CTASectionProps> = ({ ctaSection, className }) => {
-    const safeCta: any = ctaSection ?? { enabled: false };
-    const { site } = useWebBuilder();
-    const sectionRef = useRef<HTMLElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
-    const [parallaxOffsetY, setParallaxOffsetY] = useState(0);
+  const themeColors = useThemeColors();
+  const sectionRef = useRef<HTMLElement>(null);
+  const textSectionRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const bgImageContainerRef = useRef<HTMLDivElement>(null);
+  const bgImageRef = useRef<HTMLDivElement>(null);
 
-    const themeColors = useThemeColors();
-    const themeFonts = useThemeFonts();
+  useEffect(() => {
+    if (!ctaSection?.enabled) return;
 
-    const backgroundImageUrl = useMemo(() => {
-        return safeCta.backgroundImage ? getImageSrc(safeCta.backgroundImage) : null;
-    }, [safeCta.backgroundImage]);
-
-    // Intersection Observer for Scroll Animations
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) setIsVisible(true);
-            },
-            { threshold: 0.2 }
+    const ctx = gsap.context(() => {
+      // 1. Staggered Text Reveal
+      const elements = contentRef.current?.children;
+      if (elements) {
+        gsap.fromTo(elements,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            stagger: 0.15,
+            duration: 1.2,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: contentRef.current,
+              start: 'top 85%',
+            }
+          }
         );
-        if (sectionRef.current) observer.observe(sectionRef.current);
-        return () => observer.disconnect();
-    }, []);
+      }
 
-    // Subtle Parallax Effect
-    useEffect(() => {
-        const handleScroll = () => {
-            if (!sectionRef.current) return;
-            const rect = sectionRef.current.getBoundingClientRect();
-            const scrollPercent = rect.top / window.innerHeight;
-            setParallaxOffsetY(scrollPercent * 100);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+      // 2. Parallax Effect between Text Section and Image
+      // We want the white text section to feel like it's sliding ABOVE the expanding image
+      if (bgImageRef.current) {
+        gsap.fromTo(bgImageRef.current,
+          { yPercent: -20 },
+          {
+            yPercent: 10,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: true,
+            }
+          }
+        );
+      }
 
-    if (!safeCta?.enabled) return null;
+      // Slow upward move for the text section itself to create "floating" feel over the image
+      if (textSectionRef.current) {
+        gsap.fromTo(textSectionRef.current,
+          { y: 0 },
+          {
+            y: -50,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: true,
+            }
+          }
+        );
+      }
+    }, sectionRef);
 
-    return (
-        <section
-            ref={sectionRef}
-            className={cn('relative min-h-[60vh] flex items-center justify-center overflow-hidden py-20', className)}
-        >
-            {/* Background with slow zoom/float animation */}
-            <div 
-                className="absolute inset-0 z-0 scale-125"
-                style={{
-                    backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : 'none',
-                    backgroundColor: safeCta.backgroundColor || themeColors.primaryButton,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    transform: `translateY(${parallaxOffsetY * -0.5}px) scale(1.1)`,
-                    transition: 'transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)',
-                }}
-            />
+    return () => ctx.revert();
+  }, [ctaSection]);
 
-            {/* Premium Gradient Overlay */}
-            <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[1px]" />
-            <div 
-                className="absolute inset-0 z-10"
-                style={{
-                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%)'
-                }}
-            />
+  if (!ctaSection?.enabled) return null;
 
-            <div className="relative z-20 container mx-auto px-6 text-center">
-                <div className="max-w-5xl mx-auto flex flex-col items-center">
-                    
-                    {/* Heritage Label with Reveal Animation */}
-                    <div className={cn(
-                        "mb-8 flex flex-col items-center gap-4 transition-all duration-1000 delay-100",
-                        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                    )}>
-                        <span 
-                            className="text-[10px] tracking-[0.5em] uppercase font-bold text-white/90"
-                            style={{}}
-                        >
-                            Begin Your Journey
-                        </span>
-                        <div className="w-16 h-[1px] bg-white/40" />
-                    </div>
+  const brandColor = themeColors.primaryButton;
+  const primaryTextColor = themeColors.lightPrimaryText;
+  const secondaryTextColor = themeColors.lightSecondaryText;
 
-                    {/* Elegant Serif Title with Staggered Slide */}
-                    {safeCta.title && (
-                        <h2
-                            className={cn(
-                                "text-4xl md:text-5xl lg:text-6xl font-serif leading-[1.1] text-white mb-8 transition-all duration-1000 delay-300",
-                                isVisible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-20 scale-95"
-                            )}
-                            style={{}}
-                        >
-                            <TiptapRenderer content={safeCta.title} />
-                        </h2>
-                    )}
+  const backgroundImageUrl = ctaSection.backgroundImage ? getImageSrc(ctaSection.backgroundImage) : null;
 
-                    {/* Description with Fade */}
-                    {safeCta.description && (
-                        <div
-                            className={cn(
-                                "text-base md:text-lg text-white/80 max-w-2xl font-light mb-12 leading-relaxed transition-all duration-1000 delay-500",
-                                isVisible ? "opacity-100" : "opacity-0"
-                            )}
-                            style={{}}
-                        >
-                            <TiptapRenderer content={safeCta.description} />
-                        </div>
-                    )}
+  return (
+    <section
+      ref={sectionRef}
+      className={cn('relative flex flex-col items-center bg-white', className)}
+    >
+      {/* 1. White Statement Block - Centered Editorial Design */}
+      <div
+        ref={textSectionRef}
+        className="relative z-20 w-fit p-10 flex flex-col items-center text-center px-6 bg-white"
+      >
+        <div ref={contentRef} className="max-w-4xl flex flex-col items-center">
 
-                    {/* The CTA Button with Theme Colors */}
-                    {safeCta.primaryButton && (
-                        <div className={cn(
-                            "transition-all duration-1000 delay-700",
-                            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                        )}>
-                            <a
-                                href="/contact-us"
-                                className="group relative flex items-center gap-8 px-10 py-5 rounded-full transition-all duration-500 shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
-                                style={{ 
-                                    fontFamily: themeFonts.body,
-                                    backgroundColor: themeColors.primaryButton,
-                                    color: '#FFFFFF'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = themeColors.hoverActive;
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = themeColors.primaryButton;
-                                }}
-                            >
-                                <span className="text-xs font-black uppercase tracking-[0.2em] z-10">
-                                    {safeCta.primaryButton.label}
-                                </span>
-                                <div 
-                                    className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-500"
-                                    style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-                                >
-                                    <ArrowUpRight className="w-4 h-4 group-hover:rotate-45 transition-transform" />
-                                </div>
-                                
-                                {/* Hover "Ripple" effect using CSS only */}
-                                <div className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:scale-110 group-hover:opacity-10 transition-all duration-700" />
-                            </a>
-                        </div>
-                    )}
-                </div>
+          {/* Header Title - Huge, Centered, Multiple Lines */}
+          {ctaSection.title && (
+            <h2
+              className="text-4xl md:text-5xl lg:text-7xl font-sans tracking-tight leading-[1.1] uppercase font-light mb-12"
+              style={{ color: primaryTextColor }}
+            >
+              <div className="text-balance [&_strong]:text-primary [&_span.brand]:text-primary">
+                {/* Styling logic for "exactly like screenshot": any bold text will be red */}
+                <style jsx>{`
+                    h2 :global(strong), h2 :global(b) {
+                        color: ${brandColor} !important;
+                        font-weight: 300; /* Keep it light weight even if bolded for color */
+                    }
+                  `}</style>
+                <TiptapRenderer content={ctaSection.title} as="inline" />
+              </div>
+            </h2>
+          )}
+
+          {/* Subheading / Description */}
+          {ctaSection.description && (
+            <div
+              className="max-w-2xl text-lg md:text-xl lg:text-2xl font-light leading-relaxed tracking-wide opacity-80 mb-8"
+              style={{ color: secondaryTextColor }}
+            >
+              <TiptapRenderer content={ctaSection.description} />
             </div>
+          )}
 
-            {/* Decorative Edge Detail (matching image rounds) */}
-            <div className="absolute bottom-0 left-0 w-full h-12 bg-white rounded-t-[60px] z-30" />
-        </section>
-    );
+          {/* Note Text (Optional Small Detail) */}
+          {((ctaSection as any).subtitle || (ctaSection as any).noteText) && (
+            <div className="text-[10px] md:text-[11px] font-light tracking-[0.2em] opacity-60 mb-16" style={{ color: primaryTextColor }}>
+              <TiptapRenderer content={(ctaSection as any).subtitle || (ctaSection as any).noteText} as="inline" />
+            </div>
+          )}
+
+          {/* Circular Red Discovery CTA */}
+          {ctaSection.primaryButton && (
+            <div className="">
+              <Link
+                href={ctaSection.primaryButton.href || '/'}
+                className="group inline-flex items-center gap-6"
+              >
+                <span
+                  className="text-[10px] md:text-[11px] font-bold tracking-[0.3em] uppercase transition-colors"
+                  style={{ color: brandColor }}
+                >
+                  {ctaSection.primaryButton.label}
+                </span>
+                <div
+                  className="w-14 h-14 rounded-full border flex items-center justify-center transition-all duration-700 group-hover:scale-110"
+                  style={{ borderColor: brandColor, color: brandColor }}
+                >
+                  <svg className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 2. Panoramic Image Reveal - Overlaps the bottom of the white block */}
+      {backgroundImageUrl && (
+        <div
+          ref={bgImageContainerRef}
+          className="relative w-full h-[60vh] md:h-[85vh] lg:h-[110vh] overflow-hidden -mt-32 md:-mt-48 lg:-mt-64 z-10"
+        >
+          <div
+            ref={bgImageRef}
+            className="absolute inset-x-0 -top-20 h-[140%] bg-cover bg-center"
+            style={{ backgroundImage: `url(${backgroundImageUrl})` }}
+          >
+            {/* Subtle Linear Fade for smooth overlap transition */}
+            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white to-transparent" />
+          </div>
+        </div>
+      )}
+
+      {/* Spacing for sections below */}
+      {!backgroundImageUrl && <div className="h-32 bg-white w-full" />}
+    </section>
+  );
 };
+
+export default CTASection;

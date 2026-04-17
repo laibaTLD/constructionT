@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { getImageSrc } from '@/app/lib/utils';
-import { cn } from '@/app/lib/utils';
-import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { ArrowUpRight } from 'lucide-react';
-import useEmblaCarousel from 'embla-carousel-react';
+import { getImageSrc, cn } from '@/app/lib/utils';
+import { useThemeColors } from '@/app/hooks/useTheme';
+import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
+
+// Register ScrollTrigger
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface HeroSectionProps {
   hero: Page['hero'];
@@ -15,143 +20,202 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => {
-  if (!hero?.enabled) return null;
-
+  const { site } = useWebBuilder();
+  const sectionRef = useRef<HTMLElement>(null);
+  const mediaContainerRef = useRef<HTMLDivElement>(null);
+  const titleContainerRef = useRef<HTMLDivElement>(null);
+  const subtitleRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const badgeRef = useRef<HTMLDivElement>(null);
   const themeColors = useThemeColors();
-  const themeFonts = useThemeFonts();
 
   const mediaItems = useMemo(() => {
+    if (!hero) return [];
     const items = Array.isArray((hero as any).mediaItems) ? (hero as any).mediaItems : [];
     if (items.length > 0) return items;
     return hero.media ? [hero.media] : [];
   }, [hero]);
 
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
-
   useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-  }, [emblaApi, onSelect]);
+    if (!hero?.enabled) return;
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    const interval = setInterval(() => emblaApi.scrollNext(), 5000);
-    return () => clearInterval(interval);
-  }, [emblaApi]);
+    const ctx = gsap.context(() => {
+      // 1. Initial Reveals
+      gsap.fromTo(badgeRef.current,
+        { x: -20, opacity: 0 },
+        { x: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 0.5 }
+      );
+
+      const lines = titleContainerRef.current?.querySelectorAll('p, span, h1');
+      if (lines && lines.length > 0) {
+        gsap.fromTo(lines,
+          { y: 50, opacity: 0 },
+          { y: 0, opacity: 1, stagger: 0.15, duration: 1.2, ease: 'power3.out', delay: 0.7 }
+        );
+      }
+
+      gsap.fromTo(subtitleRef.current,
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 1.1 }
+      );
+
+      gsap.fromTo(ctaRef.current,
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 1.4 }
+      );
+
+      // 2. Images reveal (Staggered)
+      const images = mediaContainerRef.current?.querySelectorAll('.hero-media-item');
+      if (images) {
+        gsap.fromTo(images,
+          { opacity: 0, y: 100, scale: 1.1 },
+          { opacity: 1, y: 0, scale: 1, stagger: 0.2, duration: 1.8, ease: 'power2.out', delay: 0.4 }
+        );
+      }
+
+      // 3. Scroll parallax for images
+      if (images) {
+        images.forEach((img, i) => {
+          gsap.to(img, {
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top top',
+              end: 'bottom top',
+              scrub: 1
+            },
+            yPercent: (i + 1) * 10,
+            ease: 'none'
+          });
+        });
+      }
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [hero]);
+
+  if (!hero?.enabled) return null;
+
+  const brandName = (site?.business?.name || site?.name || '').toUpperCase();
 
   return (
     <section 
-      className={cn('relative w-full h-screen overflow-hidden', className)}
-      style={{ backgroundColor: themeColors.pageBackground }}
+      ref={sectionRef}
+      className={cn('relative w-full min-h-screen bg-white flex flex-col md:flex-row overflow-hidden pb-12', className)}
     >
-      {/* Background Media Carousel */}
-      <div className="absolute inset-0 z-0" ref={emblaRef}>
-        <div className="flex h-full">
-          {mediaItems.map((item: any, idx: number) => (
-            <div key={idx} className="shrink-0 grow-0 basis-full h-full relative">
-              {item?.type === 'video' ? (
-                <video className="h-full w-full object-cover" src={getImageSrc(item.url)} autoPlay muted loop playsInline />
-              ) : (
-                <img src={getImageSrc(item.url)} alt="" className="h-full w-full object-cover" />
-              )}
-              {/* Dark Overlay for Typography legibility */}
-              <div className="absolute inset-0 bg-black/40" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Content Overlay */}
-      <div className="relative z-10 h-full w-full flex flex-col items-center justify-center text-center px-6">
-        
-        {/* Floating Heritage Badge (Reference: EST. 1998 • UDAIPUR) */}
-        {hero.subtitle && (
-          <div className="mb-6 animate-fade-in">
-            <div className="inline-block px-6 py-2 border border-white/30 rounded-full backdrop-blur-md">
-              <span className="text-white text-xs lg:text-sm font-medium tracking-[0.3em] uppercase">
-                <TiptapRenderer content={hero.subtitle} as="inline" />
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Main Centered Title */}
-        {hero.title && (
+      {/* Left Content Area */}
+      <div className="w-full md:w-[50%] flex flex-col justify-center px-8 md:px-16 lg:px-24 xl:px-32 pt-32 md:pt-0 z-20">
+        <div className="max-w-lg">
+          {/* Branded Badge with Theme Color */}
           <div 
-            className="max-w-5xl mb-6 animate-slide-up"
-            style={{ color: '#FFFFFF' }}
+            ref={badgeRef}
+            className="inline-block text-white text-[10px] font-bold tracking-[0.4em] px-3 py-1 uppercase mb-10"
+            style={{ 
+              backgroundColor: themeColors.primaryButton 
+            }}
           >
-            <h1 
-              className="text-5xl md:text-6xl lg:text-7xl font-serif leading-[0.95] tracking-tight"
-              style={{}}
-            >
-              <TiptapRenderer content={hero.title} />
-            </h1>
+             {brandName}
           </div>
-        )}
 
-        {/* Centered Description */}
-        {hero.description && (
-          <div 
-            className="max-w-xl animate-fade-in delay-300"
-            style={{ color: 'rgba(255, 255, 255, 0.85)' }}
-          >
-            <div className="text-base md:text-lg leading-relaxed font-light">
-              <TiptapRenderer content={hero.description} />
+          {/* Heading - Reduced Size */}
+          {hero.title && (
+            <div 
+              ref={titleContainerRef} 
+              className="mb-6"
+            >
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-sans tracking-tight text-[var(--wb-text-main)] font-light uppercase leading-[1.1] tiptap-hero-title">
+                <TiptapRenderer content={hero.title} as="inline" />
+              </h1>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* CTA Button - Using Theme Colors */}
-        {hero.primaryCta && (
-          <div className="absolute bottom-12 left-1/2 -translate-x-1/2">
-            <a
-              href="/contact-us"
-              className="group flex items-center gap-3 transition-all px-8 py-4 rounded-full shadow-xl"
-              style={{ 
-                backgroundColor: themeColors.primaryButton,
-                color: '#FFFFFF'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = themeColors.hoverActive;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = themeColors.primaryButton;
-              }}
+          {/* Subtitle / Description - Reduced Size */}
+          {(hero.description || hero.subtitle) && (
+            <div 
+              ref={subtitleRef} 
+              className="mb-12"
             >
-              <span className="font-bold text-sm uppercase tracking-wider">{hero.primaryCta.label}</span>
-              <div 
-                className="rounded-full p-1.5 group-hover:rotate-45 transition-transform"
-                style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-              >
-                <ArrowUpRight className="w-4 h-4" />
+              <div className="text-[var(--wb-text-secondary)] text-sm md:text-base font-light tracking-wide max-w-sm leading-relaxed">
+                <TiptapRenderer content={hero.description || hero.subtitle} as="inline" />
               </div>
-            </a>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Carousel Dots (Optional - matching reference minimal style) */}
-        <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3">
-          {mediaItems.map((_: any, i: number) => (
-            <button
-              key={i}
-              onClick={() => emblaApi?.scrollTo(i)}
-              className={cn(
-                "w-1.5 h-1.5 rounded-full transition-all duration-500",
-                selectedIndex === i ? "h-8 bg-white" : "bg-white/30"
-              )}
-            />
-          ))}
+          {/* Circular Architectural CTA */}
+          {hero.primaryCta && (
+            <div ref={ctaRef} className="pt-4">
+              <a
+                href={hero.primaryCta.href || '/'}
+                className="group inline-flex items-center gap-6"
+              >
+                <span 
+                  className="text-[10px] font-bold tracking-[0.3em] uppercase transition-colors duration-300"
+                  style={{ color: themeColors.primaryButton }}
+                >
+                  {hero.primaryCta.label}
+                </span>
+                <div 
+                  className="w-12 h-12 rounded-full border flex items-center justify-center transition-all duration-500 group-hover:bg-current group-hover:scale-110"
+                  style={{ 
+                    borderColor: themeColors.primaryButton,
+                    color: themeColors.primaryButton 
+                  }}
+                >
+                   <svg className="w-3 h-3 transition-transform duration-500 group-hover:translate-x-1 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                   </svg>
+                </div>
+              </a>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Right Media Grid Area */}
+      <div 
+        ref={mediaContainerRef}
+        className="w-full md:w-[50%] flex flex-col md:grid md:grid-cols-2 gap-4 p-8 md:p-12 self-center"
+      >
+        {mediaItems.slice(0, 3).map((item: any, idx: number) => (
+          <div 
+            key={idx}
+            className={cn(
+              "hero-media-item relative overflow-hidden bg-gray-100",
+              idx === 0 ? "col-span-2 aspect-[4/3] md:aspect-video mb-4" : "col-span-1 aspect-square md:aspect-[4/5]",
+              idx === 2 ? "md:-mt-20" : "" // Offset the last image for architectural look
+            )}
+          >
+             {item?.type === 'video' ? (
+                <video 
+                  className="h-full w-full object-cover" 
+                  src={getImageSrc(item.url)} 
+                  autoPlay muted loop playsInline 
+                />
+              ) : (
+                <img 
+                  src={getImageSrc(item.url)} 
+                  alt="" 
+                  className="xl:min-h-[500px] h-full w-full object-cover" 
+                />
+              )}
+              <div className="absolute inset-0 bg-black/[0.03] pointer-events-none" />
+          </div>
+        ))}
+        {mediaItems.length === 0 && (
+          <div className="col-span-2 aspect-video bg-[#f8f8f8]" />
+        )}
+      </div>
+
+      {/* Subtle Bottom Scroll Info */}
+      <div className="absolute bottom-10 left-8 md:left-16 flex items-center gap-3 opacity-20 hidden md:flex">
+         <div className="w-8 h-[1px] bg-black" />
+         <span className="text-[8px] uppercase tracking-[0.5em] font-medium text-black">Architectural Excellence</span>
+      </div>
+
+      <style jsx global>{`
+        .tiptap-hero-title p, .tiptap-hero-title span {
+          display: block;
+        }
+      `}</style>
     </section>
   );
 };

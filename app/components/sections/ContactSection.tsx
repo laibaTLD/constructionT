@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Page, SiteBusinessHours, BusinessHours } from '@/app/lib/types';
-import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
+import React from 'react';
+import { Page, BusinessHours } from '@/app/lib/types';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { cn } from '@/app/lib/utils';
-import { Mail, Phone, MapPin, ArrowUpRight, Clock } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { ContactSideForm } from '@/app/components/ui/ContactSideForm';
 
 const DAY_LABELS: Record<string, string> = {
-  monday: 'Monday',
-  tuesday: 'Tuesday',
-  wednesday: 'Wednesday',
-  thursday: 'Thursday',
-  friday: 'Friday',
-  saturday: 'Saturday',
-  sunday: 'Sunday'
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun'
 };
 
 interface ContactSectionProps {
@@ -24,53 +24,17 @@ interface ContactSectionProps {
 }
 
 export const ContactSection: React.FC<ContactSectionProps> = ({ contactSection, className }) => {
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isCurrentlyOpen, setIsCurrentlyOpen] = useState(false);
-
+  const [isFormOpen, setIsFormOpen] = React.useState(false);
   const themeColors = useThemeColors();
   const themeFonts = useThemeFonts();
   const { site } = useWebBuilder();
 
-  const businessHours = site?.business?.businessHours;
+  if (!contactSection?.enabled) return null;
 
-  useEffect(() => {
-    if (!businessHours?.isEnabled) return;
-
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-
-    return () => clearInterval(timer);
-  }, [businessHours?.isEnabled]);
-
-  useEffect(() => {
-    if (!businessHours?.isEnabled || !businessHours?.hours) return;
-
-    const now = currentTime;
-    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    const currentTimeStr = now.toTimeString().slice(0, 5);
-
-    const todayHours = businessHours.hours.find(h => h.day === currentDay);
-    
-    if (todayHours && todayHours.isOpen) {
-      if (todayHours.is24Hours) {
-        setIsCurrentlyOpen(true);
-      } else if (todayHours.timeRanges && todayHours.timeRanges.length > 0) {
-        const isOpen = todayHours.timeRanges.some(range => {
-          return currentTimeStr >= range.openTime && currentTimeStr <= range.closeTime;
-        });
-        setIsCurrentlyOpen(isOpen);
-      } else {
-        setIsCurrentlyOpen(false);
-      }
-    } else {
-      setIsCurrentlyOpen(false);
-    }
-  }, [currentTime, businessHours]);
-
+  const business = site?.business;
+  const address = business?.address;
+  const businessHours = business?.businessHours;
+  
   const formatTime = (time: string) => {
     if (!time) return '';
     if (businessHours?.displayFormat === '12h') {
@@ -85,7 +49,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ contactSection, 
 
   const formatDayHours = (dayHours: BusinessHours) => {
     if (!dayHours.isOpen) return 'Closed';
-    if (dayHours.is24Hours) return '24 Hours';
+    if (dayHours.is24Hours) return '24h';
     if (dayHours.timeRanges && dayHours.timeRanges.length > 0) {
       return dayHours.timeRanges.map(range => 
         `${formatTime(range.openTime)} - ${formatTime(range.closeTime)}`
@@ -94,208 +58,123 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ contactSection, 
     return '';
   };
 
-  const getCurrentStatus = () => {
-    if (!businessHours?.isEnabled) return null;
-    if (businessHours.is24_7) return { status: 'Open 24/7', color: 'text-green-600', bgColor: 'bg-green-100' };
-    return isCurrentlyOpen 
-      ? { status: 'Open Now', color: 'text-green-600', bgColor: 'bg-green-100' }
-      : { status: 'Closed', color: 'text-red-600', bgColor: 'bg-red-100' };
-  };
-
-  const status = getCurrentStatus();
-  const currentDay = currentTime.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-
-  if (!contactSection?.enabled) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitMessage('');
-    
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...formData, 
-          siteId: site?._id,
-          subject: 'Contact Form Submission from Website'
-        }),
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok) {
-        setSubmitMessage('✅ Message sent successfully! We\'ll get back to you soon.');
-        setFormData({ name: '', email: '', phone: '', message: '' });
-      } else {
-        setSubmitMessage(`❌ ${result.error || 'Failed to send message. Please try again.'}`);
-      }
-    } catch (error) {
-      console.error('Contact form error:', error);
-      setSubmitMessage('❌ Network error. Please check your connection and try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
   return (
     <section 
-      className={cn('py-20 lg:py-28', className)} 
-      style={{ backgroundColor: themeColors.pageBackground }}
+      className={cn('py-24 md:py-32 lg:py-40 flex flex-col gap-32 lg:gap-48', className)} 
+      style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
     >
-      <div className="container mx-auto px-6">
-        {/* Header Section */}
-        <div className="mb-16">
-          <span 
-            className="text-sm uppercase tracking-widest font-medium"
-            style={{ color: themeColors.primaryButton }}
-          >
-            Location
-          </span>
+      
+      {/* PART 1: "ANY QUESTIONS?" CALL TO ACTION */}
+      <div className="container mx-auto px-6 text-center flex flex-col items-center">
+        <div className="max-w-4xl space-y-4 mb-20 text-center">
           <h2 
-            className="text-4xl md:text-5xl font-semibold mt-4"
-            style={{ color: themeColors.lightPrimaryText }}
+            className="text-3xl md:text-5xl lg:text-7xl font-extralight tracking-[0.15em] uppercase leading-[1.1]"
+            style={{ fontFamily: themeFonts.heading, color: themeColors.mainText }}
           >
-            <TiptapRenderer content={contactSection.title} />
+            Any questions?<br />
+            Simply ask us.
           </h2>
+          <h3 
+            className="text-3xl md:text-5xl lg:text-7xl font-light tracking-[0.15em] uppercase italic"
+            style={{ 
+                fontFamily: themeFonts.heading, 
+                color: themeColors.primaryButton || '#E31E24' 
+            }}
+          >
+           This is your home
+          </h3>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 items-stretch">
-          {/* Left Column: Info & Form */}
-          <div className="flex flex-col gap-8 lg:col-span-1">
-         
+        <button
+          onClick={() => setIsFormOpen(true)}
+          className="group relative flex items-center justify-between px-10 py-6 w-full max-w-[320px] transition-all duration-500 overflow-hidden text-left"
+          style={{ backgroundColor: themeColors.primaryButton || '#E31E24', color: '#FFFFFF' }}
+        >
+          <span className="text-[11px] font-bold tracking-[0.4em] uppercase z-10">Form</span>
+          <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform z-10" />
+          <div className="absolute inset-0 bg-black/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+        </button>
+      </div>
 
-            {/* Contact Form Container */}
-            <div 
-              className="p-6 rounded-[1.5rem] shadow-sm border flex flex-col h-full"
-              style={{ backgroundColor: themeColors.sectionBackground, borderColor: `${themeColors.inactive}33` }}
-            >
-              <h3 className="text-xl font-semibold mb-6">Get in Touch</h3>
-              <form onSubmit={handleSubmit} className="space-y-4 flex-grow flex flex-col">
-                <div className="space-y-4">
-                  <input
-                    name="name"
-                    placeholder="Name"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full bg-white/50 border-b py-2 px-3 text-sm focus:outline-none focus:border-black transition-colors"
-                  />
-                  <input
-                    name="phone"
-                    placeholder="Phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full bg-white/50 border-b py-2 px-3 text-sm focus:outline-none focus:border-black transition-colors"
-                  />
-                </div>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="Email Address"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full bg-white/50 border-b py-2 px-3 text-sm focus:outline-none focus:border-black transition-colors"
-                />
-                <textarea
-                  name="message"
-                  placeholder="Your Message..."
-                  rows={3}
-                  required
-                  value={formData.message}
-                  onChange={handleChange}
-                  className="w-full bg-white/50 border-b py-2 px-3 text-sm focus:outline-none focus:border-black transition-colors resize-none flex-grow"
-                />
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="group flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.01] mt-auto"
-                  style={{ backgroundColor: themeColors.primaryButton, color: themeColors.pageBackground }}
-                >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                  <ArrowUpRight size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                </button>
-              </form>
-              {submitMessage && <p className="mt-3 text-center text-xs font-medium">{submitMessage}</p>}
+      {/* Slide-out Form Component */}
+      <ContactSideForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
+
+      {/* PART 2: "WHERE TO FIND US" MAP SECTION */}
+      <div className="container mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+        
+        {/* Left: Info */}
+        <div className="space-y-16">
+          <h2 
+            className="text-3xl md:text-5xl font-extralight tracking-[0.2em] uppercase leading-tight"
+            style={{ fontFamily: themeFonts.heading, color: themeColors.mainText }}
+          >
+            Where to<br />find us
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+            {/* Address */}
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase tracking-[0.2em] mb-4 block font-bold opacity-30">Head Office</span>
+                <p className="text-sm md:text-base font-light tracking-wide max-w-sm opacity-80 leading-relaxed uppercase">
+                  {address?.street || 'Avda. Valdemarín 86'}<br />
+                  {address?.city || 'Aravaca'}, {address?.zipCode || '28023'}
+                </p>
+              </div>
+
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${address?.street || ''} ${address?.city || ''}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center justify-between px-8 py-4 w-full max-w-[220px] transition-all duration-500 overflow-hidden mt-8"
+                style={{ backgroundColor: themeColors.primaryButton || '#E31E24', color: '#FFFFFF' }}
+              >
+                <span className="text-[10px] font-bold tracking-[0.3em] uppercase z-10">View Map</span>
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform z-10" />
+                <div className="absolute inset-0 bg-black/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+              </a>
             </div>
-          </div>
 
-          {/* Middle Column: Map */}
-          <div className="lg:col-span-1 h-full">
-            {contactSection.showMap && site?.business?.coordinates && (
-              <div className="h-full w-full rounded-[1.5rem] overflow-hidden shadow-lg border-4 border-white min-h-[400px]">
+            {/* Business Hours */}
+            {businessHours?.isEnabled && (
+              <div className="space-y-6">
+                <span className="text-[10px] uppercase tracking-[0.2em] mb-4 block font-bold opacity-30">Business Hours</span>
+                <div className="space-y-2">
+                  {businessHours.hours.map((day) => (
+                    <div key={day.day} className="flex justify-between items-baseline gap-4 text-[11px] uppercase tracking-widest opacity-80 font-light">
+                      <span className="font-semibold opacity-60">{DAY_LABELS[day.day]}</span>
+                      <span className="text-right">{formatDayHours(day)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Architectural Map Overlay */}
+        <div className="relative aspect-[16/10] md:aspect-video lg:aspect-[4/3] w-full overflow-hidden shadow-2xl lg:mt-12">
+          {site?.business?.coordinates ? (
+              <div className="w-full h-full grayscale-[0.9] contrast-[1.1] brightness-[1.1] scale-100 hover:grayscale-0 transition-all duration-1000">
                 <iframe
                   title="Office Location"
                   width="100%"
                   height="100%"
                   frameBorder="0"
-                  style={{ border: 0 }}
+                  style={{ border: 0, filter: 'grayscale(1) contrast(1.2) opacity(0.8)' }}
                   src={`https://maps.google.com/maps?q=${site.business.coordinates.latitude},${site.business.coordinates.longitude}&z=15&output=embed`}
                   allowFullScreen
                   loading="lazy"
                 />
               </div>
-            )}
-          </div>
-
-          {/* Right Column: Business Hours */}
-          <div className="lg:col-span-1 h-full">
-            {businessHours?.isEnabled && (
-              <div 
-                className="p-6 rounded-[1.5rem] border shadow-sm h-full flex flex-col"
-                style={{ backgroundColor: themeColors.sectionBackground, borderColor: `${themeColors.inactive}33` }}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-full bg-black/5">
-                      <Clock size={18} />
-                    </div>
-                    <h3 className="text-lg font-semibold">Hours</h3>
-                  </div>
-                  {status && (
-                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider", status.bgColor, status.color)}>
-                      {status.status}
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-2 flex-grow">
-                  {businessHours.hours.map((dayHours) => {
-                    const isToday = dayHours.day === currentDay;
-                    return (
-                      <div 
-                        key={dayHours.day}
-                        className={cn(
-                          "flex items-center justify-between py-2 px-3 rounded-lg transition-colors",
-                          isToday ? "bg-white shadow-sm border" : "opacity-70"
-                        )}
-                        style={isToday ? { borderColor: `${themeColors.primaryButton}33` } : {}}
-                      >
-                        <span className={cn("text-xs font-medium", isToday && "font-bold")}>
-                          {DAY_LABELS[dayHours.day]}
-                        </span>
-                        <span className={cn("text-[11px]", isToday && "font-medium")}>
-                          {formatDayHours(dayHours)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {businessHours.timezone && (
-                  <p className="mt-4 text-[10px] opacity-40 text-center italic mt-auto">
-                    Timezone: {businessHours.timezone}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          ) : (
+             <div className="w-full h-full bg-gray-100 flex items-center justify-center grayscale">
+                <span className="text-[10px] uppercase tracking-[0.5em] opacity-30 italic">Satellite View Pending</span>
+             </div>
+          )}
+          
+          {/* Subtle architectural frame */}
+          <div className="absolute inset-0 border-[20px] border-white/5 pointer-events-none" />
         </div>
       </div>
     </section>

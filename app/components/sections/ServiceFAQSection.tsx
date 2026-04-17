@@ -1,52 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
+import { cn } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
+import { Plus, Minus } from 'lucide-react';
+import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 
 interface ServiceFAQSectionProps {
     service: any;
 }
 
-// Get contrast color for text on backgrounds
-const getContrastColor = (bgColor: string, fallback: string) => {
-    if (!bgColor || bgColor === 'transparent') return fallback;
-    const color = bgColor.toLowerCase();
-    
-    if (color.startsWith('#')) {
-        const hex = color.replace('#', '');
-        if (hex.length === 3) {
-            const r = parseInt(hex[0], 16) * 17;
-            const g = parseInt(hex[1], 16) * 17;
-            const b = parseInt(hex[2], 16) * 17;
-            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            if (brightness < 128) return '#FFFFFF';
-        } else if (hex.length === 6) {
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
-            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            if (brightness < 128) return '#FFFFFF';
-        }
-    }
-    
-    if (color.includes('dark') || color.includes('black') || 
-        color.includes('#000') || color.includes('#111') || color.includes('#222') || 
-        color.includes('#333') || color.includes('#444') || color.includes('#555')) {
-        return '#FFFFFF';
-    }
-    
-    return fallback;
-};
-
 export const ServiceFAQSection: React.FC<ServiceFAQSectionProps> = ({ service }) => {
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
     const themeColors = useThemeColors();
     const themeFonts = useThemeFonts();
-    const [activeFaqIndex, setActiveFaqIndex] = useState<number | null>(null);
 
-    // FAQ toggle handler
-    const toggleFaq = (index: number) => {
-        setActiveFaqIndex(activeFaqIndex === index ? null : index);
+    const toggle = (index: number) => {
+        setOpenIndex(openIndex === index ? null : index);
     };
+
+    const brandColor = themeColors.primaryButton || '#E31E24';
 
     // Service FAQ items
     const serviceFaqs = service.faqs || [];
@@ -56,95 +29,121 @@ export const ServiceFAQSection: React.FC<ServiceFAQSectionProps> = ({ service })
 
     return (
         <section
-            className="py-16 lg:py-24"
-            style={{ backgroundColor: themeColors.sectionBackground }}
+            className="py-24 md:py-32 lg:py-48"
+            style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
         >
-            <div className="container mx-auto px-4 lg:px-8">
-                <div className="grid lg:grid-cols-12 gap-10 items-start">
-                    {/* Left column - Title */}
-                    <div className="lg:col-span-5">
-                        <h2
-                            className="text-4xl lg:text-5xl font-semibold leading-tight"
-                            style={{ 
-                                color: themeColors.lightPrimaryText 
-                            }}
-                        >
-                            Frequently Asked Questions
-                        </h2>
-                        <p
-                            className="mt-4 max-w-md text-sm leading-relaxed"
-                            style={{ 
-                                color: themeColors.lightSecondaryText 
-                            }}
+            <div className="container mx-auto px-6 lg:px-12">
+                <div className="grid lg:grid-cols-12 gap-20 lg:gap-24 items-start">
+
+                    {/* Left Column: Architectural Section Header */}
+                    <div className="lg:col-span-4 lg:sticky lg:top-36 space-y-10">
+                        <div className="space-y-6">
+                            <span
+                                className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-30"
+                                style={{ color: themeColors.mainText }}
+                            >
+                                Frequently Asked Questions
+                            </span>
+
+                            <h2
+                                className="text-4xl md:text-5xl lg:text-6xl font-extralight tracking-[0.1em] uppercase leading-[1.1] text-balance"
+                                style={{
+                                    color: themeColors.mainText,
+                                    fontFamily: themeFonts.heading
+                                }}
+                            >
+                                Common Questions
+                            </h2>
+                        </div>
+
+                        <div
+                            className="max-w-xs text-xs md:text-sm font-light leading-relaxed tracking-wider opacity-60 uppercase"
+                            style={{ color: themeColors.secondaryText }}
                         >
                             Get answers to common questions about our {service.name} service.
-                        </p>
+                        </div>
+
+                        {/* Signature Brand Detail */}
+                        <div className="pt-8">
+                            <div className="w-16 h-[2px]" style={{ backgroundColor: brandColor }} />
+                        </div>
                     </div>
 
-                    {/* Right column - FAQ Items */}
-                    <div className="lg:col-span-7">
-                        <div
-                            className="rounded-2xl border overflow-hidden"
-                            style={{
-                                backgroundColor: themeColors.cardBackgroundDark,
-                                borderColor: `${themeColors.inactive}30`,
-                                boxShadow: '0 18px 40px rgba(0,0,0,0.06)',
-                            }}
-                        >
+                    {/* Right Column: Premium Minimalist Accordion */}
+                    <div className="lg:col-span-8">
+                        <div className="border-t border-black/10">
                             {serviceFaqs.map((faq: any, index: number) => {
-                                const isOpen = activeFaqIndex === index;
+                                const isOpen = openIndex === index;
                                 return (
                                     <div
                                         key={index}
-                                        className="px-6 py-5 border-b last:border-b-0"
-                                        style={{ borderColor: `${themeColors.inactive}22` }}
+                                        className="border-b border-black/10 overflow-hidden transition-all duration-700"
                                     >
                                         <button
                                             type="button"
-                                            onClick={() => toggleFaq(index)}
-                                            className="w-full flex items-start justify-between gap-6 text-left"
+                                            onClick={() => toggle(index)}
+                                            className="w-full flex items-center justify-between py-10 lg:py-14 text-left group transition-all duration-300"
                                         >
-                                            <div
-                                                className="text-sm font-medium"
-                                                style={{ 
-                                                    color: themeColors.darkPrimaryText 
-                                                }}
-                                            >
-                                                {faq.question}
+                                            <div className="flex items-start gap-8 md:gap-12 lg:gap-16">
+                                                <span
+                                                    className={cn(
+                                                        "text-[10px] mt-2.5 font-bold tracking-[0.2em] transition-all duration-500",
+                                                        isOpen ? "opacity-100" : "opacity-20"
+                                                    )}
+                                                    style={{ color: isOpen ? brandColor : themeColors.mainText }}
+                                                >
+                                                    {(index + 1).toString().padStart(2, '0')}
+                                                </span>
+                                                <h3
+                                                    className={cn(
+                                                        "text-xl md:text-2xl lg:text-4xl font-extralight tracking-[0.05em] uppercase transition-all duration-500",
+                                                        isOpen ? "italic scale-[1.01]" : "group-hover:opacity-50"
+                                                    )}
+                                                    style={{
+                                                        color: themeColors.mainText,
+                                                        fontFamily: themeFonts.heading
+                                                    }}
+                                                >
+                                                    {typeof faq.question === 'string' 
+                                                        ? faq.question 
+                                                        : <TiptapRenderer content={faq.question} as="inline" />
+                                                    }
+                                                </h3>
                                             </div>
 
-                                            <span
-                                                className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border shrink-0"
+                                            <div
+                                                className={cn(
+                                                    "shrink-0 ml-4 transition-all duration-500 rounded-full w-10 md:w-12 h-10 md:h-12 flex items-center justify-center border",
+                                                    isOpen ? "rotate-180 border-transparent shadow-lg text-white" : "border-black/10 group-hover:border-black/30"
+                                                )}
                                                 style={{
-                                                    borderColor: themeColors.darkPrimaryText,
-                                                    backgroundColor: isOpen ? `${themeColors.primaryButton}55` : 'transparent',
-                                                    color: themeColors.darkPrimaryText,
+                                                    color: isOpen ? '#FFFFFF' : themeColors.mainText,
+                                                    backgroundColor: isOpen ? brandColor : 'transparent',
+                                                    borderColor: isOpen ? brandColor : undefined
                                                 }}
-                                                aria-hidden="true"
                                             >
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    {isOpen ? (
-                                                        <path d="M6 12h12" strokeLinecap="round" strokeLinejoin="round" />
-                                                    ) : (
-                                                        <>
-                                                            <path d="M12 6v12" strokeLinecap="round" strokeLinejoin="round" />
-                                                            <path d="M6 12h12" strokeLinecap="round" strokeLinejoin="round" />
-                                                        </>
-                                                    )}
-                                                </svg>
-                                            </span>
+                                                {isOpen ? <Minus strokeWidth={1} size={18} /> : <Plus strokeWidth={1} size={18} />}
+                                            </div>
                                         </button>
 
-                                        {isOpen && (
-                                            <div
-                                                className="mt-3 pr-10 text-sm leading-relaxed"
-                                                style={{ 
-                                                    color: themeColors.darkPrimaryText 
-                                                }}
-                                            >
-                                                {faq.answer}
+                                        <div
+                                            className={cn(
+                                                "grid transition-all duration-700 ease-[cubic-bezier(0.85,0,0.15,1)]",
+                                                isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                                            )}
+                                        >
+                                            <div className="overflow-hidden">
+                                                <div
+                                                    className="pl-12 md:pl-32 lg:pl-44 pb-14 text-sm md:text-base lg:text-lg font-light leading-relaxed tracking-wide opacity-70 max-w-2xl"
+                                                    style={{ color: themeColors.secondaryText }}
+                                                >
+                                                    {typeof faq.answer === 'string'
+                                                        ? faq.answer
+                                                        : <TiptapRenderer content={faq.answer} />
+                                                    }
+                                                </div>
                                             </div>
-                                        )}
+                                        </div>
                                     </div>
                                 );
                             })}

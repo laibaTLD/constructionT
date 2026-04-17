@@ -5,7 +5,7 @@ import { Site, Page, Service, BlogPost, Project } from '@/app/lib/types';
 import { siteApi, pageApi, serviceApi, blogApi, projectApi, testimonialApi, serviceAreaApi } from '@/app/lib/api';
 
 // Site slug from environment variable
-const SITE_SLUG = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG;
+const SITE_SLUG = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG || 'brightpath-home-services-mm9bo6ed-2n7p';
 
 
 
@@ -126,12 +126,17 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
   };
 
   const loadTestimonials = async (siteSlug: string) => {
+    console.log('[WebBuilderProvider] === loadTestimonials START ===', siteSlug);
     try {
+      console.log('[WebBuilderProvider] Calling testimonialApi.getTestimonialsBySite...');
       const testimonialsData = await testimonialApi.getTestimonialsBySite(siteSlug);
+      console.log('[WebBuilderProvider] Testimonials loaded SUCCESS:', testimonialsData);
+      console.log('[WebBuilderProvider] Testimonials count:', testimonialsData?.testimonials?.length || 0);
       setTestimonials(testimonialsData);
     } catch (err) {
-      console.warn('Failed to load testimonials:', err instanceof Error ? err.message : 'Unknown error');
+      console.error('[WebBuilderProvider] Testimonials loaded FAILED:', err instanceof Error ? err.message : err);
     }
+    console.log('[WebBuilderProvider] === loadTestimonials END ===');
   };
 
   const loadServiceAreaPages = async (siteSlug: string) => {
@@ -154,11 +159,11 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
 
   // Poll for site updates every 3 seconds to detect theme/color changes from builder
   useEffect(() => {
-    if (!SITE_SLUG) return;
+    if (!site?.slug) return;
 
     const intervalId = setInterval(async () => {
       try {
-        const siteData = await siteApi.getSiteBySlug(SITE_SLUG);
+        const siteData = await siteApi.getSiteBySlug(site.slug);
         setSite(prevSite => {
           // Only update if theme has changed
           if (prevSite && JSON.stringify(prevSite.theme) !== JSON.stringify(siteData.theme)) {
@@ -172,15 +177,15 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     }, 3000);
 
     return () => clearInterval(intervalId);
-  }, [SITE_SLUG]);
+  }, [site?.slug]);
 
   // Poll for projects updates every 5 seconds to detect new/updated published projects
   useEffect(() => {
-    if (!SITE_SLUG) return;
+    if (!site?.slug) return;
 
     const intervalId = setInterval(async () => {
       try {
-        const projectsData = await projectApi.getProjectsBySite(SITE_SLUG);
+        const projectsData = await projectApi.getProjectsBySite(site.slug);
         setProjects(prevProjects => {
           if (JSON.stringify(prevProjects) !== JSON.stringify(projectsData)) {
             return projectsData;
@@ -193,15 +198,15 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [SITE_SLUG]);
+  }, [site?.slug]);
 
   // Poll for pages updates every 5 seconds so navigation updates after creating/publishing pages
   useEffect(() => {
-    if (!SITE_SLUG) return;
+    if (!site?.slug) return;
 
     const intervalId = setInterval(async () => {
       try {
-        const pagesData = await pageApi.getPagesBySite(SITE_SLUG);
+        const pagesData = await pageApi.getPagesBySite(site.slug);
         setPages(prevPages => {
           if (JSON.stringify(prevPages) !== JSON.stringify(pagesData)) {
             return pagesData;
@@ -214,15 +219,15 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [SITE_SLUG]);
+  }, [site?.slug]);
 
   // Poll for services updates every 5 seconds to detect slug and content changes
   useEffect(() => {
-    if (!SITE_SLUG) return;
+    if (!site?.slug) return;
 
     const intervalId = setInterval(async () => {
       try {
-        const servicesData = await serviceApi.getServicesBySite(SITE_SLUG);
+        const servicesData = await serviceApi.getServicesBySite(site.slug);
         setServices(prevServices => {
           // Only update if services data has changed
           if (JSON.stringify(prevServices) !== JSON.stringify(servicesData)) {
@@ -236,7 +241,7 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [SITE_SLUG]);
+  }, [site?.slug]);
 
   const contextValue: WebBuilderContextType = {
     site,

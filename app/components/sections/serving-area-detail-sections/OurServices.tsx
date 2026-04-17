@@ -96,10 +96,10 @@ export const OurServices: React.FC<OurServicesProps> = ({ services, className })
           </div>
         )}
 
-        {/* Services Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-          {filteredServices.length > 0 ? (
-            filteredServices.map((service: any, index: number) => (
+        {/* Services Grid - Only show if services exist */}
+        {filteredServices.length > 0 && (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+            {filteredServices.map((service: any, index: number) => (
             <div 
               key={service.id || index}
               className="group flex flex-col h-full transition-all duration-500"
@@ -176,11 +176,9 @@ export const OurServices: React.FC<OurServicesProps> = ({ services, className })
                 </button>
               </div>
             </div>
-          ))
-          ) : (
-            <div className="col-span-full text-center py-20 opacity-40">No services found.</div>
-          )}
+          ))}
         </div>
+      )}
       </div>
     </section>
   );

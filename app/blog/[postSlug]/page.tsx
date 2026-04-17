@@ -13,6 +13,7 @@ import { getImageSrc } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { SeoHead } from '@/app/components/ui/SeoHead';
 import { normalizeSeoImage, tiptapToText, truncate } from '@/app/lib/seo';
+import { ArrowLeft } from 'lucide-react';
 
 export default function BlogPostPage() {
     const params = useParams();
@@ -30,331 +31,159 @@ export default function BlogPostPage() {
     useEffect(() => {
         async function loadPost() {
             if (!site) return;
-
             try {
                 setLoading(true);
-                // Load current post
                 const postData = await blogApi.getPostBySlug(site.slug, postSlug);
                 setPost(postData);
 
-                // Load other published posts for sidebar (exclude current)
                 const allPosts = await blogApi.getPostsBySite(site.slug);
                 const filtered = allPosts
                     .filter(p => p.status === 'published' && p.slug !== postSlug)
-                    .slice(0, 5);
+                    .slice(0, 3);
                 setOtherPosts(filtered);
-
                 setError(null);
             } catch (err: any) {
-                console.error('Failed to load blog post:', err);
                 setError(err.message || 'Failed to load blog post');
             } finally {
                 setLoading(false);
             }
         }
-
-        if (!siteLoading) {
-            loadPost();
-        }
+        if (!siteLoading) loadPost();
     }, [site, postSlug, siteLoading]);
 
     if (siteLoading || loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading post...</p>
-                </div>
-            </div>
-        );
+        return <div className="min-h-screen flex items-center justify-center animate-pulse uppercase tracking-[0.3em] text-xs">Loading Perspective...</div>;
     }
 
     if (error || !post) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <h2 className="text-red-800 font-semibold mb-2">Error Loading Post</h2>
-                    <p className="text-red-600">{error || 'Post not found'}</p>
-                </div>
-            </div>
-        );
+        return <div className="min-h-screen flex items-center justify-center text-red-500 uppercase tracking-widest">Entry Not Found</div>;
     }
 
-    const siteName = site?.business?.name || site?.name || 'Web Builder Site';
-    const seoTitleBase = post.seo?.title || post.title;
-    const seoTitle = `${seoTitleBase} | ${siteName}`;
-    const fallbackDesc = truncate(
-        post.seo?.description ||
-        tiptapToText(post.excerpt) ||
-        tiptapToText(post.content),
-        160
-    );
-    const seoDescription = truncate(post.seo?.description || fallbackDesc, 160);
-    const ogImage =
-        normalizeSeoImage(post.seo?.ogImageUrl || undefined, post.title) ||
-        normalizeSeoImage(post.featuredImage?.url, post.featuredImage?.altText || post.title);
+    const siteName = site?.business?.name || site?.name || 'Perspective';
+    const seoTitle = `${post.seo?.title || post.title} | ${siteName}`;
+    const seoDescription = truncate(post.seo?.description || tiptapToText(post.excerpt) || tiptapToText(post.content), 160);
+    const ogImage = normalizeSeoImage(post.seo?.ogImageUrl || post.featuredImage?.url, post.title);
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <SeoHead
-                title={seoTitle}
-                description={seoDescription}
-                canonicalPath={`/blog/${post.slug}`}
-                ogType="article"
-                ogImage={ogImage}
-            />
+        <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
+            <SeoHead title={seoTitle} description={seoDescription} canonicalPath={`/blog/${post.slug}`} ogType="article" ogImage={ogImage} />
             <Header />
 
-            <main className="pt-32 pb-12 lg:pt-40 lg:pb-16">
-                <div className="container mx-auto px-4 max-w-7xl">
-                    {/* Blog Title Section */}
-                    <header className="text-center mb-8">
-                        <h1 
-                            className="text-4xl lg:text-5xl font-bold mb-6 leading-tight"
-                            style={{ color: themeColors.lightPrimaryText, fontFamily: themeFonts.heading }}
-                        >
-                            {post.title}
-                        </h1>
-
-                        {/* Date Only */}
-                        {post.publishedAt && (
-                            <div className="text-center">
-                                <time 
-                                    dateTime={new Date(post.publishedAt).toISOString()} 
-                                    style={{ color: themeColors.lightSecondaryText }}
-                                >
-                                    {new Date(post.publishedAt).toLocaleDateString(undefined, {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
-                                </time>
-                            </div>
-                        )}
-
-                        {/* Categories */}
-                        {post.categories && post.categories.length > 0 && (
-                            <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
-                                {post.categories.map(category => (
-                                    <span 
-                                        key={category} 
-                                        className="px-4 py-1.5 rounded-full text-sm font-medium"
-                                        style={{ 
-                                            backgroundColor: `${themeColors.primaryButton}15`,
-                                            color: themeColors.primaryButton
-                                        }}
-                                    >
-                                        {category}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-                    </header>
-
-                    {/* Hero Image */}
+            <main className="relative">
+                {/* HERO SECTION - WHITE TEXT OVER IMAGE */}
+                <div className="relative h-[70vh] md:h-[85vh] w-full overflow-hidden flex items-end">
                     {post.featuredImage && (
-                        <div className="mb-12 text-center">
+                        <div className="absolute inset-0 z-0">
                             <img
                                 src={getImageSrc(post.featuredImage.url)}
                                 alt={post.featuredImage.altText || post.title}
-                                className="w-full max-w-4xl mx-auto h-auto max-h-[500px] object-cover rounded-2xl shadow-xl"
+                                className="w-full h-full object-cover"
                             />
+                            <div className="absolute inset-0 bg-black/40" /> 
                         </div>
                     )}
-
-                    {/* Two Column Layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-                        {/* Left Side - Main Content */}
-                        <article className="lg:col-span-2">
-                            <div 
-                                className="rounded-2xl shadow-sm p-8 lg:p-12"
-                                style={{ backgroundColor: themeColors.pageBackground }}
+                    
+                    <div className="container mx-auto px-6 lg:px-12 relative z-10 pb-16 lg:pb-24">
+                        <div className="max-w-4xl">
+                            {post.categories?.[0] && (
+                                <span className="text-[6px] md:text-xs uppercase tracking-[0.3em] text-white/80 mb-6 block font-medium">
+                                    {post.categories[0]}
+                                </span>
+                            )}
+                            <h1 
+                                className="text-3xl md:text-5xl lg:text-6xl text-white font-extralight uppercase leading-[1.1] tracking-tight md:tracking-[-0.02em] text-balance"
+                                style={{ fontFamily: themeFonts.heading }}
                             >
-                                {/* Content */}
-                                <div 
-                                    className="prose prose-lg max-w-none"
-                                    style={{ color: themeColors.lightPrimaryText, fontFamily: themeFonts.body }}
-                                >
-                                    {post.content ? (
-                                        <TiptapRenderer content={post.content} />
-                                    ) : post.excerpt ? (
-                                        <TiptapRenderer content={post.excerpt} />
-                                    ) : null}
-                                </div>
-
-                                {/* Tags */}
-                                {post.tags && post.tags.length > 0 && (
-                                    <div 
-                                        className="mt-12 pt-8 border-t"
-                                        style={{ borderColor: `${themeColors.secondaryText}20` }}
-                                    >
-                                        <span 
-                                            className="text-sm font-semibold uppercase mr-3"
-                                            style={{ color: themeColors.secondaryText }}
-                                        >
-                                            Tags:
-                                        </span>
-                                        <div className="inline-flex gap-2 flex-wrap mt-2">
-                                            {post.tags.map(tag => (
-                                                <span 
-                                                    key={tag} 
-                                                    className="px-3 py-1 rounded-full text-sm transition-colors cursor-pointer hover:opacity-80"
-                                                    style={{
-                                                        backgroundColor: `${themeColors.secondaryText}15`,
-                                                        color: themeColors.secondaryText
-                                                    }}
-                                                >
-                                                    #{tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </article>
-
-                        {/* Right Side - Sticky Sidebar */}
-                        <aside className="lg:col-span-1">
-                            <div className="sticky top-8 space-y-6">
-                                {/* Other Blogs Box */}
-                                <div 
-                                    className="rounded-xl shadow-sm p-6"
-                                    style={{ backgroundColor: themeColors.pageBackground }}
-                                >
-                                    <h3 
-                                        className="text-lg font-bold mb-4 pb-3 border-b"
-                                        style={{ 
-                                            color: themeColors.lightPrimaryText,
-                                            borderColor: `${themeColors.secondaryText}15`,
-                                            fontFamily: themeFonts.heading
-                                        }}
-                                    >
-                                        Other Articles
-                                    </h3>
-                                    {otherPosts.length === 0 ? (
-                                        <p style={{ color: themeColors.secondaryText }}>No other articles available.</p>
-                                    ) : (
-                                        <ul className="space-y-4">
-                                            {otherPosts.map(otherPost => (
-                                                <li key={otherPost._id}>
-                                                    <Link 
-                                                        href={`/blog/${otherPost.slug}`}
-                                                        className="group block"
-                                                    >
-                                                        <div className="flex gap-3">
-                                                            {otherPost.featuredImage && (
-                                                                <img
-                                                                    src={getImageSrc(otherPost.featuredImage.url)}
-                                                                    alt={otherPost.title}
-                                                                    className="w-16 h-16 object-cover rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform"
-                                                                />
-                                                            )}
-                                                            <div className="flex-1 min-w-0">
-                                                                <h4 
-                                                                    className="text-sm font-semibold line-clamp-2 transition-colors"
-                                                                    style={{ 
-                                                                        color: themeColors.lightPrimaryText,
-                                                                        fontFamily: themeFonts.body
-                                                                    }}
-                                                                >
-                                                                    {otherPost.title}
-                                                                </h4>
-                                                                {otherPost.publishedAt && (
-                                                                    <p 
-                                                                        className="text-xs mt-1"
-                                                                        style={{ color: themeColors.lightSecondaryText }}
-                                                                    >
-                                                                        {new Date(otherPost.publishedAt).toLocaleDateString(undefined, {
-                                                                            month: 'short',
-                                                                            day: 'numeric',
-                                                                            year: 'numeric'
-                                                                        })}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </Link>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                    <Link 
-                                        href="/blog"
-                                        className="inline-block mt-4 text-sm font-medium transition-colors hover:opacity-80"
-                                        style={{ color: themeColors.primaryButton }}
-                                    >
-                                        View all articles →
-                                    </Link>
-                                </div>
-
-                                {/* Contact Box */}
-                                <div 
-                                    className="rounded-xl shadow-md p-6"
-                                    style={{ backgroundColor: themeColors.primaryButton }}
-                                >
-                                    <h3 
-                                        className="text-lg font-bold mb-3"
-                                        style={{ 
-                                            color: themeColors.darkPrimaryText,
-                                            fontFamily: themeFonts.heading
-                                        }}
-                                    >
-                                        Need Help?
-                                    </h3>
-                                    <p 
-                                        className="text-sm mb-5 leading-relaxed"
-                                        style={{ color: `${themeColors.darkPrimaryText}CC` }}
-                                    >
-                                        Have questions or need assistance? Our team is here to help you with any inquiries.
-                                    </p>
-                                    <Link 
-                                        href="/contact"
-                                        className="inline-flex items-center justify-center w-full font-semibold py-3 px-6 rounded-lg transition-colors shadow-sm hover:opacity-90"
-                                        style={{ 
-                                            backgroundColor: themeColors.pageBackground,
-                                            color: themeColors.primaryButton,
-                                            fontFamily: themeFonts.body
-                                        }}
-                                    >
-                                        Contact Us
-                                    </Link>
-                                </div>
-
-                                {/* Tags Cloud (if post has many tags) */}
-                                {post.tags && post.tags.length > 0 && (
-                                    <div 
-                                        className="rounded-xl shadow-sm p-6"
-                                        style={{ backgroundColor: themeColors.pageBackground }}
-                                    >
-                                        <h3 
-                                            className="text-lg font-bold mb-4"
-                                            style={{ 
-                                                color: themeColors.lightPrimaryText,
-                                                fontFamily: themeFonts.heading
-                                            }}
-                                        >
-                                            Popular Tags
-                                        </h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {post.tags.map(tag => (
-                                                <span 
-                                                    key={tag} 
-                                                    className="px-3 py-1.5 rounded-full text-sm transition-colors cursor-pointer hover:opacity-80"
-                                                    style={{
-                                                        backgroundColor: `${themeColors.secondaryText}15`,
-                                                        color: themeColors.secondaryText
-                                                    }}
-                                                >
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </aside>
+                                {post.title}
+                            </h1>
+                        </div>
                     </div>
                 </div>
+
+                {/* METADATA BAR - BLACK TEXT FOR VISIBILITY */}
+                <div className="border-y" style={{ borderColor: `rgba(0, 0, 0, 0.1)`, backgroundColor: themeColors.pageBackground }}>
+                    <div className="container mx-auto px-6 lg:px-12 py-8 flex flex-wrap gap-8 md:gap-16 items-center">
+                        <div className="space-y-1">
+                            <span className="text-[9px] uppercase tracking-[0.3em] block" style={{ color: 'rgba(0, 0, 0, 0.5)' }}>Published</span>
+                            <span className="text-xs uppercase tracking-widest font-medium" style={{ color: '#000000' }}>
+                                {new Date(post.publishedAt!).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </span>
+                        </div>
+                        
+                        <Link
+                            href="/blog"
+                            className="ml-auto flex items-center gap-2 group text-[10px] uppercase tracking-[0.4em] hover:opacity-100 transition-opacity"
+                            style={{ color: '#000000' }}
+                        >
+                            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back to Blog
+                        </Link>
+                    </div>
+                </div>
+
+                {/* CONTENT AREA - SOLID BLACK TEXT */}
+                <div className="container px-6 lg:px-12 py-10 lg:py-14">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
+                        
+                        <article className="lg:col-span-8 lg:col-start-3">
+                            <div 
+                                className="prose prose-lg md:prose-xl max-w-none prose-headings:uppercase prose-headings:font-light prose-headings:tracking-widest prose-img:rounded-none prose-blockquote:border-l prose-blockquote:italic !text-black"
+                                style={{ 
+                                    color: '#000000', 
+                                    fontFamily: themeFonts.body,
+                                }}
+                            >
+                                <TiptapRenderer content={post.content || post.excerpt} />
+                            </div>
+
+                            {/* Tags - Minimalist style */}
+                            {post.tags && post.tags.length > 0 && (
+                                <div className="mt-12 pt-8 flex flex-wrap gap-4" style={{ borderTop: `1px solid rgba(0, 0, 0, 0.1)` }}>
+                                    {post.tags.map(tag => (
+                                        <span
+                                            key={tag}
+                                            className="text-[10px] uppercase tracking-[0.3em] px-4 py-2"
+                                            style={{
+                                                backgroundColor: `rgba(0, 0, 0, 0.05)`,
+                                                color: '#000000'
+                                            }}
+                                        >
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                        </article>
+                    </div>
+                </div>
+
+                {/* RELATED ARTICLES */}
+                {otherPosts.length > 0 && (
+                    <section className="py-24 lg:py-32" style={{ backgroundColor: `rgba(0, 0, 0, 0.02)` }}>
+                        <div className="container mx-auto px-6 lg:px-12">
+                            <h3 className="text-[11px] uppercase tracking-[0.6em] text-center mb-16 opacity-40 text-black" style={{ fontFamily: themeFonts.heading }}>
+                                More Blogs
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-px" style={{ backgroundColor: `rgba(0, 0, 0, 0.1)` }}>
+                                {otherPosts.map(other => (
+                                    <Link
+                                        key={other._id}
+                                        href={`/blog/${other.slug}`}
+                                        className="group p-8 lg:p-12 transition-colors flex flex-col h-full"
+                                        style={{ backgroundColor: themeColors.pageBackground }}
+                                    >
+                                        <span className="text-[9px] uppercase tracking-[0.4em] mb-4 opacity-40 block text-black">Next Article</span>
+                                        <h4 className="text-xl uppercase font-light tracking-wide mb-8 group-hover:opacity-60 transition-opacity flex-grow text-black">
+                                            {other.title}
+                                        </h4>
+                                        <span className="text-[10px] uppercase tracking-[0.4em] font-bold flex items-center gap-4 text-black">
+                                            Explore <ArrowLeft size={14} className="rotate-180" />
+                                        </span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                )}
             </main>
 
             <Footer />

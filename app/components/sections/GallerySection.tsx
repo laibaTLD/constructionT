@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc } from '@/app/lib/utils';
 import { cn } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import useEmblaCarousel from 'embla-carousel-react';
 
 interface GallerySectionProps {
     gallerySection: Page['gallerySection'];
@@ -19,168 +17,111 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
 
     const themeColors = useThemeColors();
     const themeFonts = useThemeFonts();
-    const { site } = useWebBuilder();
 
     const images = useMemo(() => {
         return (gallerySection.images || []).map((image: any, index: number) => {
             const imageUrl = typeof image === 'string' ? image : image.url;
             const altText = typeof image === 'object' ? image.altText : '';
-            const caption = typeof image === 'object' ? image.caption : null;
             return {
                 key: `${imageUrl}-${index}`,
                 imageUrl,
                 altText,
-                caption,
             };
         });
     }, [gallerySection.images]);
 
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'center' });
-
-    const onSelect = useCallback(() => {
-        if (!emblaApi) return;
-        setSelectedIndex(emblaApi.selectedScrollSnap());
-    }, [emblaApi]);
-
-    useEffect(() => {
-        if (!emblaApi) return;
-        onSelect();
-        emblaApi.on('select', onSelect);
-        emblaApi.on('reInit', onSelect);
-    }, [emblaApi, onSelect]);
-
-    const scrollTo = useCallback(
-        (index: number) => {
-            emblaApi?.scrollTo(index);
-        },
-        [emblaApi]
-    );
-
-    const prevIndex = (selectedIndex - 1 + images.length) % images.length;
-    const nextIndex = (selectedIndex + 1) % images.length;
+    // Asymmetrical Grid Logic: Map images to specific slots
+    const mainImg = images[0];
+    const topSecondaryImg = images[1] || images[0];
+    const bottomSecondaryImg = images[2] || images[1] || images[0];
 
     return (
         <section
-            className={cn('py-16 lg:py-24', className)}
+            className={cn('py-20 lg:py-32 overflow-hidden', className)}
             style={{ backgroundColor: themeColors.pageBackground }}
         >
-            <div className="container mx-auto px-4">
-                <div className="text-center">
-                    <div
-                        className="text-xs tracking-wide"
-                        style={{ color: themeColors.darkSecondaryText }}
-                    >
-                        2025 Edition →
-                    </div>
-
-                    {gallerySection.title && (
-                        <h2
-                            className="mt-3 text-4xl lg:text-5xl font-semibold"
-                            style={{ color: themeColors.darkPrimaryText }}
-                        >
-                            <TiptapRenderer content={gallerySection.title} />
-                        </h2>
-                    )}
-
-                    {gallerySection.description && (
-                        <div
-                            className="mt-3 text-sm max-w-3xl mx-auto"
-                            style={{ color: themeColors.darkSecondaryText }}
-                        >
-                            <TiptapRenderer content={gallerySection.description} />
-                        </div>
-                    )}
-                </div>
-
-                <div className="mt-12 grid grid-cols-12 gap-8 items-center">
-                    {/* Left preview */}
-                    <button
-                        type="button"
-                        className="hidden lg:block col-span-2 rounded-2xl overflow-hidden border transition-transform"
-                        style={{
-                            borderColor: `${themeColors.inactive}30`,
-                            backgroundColor: '#fff',
-                        }}
-                        onClick={() => scrollTo(prevIndex)}
-                        aria-label="Previous image"
-                    >
-                        <div className="aspect-square">
+            <div className="container mx-auto px-6 md:px-12 lg:px-20">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-14 items-start">
+                    
+                    {/* Left Column: Main Focal Image & Typography */}
+                    <div className="md:col-span-7 flex flex-col gap-12 lg:gap-20">
+                        {/* Large Focal Image */}
+                        <div className="relative aspect-[4/3] overflow-hidden group bg-gray-50">
                             <img
-                                src={getImageSrc(images[prevIndex]?.imageUrl)}
-                                alt={images[prevIndex]?.altText || ''}
-                                className="h-full w-full object-cover"
+                                src={getImageSrc(mainImg.imageUrl)}
+                                alt={mainImg.altText}
+                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                loading="lazy"
                             />
                         </div>
-                    </button>
 
-                    {/* Main carousel */}
-                    <div className="col-span-12 lg:col-span-8">
-                        <div className="overflow-hidden" ref={emblaRef}>
-                            <div className="flex">
-                                {images.map((img, idx) => (
-                                    <div
-                                        key={img.key}
-                                        className="shrink-0 grow-0 basis-full px-2"
-                                        aria-hidden={idx !== selectedIndex}
+                        {/* Editorial Typography Section */}
+                        <div className="space-y-4 max-w-2xl">
+                            <div 
+                                className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light tracking-[0.2em] transition-all uppercase leading-[1.3] text-balance"
+                                style={{ 
+                                    fontFamily: themeFonts.heading,
+                                    color: themeColors.mainText
+                                }}
+                            >
+                                <TiptapRenderer content={gallerySection.title} />
+                                
+                                {gallerySection.description && (
+                                    <div 
+                                        className="mt-4 italic font-medium tracking-[0.1em]"
+                                        style={{ color: themeColors.primaryButton || '#E31E24' }} 
                                     >
-                                        <div
-                                            className="rounded-3xl overflow-hidden border"
-                                            style={{
-                                                borderColor: `${themeColors.inactive}22`,
-                                                boxShadow: '0 20px 45px rgba(0,0,0,0.10)',
-                                            }}
-                                        >
-                                            <div className="relative aspect-[16/7]">
-                                                <img
-                                                    src={getImageSrc(img.imageUrl)}
-                                                    alt={img.altText || `Gallery image ${idx + 1}`}
-                                                    className="absolute inset-0 h-full w-full object-cover"
-                                                />
-                                            </div>
-                                        </div>
+                                        <TiptapRenderer content={gallerySection.description} />
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
-
-                        <div className="mt-5 flex items-center justify-center gap-2">
-                            {images.slice(0, 8).map((_, i) => (
-                                <button
-                                    key={i}
-                                    type="button"
-                                    aria-label={`Go to slide ${i + 1}`}
-                                    onClick={() => scrollTo(i)}
-                                    className="h-2 rounded-full transition-all"
-                                    style={{
-                                        width: selectedIndex === i ? 18 : 6,
-                                        backgroundColor: selectedIndex === i ? themeColors.darkPrimaryText : `${themeColors.inactive}66`,
-                                    }}
-                                />
-                            ))}
-                        </div>
                     </div>
 
-                    {/* Right preview */}
-                    <button
-                        type="button"
-                        className="hidden lg:block col-span-2 rounded-2xl overflow-hidden border transition-transform"
-                        style={{
-                            borderColor: `${themeColors.inactive}30`,
-                            backgroundColor: '#fff',
-                        }}
-                        onClick={() => scrollTo(nextIndex)}
-                        aria-label="Next image"
-                    >
-                        <div className="aspect-square">
-                            <img
-                                src={getImageSrc(images[nextIndex]?.imageUrl)}
-                                alt={images[nextIndex]?.altText || ''}
-                                className="h-full w-full object-cover"
+                    {/* Right Column: Stacked Architectural Details */}
+                    <div className="md:col-span-5 flex flex-col gap-8 md:pt-16 lg:pt-24">
+                        {/* Secondary Image Top (Landscape/Video Aspect) */}
+                        <div className="relative aspect-video overflow-hidden group bg-gray-50 shadow-xl">
+                           <img
+                                src={getImageSrc(topSecondaryImg.imageUrl)}
+                                alt={topSecondaryImg.altText}
+                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                loading="lazy"
                             />
                         </div>
-                    </button>
+
+                        {/* Secondary Image Bottom (Taller Aspect) */}
+                        <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden group bg-gray-50 shadow-lg z-10">
+                            <img
+                                src={getImageSrc(bottomSecondaryImg.imageUrl)}
+                                alt={bottomSecondaryImg.altText}
+                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                loading="lazy"
+                            />
+                        </div>
+                    </div>
                 </div>
+
+                {/* Optional: Overflow Grid (If more than 3 images exist) */}
+                {images.length > 3 && (
+                    <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-6 opacity-60 hover:opacity-100 transition-opacity duration-700">
+                        {images.slice(3, 7).map((img, i) => (
+                            <div 
+                                key={img.key} 
+                                className={cn(
+                                    "aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-700",
+                                    i % 2 === 1 ? "md:translate-y-8" : ""
+                                )}
+                            >
+                                <img
+                                    src={getImageSrc(img.imageUrl)}
+                                    alt={img.altText}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     );

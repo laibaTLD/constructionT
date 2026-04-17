@@ -55,11 +55,11 @@ export const ServingAreasdetailSection: React.FC<ServingAreasdetailSectionProps>
       {/* Our Services Section */}
       {data.ourServices && <OurServices services={data.ourServices} />}
 
-      {/* Service Overview Section */}
-      {data.serviceOverview && <ServiceOverview overview={data.serviceOverview} />}
-
       {/* Service Details Section */}
       {data.serviceDetails && <ServiceDetails details={data.serviceDetails} />}
+
+      {/* Service Overview Section */}
+      {data.serviceOverview && <ServiceOverview overview={data.serviceOverview} />}
 
       {/* Why Choose Us Section */}
       {data.whyChooseUs && <WhyChooseUs whyChooseUs={data.whyChooseUs} />}
