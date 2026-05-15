@@ -110,7 +110,12 @@ export interface Site {
       }>;
     }>;
     copyright?: any; // Tiptap JSON
-    showSocialLinks: boolean;
+    showSocialLinks?: boolean;
+    showSocialMediaLinks?: boolean;
+    socialLinks?: Array<{
+      platform: 'facebook' | 'instagram' | 'X' | 'youtube' | 'yelp' | 'linkedin' | 'tiktok' | 'pinterest';
+      url: string;
+    }>;
   };
   contactSection?: {
     enabled: boolean;
@@ -360,14 +365,6 @@ export interface Page {
     }>;
     order: number;
   }>;
-  footerOverrides?: {
-    enabled: boolean;
-    links: Array<{
-      label: string;
-      href: string;
-    }>;
-    copyright?: string;
-  };
   createdBy: string;
   createdAt: string;
   updatedAt: string;
