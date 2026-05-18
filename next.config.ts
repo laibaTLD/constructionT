@@ -12,12 +12,13 @@ function buildImageRemotePatterns(): RemotePattern[] {
 
   try {
     const u = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
-    patterns.push({
-      protocol: u.protocol.replace(":", "") as "http" | "https",
-      hostname: u.hostname,
-      ...(u.port ? { port: u.port } : {}),
-      pathname: "/api/uploads/**",
-    });
+    const protocol = u.protocol.replace(":", "") as "http" | "https";
+    const hostPattern = { protocol, hostname: u.hostname, ...(u.port ? { port: u.port } : {}) };
+
+    patterns.push(
+      { ...hostPattern, pathname: "/api/uploads/**" },
+      { ...hostPattern, pathname: "/uploads/**" },
+    );
   } catch {
     /* ignore invalid env */
   }

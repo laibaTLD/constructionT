@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Site, Page, Service, BlogPost, Project } from '@/app/lib/types';
 import { siteApi, pageApi, serviceApi, blogApi, projectApi, testimonialApi, serviceAreaApi } from '@/app/lib/api';
+import { isPublishedProject, projectBelongsToSite, projectLog, projectWarn } from '@/app/lib/projects';
 
 // Site slug from environment variable
 const SITE_SLUG = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG;
@@ -82,12 +83,17 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
       // Use real API when backend is available
       const siteData = await siteApi.getSiteBySlug(slug);
       setSite(siteData);
-      
+      projectLog('WebBuilderProvider.loadSite: site loaded', {
+        slug: siteData.slug,
+        siteId: siteData._id,
+        name: siteData.name,
+      });
+
       await Promise.all([
         loadPages(siteData.slug),
         loadServicesBySiteSlug(siteData.slug),
         loadBlogPosts(siteData.slug),
-        loadProjects(siteData.slug),
+        loadProjects(siteData.slug, undefined, siteData),
         loadTestimonials(siteData.slug),
         loadServiceAreaPages(siteData.slug),
       ]);
@@ -138,12 +144,26 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     }
   };
 
-  const loadProjects = async (siteSlug: string, limit?: number) => {
+  const loadProjects = async (siteSlug: string, limit?: number, siteForScope?: Site | null) => {
     try {
+      projectLog('WebBuilderProvider.loadProjects: start', { siteSlug, limit });
       const projectsData = await projectApi.getProjectsBySite(siteSlug, limit);
-      setProjects(projectsData);
+      const scoped = siteForScope
+        ? projectsData.filter((p) => projectBelongsToSite(p, siteForScope))
+        : projectsData;
+      setProjects(scoped);
+      projectLog('WebBuilderProvider.loadProjects: stored', {
+        siteSlug,
+        siteId: siteForScope?._id,
+        count: scoped.length,
+        published: scoped.filter(isPublishedProject).length,
+        slugs: scoped.map((p) => p.slug),
+      });
     } catch (err) {
-      console.warn('Failed to load projects:', err instanceof Error ? err.message : 'Unknown error');
+      projectWarn('WebBuilderProvider.loadProjects: failed', {
+        siteSlug,
+        error: err instanceof Error ? err.message : err,
+      });
     }
   };
 
@@ -204,13 +224,19 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     const intervalId = setInterval(async () => {
       try {
         const projectsData = await projectApi.getProjectsBySite(site.slug);
+        const scoped = projectsData.filter((p) => projectBelongsToSite(p, site));
         setProjects((prevProjects) =>
-          JSON.stringify(prevProjects) !== JSON.stringify(projectsData)
-            ? projectsData
-            : prevProjects
+          JSON.stringify(prevProjects) !== JSON.stringify(scoped) ? scoped : prevProjects
         );
-      } catch {
-        /* ignore */
+        projectLog('WebBuilderProvider.poll: projects refreshed', {
+          siteSlug: site.slug,
+          count: scoped.length,
+        });
+      } catch (err) {
+        projectWarn('WebBuilderProvider.poll: projects failed', {
+          siteSlug: site.slug,
+          error: err instanceof Error ? err.message : err,
+        });
       }
     }, CONTENT_POLL_INTERVAL_MS);
 

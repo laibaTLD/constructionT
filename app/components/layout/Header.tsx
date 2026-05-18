@@ -7,6 +7,7 @@ import { getImageSrc, cn } from '@/app/lib/utils';
 import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { Page } from '@/app/lib/types';
+import { getPageHref } from '@/app/lib/page-routes';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 
@@ -147,8 +148,8 @@ export const Header: React.FC = () => {
           <div className="flex-1 flex items-center gap-4 md:gap-8 lg:gap-10 overflow-x-auto no-scrollbar">
             {orderedNavPages.map((p) => (
               <Link
-                key={p.slug}
-                href={p.pageType === 'home' ? '/' : `/${p.slug}`}
+                key={p._id}
+                href={getPageHref(p)}
                 className="text-[8px] md:text-[9px] font-bold tracking-[0.3em] uppercase whitespace-nowrap hover:opacity-60 transition-opacity"
                 onClick={() => setIsMenuOpen(false)}
               >

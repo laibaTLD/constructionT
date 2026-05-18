@@ -321,15 +321,14 @@ export interface Page {
     enabled: boolean;
     title?: any;
     description?: any;
-    projects?: Array<{
-      title?: any;
-      description?: any;
-      image?: {
-        url: string;
-        altText?: string;
-      };
-      href?: string;
-    }>;
+    projectIds?: string[];
+    /** Legacy CMS field: project id strings or populated project documents */
+    projects?: Array<string | Project | Record<string, unknown>>;
+  };
+  projectSection?: {
+    enabled: boolean;
+    title?: any;
+    description?: any;
   };
   cta2Section?: {
     enabled: boolean;

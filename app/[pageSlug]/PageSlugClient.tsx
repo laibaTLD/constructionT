@@ -113,8 +113,11 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
             <BlogSection blogSection={page?.blogSection} />
             <CTASection ctaSection={page?.ctaSection} />
             <WhyChooseUsSection whyChooseUsSection={page?.whyChooseUsSection} />
+            <ProjectsSection
+              projectsSection={page?.projectsSection}
+              projectSection={page?.projectSection}
+            />
             <CompanyDetailSection companyDetailSection={page?.companyDetailSection} />
-            <ProjectsSection projectsSection={page?.projectsSection} />
             <CTA2Section cta2Section={page?.cta2Section} />
             <CTA3Section cta3Section={page?.cta3Section} />
           </>
@@ -151,7 +154,15 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
           </>
         )}
 
-        {pageType === 'project-detail' && <HeroSection hero={page?.hero} />}
+        {pageType === 'project-detail' && (
+          <>
+            <HeroSection hero={page?.hero} />
+            <ProjectsSection
+              projectsSection={page?.projectsSection}
+              projectSection={page?.projectSection}
+            />
+          </>
+        )}
 
         {page?.slug === 'testimonials' && (
           <>

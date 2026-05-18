@@ -4,6 +4,7 @@ import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { HeroSection } from '@/app/components/sections/HeroSection';
+import { ProjectsSection } from '@/app/components/sections/ProjectsSection';
 import { Page } from '@/app/lib/types';
 
 export default function ProjectDetailPage() {
@@ -14,7 +15,15 @@ export default function ProjectDetailPage() {
         <div className="min-h-screen flex flex-col">
             <Header />
             <main className="flex-1">
-                {!loading && projectPage && <HeroSection hero={projectPage.hero} />}
+                {!loading && projectPage && (
+                    <>
+                        <HeroSection hero={projectPage.hero} />
+                        <ProjectsSection
+                            projectsSection={projectPage.projectsSection}
+                            projectSection={projectPage.projectSection}
+                        />
+                    </>
+                )}
             </main>
             <Footer />
         </div>
