@@ -108,7 +108,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ contactSection, 
             className="group relative flex items-center justify-between px-10 py-6 w-full max-w-[320px] transition-all duration-500 overflow-hidden text-left"
             style={{ backgroundColor: themeColors.primaryButton, color: '#FFFFFF' }}
           >
-            <span className="text-[11px] font-bold tracking-[0.4em] uppercase z-10">Form</span>
+            <span className="text-[11px] font-bold tracking-[0.4em] uppercase z-10">Contact Us</span>
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform z-10" />
             <div className="absolute inset-0 bg-black/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
           </button>
