@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Site, Page, Service, BlogPost, Project } from '@/app/lib/types';
 import { siteApi, pageApi, serviceApi, blogApi, projectApi, testimonialApi, serviceAreaApi } from '@/app/lib/api';
-import { isPublishedProject, projectBelongsToSite, projectLog, projectWarn } from '@/app/lib/projects';
+import { isPublishedProject, projectBelongsToSite } from '@/app/lib/projects';
+import { SiteLoadingScreen } from '@/app/components/ui/SiteLoadingScreen';
 
 // Site slug from environment variable
 const SITE_SLUG = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG;
@@ -45,6 +46,7 @@ interface WebBuilderContextType {
   currentPage: Page | null;
   setCurrentPage: (page: Page | null) => void;
   loading: boolean;
+  initialLoading: boolean;
   error: string | null;
   loadPage: (siteSlug: string, pageSlug: string) => Promise<void>;
 }
@@ -73,33 +75,37 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
   const [serviceAreaPages, setServiceAreaPages] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<Page | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadSite = async (slug: string) => {
     try {
       setLoading(true);
+      setInitialLoading(true);
       setError(null);
-      
-      // Use real API when backend is available
-      const siteData = await siteApi.getSiteBySlug(slug);
-      setSite(siteData);
-      projectLog('WebBuilderProvider.loadSite: site loaded', {
-        slug: siteData.slug,
-        siteId: siteData._id,
-        name: siteData.name,
-      });
 
-      await Promise.all([
-        loadPages(siteData.slug),
-        loadServicesBySiteSlug(siteData.slug),
-        loadBlogPosts(siteData.slug),
-        loadProjects(siteData.slug, undefined, siteData),
-        loadTestimonials(siteData.slug),
-        loadServiceAreaPages(siteData.slug),
-      ]);
+      const siteData = await siteApi.getSiteBySlug(slug);
+      const [pagesData, servicesData, postsData, projectsData, testimonialsData, serviceAreaPagesData] =
+        await Promise.all([
+          pageApi.getPagesBySite(siteData.slug),
+          serviceApi.getServicesBySite(siteData.slug),
+          blogApi.getPostsBySite(siteData.slug),
+          projectApi.getProjectsBySite(siteData.slug),
+          testimonialApi.getTestimonialsBySite(siteData.slug),
+          serviceAreaApi.getServiceAreaPagesBySite(siteData.slug),
+        ]);
+
+      setSite(siteData);
+      setPages(pagesData);
+      setServices(servicesData);
+      setBlogPosts(postsData);
+      setProjects(projectsData.filter((p) => projectBelongsToSite(p, siteData)));
+      setTestimonials(testimonialsData);
+      setServiceAreaPages(serviceAreaPagesData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load site');
     } finally {
+      setInitialLoading(false);
       setLoading(false);
     }
   };
@@ -146,24 +152,13 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
 
   const loadProjects = async (siteSlug: string, limit?: number, siteForScope?: Site | null) => {
     try {
-      projectLog('WebBuilderProvider.loadProjects: start', { siteSlug, limit });
       const projectsData = await projectApi.getProjectsBySite(siteSlug, limit);
       const scoped = siteForScope
         ? projectsData.filter((p) => projectBelongsToSite(p, siteForScope))
         : projectsData;
       setProjects(scoped);
-      projectLog('WebBuilderProvider.loadProjects: stored', {
-        siteSlug,
-        siteId: siteForScope?._id,
-        count: scoped.length,
-        published: scoped.filter(isPublishedProject).length,
-        slugs: scoped.map((p) => p.slug),
-      });
-    } catch (err) {
-      projectWarn('WebBuilderProvider.loadProjects: failed', {
-        siteSlug,
-        error: err instanceof Error ? err.message : err,
-      });
+    } catch {
+      /* ignore project load errors */
     }
   };
 
@@ -192,6 +187,8 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
   useEffect(() => {
     if (!SITE_SLUG) {
       setError('NEXT_PUBLIC_WEBBUILDER_SITE_SLUG environment variable is not defined. Please check your .env file.');
+      setInitialLoading(false);
+      setLoading(false);
       return;
     }
     loadSite(SITE_SLUG);
@@ -228,15 +225,8 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
         setProjects((prevProjects) =>
           JSON.stringify(prevProjects) !== JSON.stringify(scoped) ? scoped : prevProjects
         );
-        projectLog('WebBuilderProvider.poll: projects refreshed', {
-          siteSlug: site.slug,
-          count: scoped.length,
-        });
-      } catch (err) {
-        projectWarn('WebBuilderProvider.poll: projects failed', {
-          siteSlug: site.slug,
-          error: err instanceof Error ? err.message : err,
-        });
+      } catch {
+        /* ignore polling errors */
       }
     }, CONTENT_POLL_INTERVAL_MS);
 
@@ -290,13 +280,16 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     currentPage,
     setCurrentPage,
     loading,
+    initialLoading,
     error,
     loadPage,
   };
 
+  const loadingLabel = site?.business?.name || site?.name;
+
   return (
     <WebBuilderContext.Provider value={contextValue}>
-      {children}
+      {initialLoading ? <SiteLoadingScreen siteName={loadingLabel} /> : children}
     </WebBuilderContext.Provider>
   );
 };

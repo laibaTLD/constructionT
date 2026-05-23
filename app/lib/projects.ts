@@ -1,8 +1,6 @@
 import { Page, Project, Site } from './types';
 import { unwrapApiPayload } from './api-response';
 
-const LOG_PREFIX = '[Projects]';
-
 export function isSectionEnabled(value: unknown): boolean {
   if (value === true || value === 1) return true;
   if (value === false || value === 0 || value === null || value === undefined) return false;
@@ -13,15 +11,12 @@ export function isSectionEnabled(value: unknown): boolean {
   return Boolean(value);
 }
 
-export function projectLog(...args: unknown[]) {
-  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_DEBUG_PROJECTS !== 'true') {
-    return;
-  }
-  console.log(LOG_PREFIX, ...args);
+export function isProjectIntroEnabled(projectSection: Page['projectSection'] | undefined): boolean {
+  return projectSection != null && isSectionEnabled(projectSection.enabled);
 }
 
-export function projectWarn(...args: unknown[]) {
-  console.warn(LOG_PREFIX, ...args);
+export function isProjectsPortfolioEnabled(projectsSection: Page['projectsSection'] | undefined): boolean {
+  return projectsSection != null && isSectionEnabled(projectsSection.enabled);
 }
 
 /** Extract Mongo/ObjectId/string ids for matching projectIds in CMS sections. */
@@ -67,10 +62,6 @@ export function unwrapApiList<T>(response: unknown): T[] {
   if (Array.isArray(record.projects)) return record.projects as T[];
   if (Array.isArray(record.items)) return record.items as T[];
 
-  projectWarn('unwrapApiList: unrecognized response shape', {
-    keys: Object.keys(record),
-    dataType: record.data == null ? 'null' : Array.isArray(record.data) ? 'array' : typeof record.data,
-  });
   return [];
 }
 
@@ -119,7 +110,6 @@ export function normalizeProject(raw: unknown, siteSlug?: string): Project | nul
         : null;
 
   if (!_id || !title || !slug) {
-    projectWarn('normalizeProject: skipped invalid project', { _id, title, slug, siteSlug, keys: Object.keys(record) });
     return null;
   }
 
@@ -177,29 +167,9 @@ export function normalizeProjects(raw: unknown, siteSlug?: string): Project[] {
   const payload = unwrapApiPayload(raw);
   const list = unwrapApiList<unknown>(payload ?? raw);
 
-  projectLog('normalizeProjects', {
-    siteSlug,
-    rawCount: list.length,
-    payloadType: Array.isArray(payload) ? 'array' : typeof payload,
-  });
-
-  if (list.length === 0) {
-    projectWarn('normalizeProjects: empty list', {
-      siteSlug,
-      topLevelKeys: raw && typeof raw === 'object' ? Object.keys(raw as object) : typeof raw,
-    });
-  }
-
   const normalized = list
     .map((item) => normalizeProject(item, siteSlug))
     .filter((p): p is Project => p !== null);
-
-  projectLog('normalizeProjects: result', {
-    siteSlug,
-    count: normalized.length,
-    slugs: normalized.map((p) => p.slug),
-    ids: normalized.map((p) => p._id),
-  });
 
   return normalized;
 }
@@ -214,14 +184,6 @@ export function projectBelongsToSite(project: Project, site: Site | null): boole
   const siteId = normalizeId(site._id);
   const projectSiteId = normalizeId(project.siteId);
   if (!siteId || !projectSiteId) return true;
-  if (siteId !== projectSiteId) {
-    projectWarn('projectBelongsToSite: siteId mismatch (keeping project from site API)', {
-      siteSlug: site.slug,
-      siteId,
-      projectSiteId,
-      projectSlug: project.slug,
-    });
-  }
   return true;
 }
 
@@ -264,14 +226,30 @@ export function normalizeEmbeddedSectionProjects(
     .map((item) => (typeof item === 'object' && item !== null ? normalizeProject(item) : null))
     .filter((p): p is Project => p !== null);
 
-  if (embedded.length > 0) {
-    projectLog('normalizeEmbeddedSectionProjects', {
-      count: embedded.length,
-      slugs: embedded.map((p) => p.slug),
-    });
-  }
-
   return embedded;
+}
+
+export function getPublishedProjectsForSite(projects: Project[], site: Site | null): Project[] {
+  return projects.filter((p) => projectBelongsToSite(p, site)).filter(isPublishedProject);
+}
+
+function projectSortDate(project: Project): string {
+  return project.publishedAt || project.updatedAt || project.createdAt || '';
+}
+
+/** Newest first by publishedAt, then updatedAt, then createdAt. */
+export function sortProjectsByLatest(projects: Project[]): Project[] {
+  return [...projects].sort((a, b) => projectSortDate(b).localeCompare(projectSortDate(a)));
+}
+
+export function getLatestPublishedProjectsForSite(
+  projects: Project[],
+  site: Site | null,
+  limit?: number
+): Project[] {
+  const sorted = sortProjectsByLatest(getPublishedProjectsForSite(projects, site));
+  if (limit != null && limit > 0) return sorted.slice(0, limit);
+  return sorted;
 }
 
 export function resolveProjectsForSection(
@@ -291,29 +269,6 @@ export function resolveProjectsForSection(
   } else if (selectedIds.length > 0) {
     resolved = published.filter((p) => selectedIds.includes(String(p._id)));
   } else {
-    resolved = published;
-  }
-
-  projectLog('resolveProjectsForSection', {
-    siteSlug: site?.slug,
-    totalFromProvider: projects.length,
-    embeddedCount: embedded.length,
-    published: published.length,
-    selectedIds,
-    resolved: resolved.length,
-    resolvedSlugs: resolved.map((p) => p.slug),
-  });
-
-  if (selectedIds.length > 0 && resolved.length === 0 && published.length > 0) {
-    projectWarn('resolveProjectsForSection: projectIds did not match — showing all published', {
-      selectedIds,
-      availableIds: published.map((p) => p._id),
-    });
-    resolved = published;
-  }
-
-  if (resolved.length === 0 && published.length > 0 && !projectsSection?.projectIds?.length) {
-    projectWarn('resolveProjectsForSection: falling back to all published projects');
     resolved = published;
   }
 

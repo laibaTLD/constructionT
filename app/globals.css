@@ -216,3 +216,114 @@ html.preloader-active header + div.fixed.inset-0 {
 .text-balance {
   text-wrap: balance;
 }
+
+/* Site loading screen */
+html.site-loading-active {
+  overflow: hidden;
+}
+
+.site-loading-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: site-loading-grid-drift 18s linear infinite;
+}
+
+.site-loading-beam {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 120%,
+    color-mix(in srgb, var(--wb-primary) 35%, transparent),
+    transparent 70%
+  );
+  animation: site-loading-beam-pulse 2.8s ease-in-out infinite;
+}
+
+.site-loading-frame {
+  animation: site-loading-frame-rotate 8s linear infinite;
+}
+
+.site-loading-frame-line {
+  animation: site-loading-frame-breathe 2.4s ease-in-out infinite;
+}
+
+.site-loading-core {
+  animation: site-loading-core-pulse 1.6s ease-in-out infinite;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--wb-primary) 55%, transparent);
+}
+
+.site-loading-brand {
+  animation: site-loading-brand-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.site-loading-progress {
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--wb-primary) 45%, transparent);
+}
+
+@keyframes site-loading-grid-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(48px, 48px, 0);
+  }
+}
+
+@keyframes site-loading-beam-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes site-loading-frame-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes site-loading-frame-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes site-loading-core-pulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes site-loading-brand-in {
+  from {
+    opacity: 0;
+    letter-spacing: 0.2em;
+    transform: translateY(12px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.55em;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}

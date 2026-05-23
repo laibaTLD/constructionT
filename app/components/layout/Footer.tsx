@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React from 'react';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { useThemeFonts, useThemeColors } from '@/app/hooks/useTheme';
 import Link from 'next/link';
@@ -48,8 +48,6 @@ type SocialLinkItem = {
   platform?: string;
   url: string;
 };
-
-const FOOTER_DEBUG = process.env.NODE_ENV !== 'production';
 
 const getSocialLinkUrl = (link: unknown): string | null => {
   if (!link || typeof link !== 'object') return null;
@@ -225,33 +223,6 @@ export const Footer: React.FC = () => {
   const hasSocial = socialLinks.length > 0;
   const hasSiteColumns = siteColumns.length > 0;
   const hasAnyContent = hasBrand || hasSocial || hasSiteColumns || hasContact || hasCopyright;
-
-  const socialDebug = useMemo(
-    () => ({
-      showSocialLinksRaw: rawShowSocialLinks,
-      showSocialMediaLinksRaw: footerRecord?.showSocialMediaLinks,
-      showSocialByFlag,
-      siteSocialLinksCount: Array.isArray(site?.socialLinks) ? site.socialLinks.length : 0,
-      resolvedSocialLinksCount: socialLinks.length,
-      resolvedSocialLinks: socialLinks,
-      hasSocial,
-      siteSlug: site?.slug
-    }),
-    [
-      rawShowSocialLinks,
-      footerRecord?.showSocialMediaLinks,
-      showSocialByFlag,
-      site?.socialLinks,
-      site?.slug,
-      socialLinks,
-      hasSocial
-    ]
-  );
-
-  useEffect(() => {
-    if (!FOOTER_DEBUG || !site) return;
-    console.log('[Footer] social debug', socialDebug);
-  }, [site, socialDebug]);
 
   if (!hasAnyContent) return null;
 

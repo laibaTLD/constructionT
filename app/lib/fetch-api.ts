@@ -18,9 +18,6 @@ class FetchError extends Error {
 
 const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-  const devLog = (...args: unknown[]) => {
-    if (process.env.NODE_ENV !== 'production') console.log(...args);
-  };
 
   /** Coalesces identical concurrent GETs (e.g. Strict Mode, parallel hooks) into one network call. */
   const pendingGets = new Map<string, Promise<unknown>>();
@@ -47,8 +44,6 @@ const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         try {
-          devLog(`[fetch-api] ${method} ${url}`);
-
           const response = await fetch(url, {
             ...fetchOptions,
             signal: controller.signal,
@@ -59,7 +54,6 @@ const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
           });
 
           clearTimeout(timeoutId);
-          devLog(`[fetch-api] Response status: ${response.status}`);
 
           if (!response.ok) {
             if (response.status === 429 && remainingRetries > 0) {
@@ -92,7 +86,6 @@ const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
           const text = await response.text();
 
           if (!text || text.trim() === '') {
-            devLog(`[fetch-api] Empty response for ${url}`);
             return {} as T;
           }
 

@@ -20,7 +20,7 @@ import { GallerySection } from '@/app/components/sections/GallerySection';
 import { BlogSection } from '@/app/components/sections/BlogSection';
 
 export default function HomeClient() {
-  const { site, pages, loading, error } = useWebBuilder();
+  const { site, pages, error } = useWebBuilder();
 
   // Get theme colors from site using the new dynamic CSS variable system
   const themeColors = {
@@ -42,23 +42,6 @@ export default function HomeClient() {
     heading: site?.theme?.headingFont,
     body: site?.theme?.bodyFont,
   };
-
-  if (loading && !site) {
-    return (
-      <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: themeColors.pageBackground }}
-      >
-        <div 
-          className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
-          style={{ 
-            borderTopColor: themeColors.primaryButton,
-            borderBottomColor: themeColors.primaryButton
-          }}
-        ></div>
-      </div>
-    );
-  }
 
   if (error && !site) {
     return (
@@ -150,6 +133,7 @@ export default function HomeClient() {
         <ProjectsSection
           projectsSection={displayPage.projectsSection}
           projectSection={displayPage.projectSection}
+          maxProjectCards={3}
         />
         <CompanyDetailSection companyDetailSection={displayPage.companyDetailSection} />
         <CTA2Section cta2Section={displayPage.cta2Section} />

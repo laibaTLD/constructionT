@@ -19,8 +19,6 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-import Preloader from './components/ui/Preloader'
-
 export default function RootLayout({
   children,
 }: {
@@ -33,10 +31,7 @@ export default function RootLayout({
           <WebBuilderProvider>
             <LanguageProvider>
               <ThemeFontWrapper>
-                <main className="min-h-screen">
-                  <Preloader />
-                  {children}
-                </main>
+                <main className="min-h-screen">{children}</main>
               </ThemeFontWrapper>
             </LanguageProvider>
           </WebBuilderProvider>

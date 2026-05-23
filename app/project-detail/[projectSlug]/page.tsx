@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { projectApi } from '@/app/lib/api';
-import { isPublishedProject, projectLog, projectWarn } from '@/app/lib/projects';
+import { isPublishedProject } from '@/app/lib/projects';
 import { Project } from '@/app/lib/types';
 import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
@@ -30,33 +30,19 @@ export default function ProjectDetailPage() {
 
   const otherProjects = useMemo(() => {
     const published = (projects || []).filter(isPublishedProject);
-    const related = published.filter((p) => p.slug !== projectSlug).slice(0, 3);
-    projectLog('ProjectDetailPage: related projects', {
-      siteSlug: site?.slug,
-      projectSlug,
-      providerCount: projects?.length ?? 0,
-      relatedCount: related.length,
-    });
-    return related;
-  }, [projects, projectSlug, site?.slug]);
+    return published.filter((p) => p.slug !== projectSlug).slice(0, 3);
+  }, [projects, projectSlug]);
 
   useEffect(() => {
     async function loadProjectPage() {
       if (!site) return;
       try {
         setLoading(true);
-        projectLog('ProjectDetailPage: fetch start', { siteSlug: site.slug, projectSlug });
         const projectData = await projectApi.getProjectBySlug(site.slug, projectSlug);
         setProject(projectData);
         setError(null);
-        projectLog('ProjectDetailPage: fetch success', {
-          siteSlug: site.slug,
-          projectSlug,
-          title: projectData.title,
-        });
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Failed to load project';
-        projectWarn('ProjectDetailPage: fetch failed', { siteSlug: site.slug, projectSlug, message });
         setError(message);
       } finally {
         setLoading(false);

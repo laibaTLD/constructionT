@@ -9,11 +9,6 @@ import { useThemeColors } from '@/app/hooks/useTheme';
 import { Page } from '@/app/lib/types';
 import { getPageHref } from '@/app/lib/page-routes';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 export const Header: React.FC = () => {
   const { site, pages } = useWebBuilder();
@@ -30,15 +25,19 @@ export const Header: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const el = headerRef.current;
+    if (!site || !el) return;
+
     const ctx = gsap.context(() => {
-      // Gentle entrance
-      gsap.fromTo(headerRef.current,
+      gsap.fromTo(
+        el,
         { y: -20, opacity: 0 },
         { y: 0, opacity: 1, duration: 1.5, ease: 'power3.out', delay: 0.8 }
       );
-    }, headerRef);
+    }, el);
+
     return () => ctx.revert();
-  }, []);
+  }, [site]);
 
   // Specific Order: Home | About | Blog | Service | Serving Areas | Testimonials | Contact
   const orderedNavPages = useMemo(() => {

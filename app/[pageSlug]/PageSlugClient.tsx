@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { Header } from '@/app/components/layout/Header';
@@ -21,6 +21,7 @@ import { CTA3Section } from '@/app/components/sections/CTA3Section';
 import { GallerySection } from '@/app/components/sections/GallerySection';
 import { ContactSection } from '@/app/components/sections/ContactSection';
 import { BlogSection } from '@/app/components/sections/BlogSection';
+import { SiteLoadingScreen } from '@/app/components/ui/SiteLoadingScreen';
 import api from '@/app/lib/fetch-api';
 import { Page, ServiceAreaPage } from '@/app/lib/types';
 
@@ -31,13 +32,18 @@ interface PageSlugClientProps {
 export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClientProps) {
   const params = useParams();
   const pageSlug = params.pageSlug as string || pageSlugProp;
-  const { pages, currentPage, setCurrentPage, loading, site } = useWebBuilder();
+  const { pages, currentPage, setCurrentPage, loading, initialLoading, site } = useWebBuilder();
   const themeColors = useThemeColors();
   const [serviceAreaPage, setServiceAreaPage] = useState<ServiceAreaPage | null>(null);
   const [serviceAreaLoading, setServiceAreaLoading] = useState(false);
+  const [serviceAreaResolved, setServiceAreaResolved] = useState(false);
   const hasAttemptedLoad = useRef(false);
 
-  // Load service area page
+  const cmsPage = useMemo(
+    () => pages.find((page) => page.slug === pageSlug),
+    [pages, pageSlug]
+  );
+
   const loadServiceAreaPage = useCallback(async () => {
     if (!site || hasAttemptedLoad.current) return;
 
@@ -55,33 +61,40 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
       setServiceAreaPage(null);
     } finally {
       setServiceAreaLoading(false);
+      setServiceAreaResolved(true);
     }
   }, [site, pageSlug]);
 
   useEffect(() => {
-    if (pages.length === 0) return;
+    hasAttemptedLoad.current = false;
+    setServiceAreaResolved(false);
+    setServiceAreaPage(null);
+  }, [pageSlug]);
 
-    const foundPage = pages.find(page => page.slug === pageSlug);
-    if (foundPage) {
-      setCurrentPage(foundPage);
+  useEffect(() => {
+    if (initialLoading) return;
+
+    if (cmsPage) {
+      setCurrentPage(cmsPage);
       setServiceAreaPage(null);
-    } else {
-      setCurrentPage(null);
-      if (!hasAttemptedLoad.current) {
-        loadServiceAreaPage();
-      }
+      setServiceAreaResolved(true);
+      return;
     }
-  }, [pageSlug, pages, setCurrentPage, loadServiceAreaPage]);
 
-  if (loading || serviceAreaLoading) {
+    setCurrentPage(null);
+    if (site && !hasAttemptedLoad.current) {
+      void loadServiceAreaPage();
+    }
+  }, [cmsPage, initialLoading, site, setCurrentPage, loadServiceAreaPage]);
+
+  const displayPage = cmsPage || serviceAreaPage;
+  const awaitingServiceArea = !cmsPage && Boolean(site) && !serviceAreaResolved;
+
+  if (loading || serviceAreaLoading || awaitingServiceArea) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: themeColors.pageBackground }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: themeColors.primaryButton }}></div>
-      </div>
+      <SiteLoadingScreen siteName={site?.business?.name || site?.name} />
     );
   }
-
-  const displayPage = currentPage || serviceAreaPage;
 
   if (!displayPage) {
     return (
@@ -93,7 +106,7 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
     );
   }
 
-  const page: Page | null = currentPage;
+  const page: Page | null = cmsPage || currentPage;
   const pageType = page?.pageType;
 
   return (
@@ -116,6 +129,7 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
             <ProjectsSection
               projectsSection={page?.projectsSection}
               projectSection={page?.projectSection}
+              maxProjectCards={3}
             />
             <CompanyDetailSection companyDetailSection={page?.companyDetailSection} />
             <CTA2Section cta2Section={page?.cta2Section} />

@@ -48,9 +48,8 @@ export const OptimizedImage = forwardRef<HTMLImageElement | null, OptimizedImage
       );
     }
 
-    /* next/image ignores HTML `loading`; use `priority` for LCP images */
-    const { loading: _omitLoading, ...imageRest } = rest;
-    void _omitLoading;
+    const { loading: _loading, priority, ...imageRest } = rest;
+    const imageLoading = priority ? ('eager' as const) : _loading;
 
     if (fill) {
       return (
@@ -62,6 +61,8 @@ export const OptimizedImage = forwardRef<HTMLImageElement | null, OptimizedImage
           sizes={sizes ?? '100vw'}
           className={cn('object-cover', className)}
           style={style}
+          priority={priority}
+          loading={imageLoading}
           {...imageRest}
         />
       );
@@ -80,6 +81,8 @@ export const OptimizedImage = forwardRef<HTMLImageElement | null, OptimizedImage
         sizes={sizes}
         className={cn('h-auto max-w-full', className)}
         style={style}
+        priority={priority}
+        loading={imageLoading}
         {...imageRest}
       />
     );

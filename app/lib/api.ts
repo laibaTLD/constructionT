@@ -2,7 +2,7 @@ import { Site, Page, Service, BlogPost, Project } from './types';
 import api from './fetch-api';
 import { unwrapApiPayload } from './api-response';
 import { normalizePage } from './page-routes';
-import { normalizeProject, normalizeProjects, projectLog, projectWarn, unwrapApiItem } from './projects';
+import { normalizeProject, normalizeProjects, unwrapApiItem } from './projects';
 import { getImageSrc } from './utils';
 
 // Site API
@@ -75,28 +75,18 @@ export const blogApi = {
 export const projectApi = {
   getProjectsBySite: async (siteSlug: string, limit?: number): Promise<Project[]> => {
     const url = limit ? `/public/sites/${siteSlug}/projects?limit=${limit}` : `/public/sites/${siteSlug}/projects`;
-    projectLog('getProjectsBySite: request', { siteSlug, url, limit });
     const response = await api.get(url);
-    projectLog('getProjectsBySite: raw response keys', {
-      siteSlug,
-      keys: response && typeof response === 'object' ? Object.keys(response as object) : typeof response,
-    });
-    const projects = normalizeProjects(response, siteSlug);
-    projectLog('getProjectsBySite: response', { siteSlug, count: projects.length });
-    return projects;
+    return normalizeProjects(response, siteSlug);
   },
 
   getProjectBySlug: async (siteSlug: string, projectSlug: string): Promise<Project> => {
     const path = `/public/sites/${siteSlug}/projects/${projectSlug}`;
-    projectLog('getProjectBySlug: request', { siteSlug, projectSlug, path });
     const response = await api.get(path);
     const raw = unwrapApiItem(response);
     const project = normalizeProject(raw, siteSlug);
     if (!project) {
-      projectWarn('getProjectBySlug: failed to normalize project', { siteSlug, projectSlug, raw });
       throw new Error(`Project not found: ${projectSlug}`);
     }
-    projectLog('getProjectBySlug: success', { siteSlug, projectSlug, id: project._id, title: project.title });
     return project;
   },
 };
