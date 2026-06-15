@@ -74,14 +74,14 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ contactSection, 
 
   return (
     <section 
-      className={cn('py-24 md:py-32 lg:py-40 flex flex-col gap-32 lg:gap-48', className)} 
+      className={cn('section flex flex-col gap-12 lg:gap-16', className)} 
       style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
     >
       
       {/* PART 1: "ANY QUESTIONS?" CALL TO ACTION */}
       {showForm && (
         <div className="container mx-auto px-6 text-center flex flex-col items-center">
-          <div className="max-w-4xl space-y-4 mb-20 text-center">
+          <div className="max-w-4xl space-y-4 mb-12 text-center">
             {contactSection.title && (
               <h2 
                 className="text-3xl md:text-5xl lg:text-7xl font-extralight tracking-[0.15em] uppercase leading-[1.1]"

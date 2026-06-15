@@ -76,7 +76,7 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
   return (
     <section
       ref={sectionRef}
-      className={cn('relative py-20 lg:py-32 overflow-hidden bg-[var(--wb-page-bg)]', className)}
+      className={cn('section relative overflow-hidden bg-[var(--wb-page-bg)]', className)}
     >
       <div className="max-w-[1800px] mx-auto px-8 md:px-16 lg:px-24">
 

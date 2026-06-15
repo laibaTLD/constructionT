@@ -36,7 +36,7 @@ export const OurServices: React.FC<OurServicesProps> = ({ services, className })
 
   return (
     <section 
-      className={cn('py-24 lg:py-32', className)}
+      className={cn('section', className)}
       style={{ backgroundColor: themeColors.pageBackground }}
     >
       <div className="container mx-auto px-6 lg:px-12 max-w-7xl">

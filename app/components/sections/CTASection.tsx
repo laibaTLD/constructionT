@@ -99,7 +99,7 @@ export const CTASection: React.FC<CTASectionProps> = ({ ctaSection, className })
   return (
     <section
       ref={sectionRef}
-      className={cn('relative flex flex-col items-center bg-white', className)}
+      className={cn('section relative flex flex-col items-center bg-white', className)}
     >
       {/* 1. White Statement Block - Centered Editorial Design */}
       <div
@@ -189,7 +189,7 @@ export const CTASection: React.FC<CTASectionProps> = ({ ctaSection, className })
       )}
 
       {/* Spacing for sections below */}
-      {!backgroundImageUrl && <div className="h-32 bg-white w-full" />}
+      {!backgroundImageUrl && <div className="h-8 bg-white w-full" />}
     </section>
   );
 };

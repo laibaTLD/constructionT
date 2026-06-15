@@ -37,7 +37,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
 
     return (
         <section
-            className={cn('py-20 lg:py-32 overflow-hidden', className)}
+            className={cn('section overflow-hidden', className)}
             style={{ backgroundColor: themeColors.pageBackground }}
         >
             <div className="container mx-auto px-6 md:px-12 lg:px-20">

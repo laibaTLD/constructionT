@@ -40,7 +40,7 @@ export const ServiceDetails: React.FC<ServiceDetailsProps> = ({ details, classNa
 
   return (
     <section 
-      className={cn('py-24 md:py-32 lg:py-48', className)}
+      className={cn('section', className)}
       style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
     >
       <div className="container mx-auto px-6 lg:px-12">

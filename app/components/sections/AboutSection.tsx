@@ -99,7 +99,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
   return (
     <section
       ref={sectionRef}
-      className={cn('relative w-full py-12 md:py-20 lg:py-24 overflow-hidden', className)}
+      className={cn('section relative w-full overflow-hidden', className)}
       style={{ backgroundColor: 'var(--wb-page-bg)' }}
     >
       <div className="container mx-auto px-8 md:px-16 lg:px-24">

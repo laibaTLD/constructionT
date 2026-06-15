@@ -134,7 +134,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
         <section
           id="project-section"
           data-project-section-intro
-          className="relative border-t border-black/5 py-16 md:py-24 lg:py-32"
+          className="section relative border-t border-black/5"
           style={{ backgroundColor: themeColors.pageBackground }}
         >
           <div className="container mx-auto max-w-4xl px-6 md:px-12 lg:px-20">
@@ -162,7 +162,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
         <section
           id="projects-section"
           data-projects-section
-          className="relative w-full border-t border-black/5 py-16 md:py-24"
+          className="section relative w-full border-t border-black/5"
           style={{ backgroundColor: themeColors.pageBackground }}
         >
           {portfolioHasHeader && projectsSection && (

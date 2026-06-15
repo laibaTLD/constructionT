@@ -26,7 +26,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ servicesSectio
 
   return (
     <section
-      className={cn('py-12 md:py-20 lg:py-24 border-t border-black/5', className)}
+      className={cn('section border-t border-black/5', className)}
       style={{ backgroundColor: themeColors.pageBackground }}
     >
       <div className="container mx-auto px-6 md:px-12 lg:px-20">

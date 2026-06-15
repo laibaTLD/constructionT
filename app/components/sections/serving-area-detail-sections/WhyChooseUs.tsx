@@ -24,7 +24,7 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({ whyChooseUs, className
 
   return (
     <section 
-      className={cn('py-20 lg:py-32', className)} 
+      className={cn('section', className)} 
       style={{ backgroundColor: themeColors.pageBackground || '#F5F2ED' }}
     >
       <div className="container mx-auto px-6 lg:px-12">

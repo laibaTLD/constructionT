@@ -66,7 +66,7 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
 
     return (
         <section
-            className={cn('relative py-24 lg:py-32 overflow-hidden', className)}
+            className={cn('section relative overflow-hidden', className)}
             style={{ backgroundColor: themeColors.sectionBackground }}
         >
             <div className="container mx-auto px-6">

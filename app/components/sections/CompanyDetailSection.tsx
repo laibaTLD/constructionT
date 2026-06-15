@@ -179,7 +179,7 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
 
                      {/* TEXT BAR: This slides over the image */}
                      <section 
-                        className="story-detail-bar relative z-30 py-32 md:py-48 px-8 md:px-16 lg:px-24 w-full" 
+                        className="story-detail-bar section relative z-30 px-8 md:px-16 lg:px-24 w-full" 
                         style={{ backgroundColor: brandColor }}
                      >
                         <div className="max-w-7xl mx-auto">
