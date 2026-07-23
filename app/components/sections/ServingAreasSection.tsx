@@ -49,14 +49,9 @@ export const ServingAreasSection: React.FC<ServingAreasSectionProps> = ({
   const resolvedDescription = description || 'Discover the locales where we offer our bespoke services.';
   const brandColor = themeColors.primaryButton || '#E31E24';
 
-  // Debug logging
-  console.log('ServingAreasSection - areas:', areas);
-  console.log('ServingAreasSection - site.serviceAreas:', site?.serviceAreas);
-  console.log('ServingAreasSection - services:', services?.length);
-
   return (
     <section
-      className={cn('section border-t border-black/5', className)}
+      className={cn('py-8 md:py-10 lg:py-12 border-t border-black/5', className)}
       style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
     >
       <div className="container mx-auto px-6 lg:px-12">
@@ -118,7 +113,7 @@ export const ServingAreasSection: React.FC<ServingAreasSectionProps> = ({
                       key={`${areaName}-${idx}`}
                       href={linkPath}
                       className={cn(
-                        "group relative border-b border-black/10 py-12 md:py-16 transition-all duration-300 cursor-pointer hover:shadow-lg no-underline",
+                        "group relative border-b border-black/10 py-6 md:py-8 transition-all duration-300 cursor-pointer hover:shadow-lg no-underline",
                         idx % 2 === 0 ? "md:border-r md:pr-12 lg:pr-16" : "md:pl-12 lg:pl-16 font-light"
                       )}
                     >

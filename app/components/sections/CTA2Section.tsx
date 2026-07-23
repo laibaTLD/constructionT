@@ -25,7 +25,7 @@ export const CTA2Section: React.FC<CTA2SectionProps> = ({ cta2Section, className
 
   return (
     <section
-      className={cn('section relative overflow-hidden', className)}
+      className={cn('relative overflow-hidden', className)}
       style={
         backgroundImageUrl
           ? {
@@ -46,7 +46,7 @@ export const CTA2Section: React.FC<CTA2SectionProps> = ({ cta2Section, className
       />
 
       <div className="relative container mx-auto px-4">
-        <div>
+        <div className="py-8 md:py-10 lg:py-12">
           <div className="max-w-4xl">
             {safeCta.title && (
               <div

@@ -33,17 +33,12 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
   const business = site?.business;
   const address = business?.address;
   const businessHours = business?.businessHours;
-  const safeBusinessHours = Array.isArray(businessHours?.hours) ? businessHours.hours : [];
-  const hasValidCoordinates =
-    typeof site?.business?.coordinates?.latitude === 'number' &&
-    typeof site?.business?.coordinates?.longitude === 'number';
   
   const formatTime = (time: string) => {
     if (!time) return '';
     if (businessHours?.displayFormat === '12h') {
       const [hours, minutes] = time.split(':');
-      const hour = parseInt(hours, 10);
-      if (Number.isNaN(hour) || !minutes) return time;
+      const hour = parseInt(hours);
       const ampm = hour >= 12 ? 'PM' : 'AM';
       const displayHour = hour % 12 || 12;
       return `${displayHour}:${minutes} ${ampm}`;
@@ -54,19 +49,17 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
   const formatDayHours = (dayHours: BusinessHours) => {
     if (!dayHours.isOpen) return 'Closed';
     if (dayHours.is24Hours) return '24h';
-    if (Array.isArray(dayHours.timeRanges) && dayHours.timeRanges.length > 0) {
-      return dayHours.timeRanges
-      .filter((range) => range?.openTime && range?.closeTime)
-      .map(range => 
+    if (dayHours.timeRanges && dayHours.timeRanges.length > 0) {
+      return dayHours.timeRanges.map(range => 
         `${formatTime(range.openTime)} - ${formatTime(range.closeTime)}`
       ).join(', ');
     }
-    return 'Hours unavailable';
+    return '';
   };
 
   return (
     <section 
-      className="section flex flex-col gap-12 lg:gap-16 border-t border-black/5" 
+      className="py-24 md:py-32 lg:py-40 flex flex-col gap-32 lg:gap-48 border-t border-black/5" 
       style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
     >
       
@@ -142,13 +135,13 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
             </div>
 
             {/* Business Hours */}
-            {businessHours?.isEnabled && safeBusinessHours.length > 0 && (
+            {businessHours?.isEnabled && (
               <div className="space-y-6">
                 <span className="text-[10px] uppercase tracking-[0.2em] mb-4 block font-bold opacity-30">Business Hours</span>
                 <div className="space-y-2">
-                  {safeBusinessHours.filter(Boolean).map((day: any) => (
+                  {businessHours.hours.map((day: any) => (
                     <div key={day.day} className="flex justify-between items-baseline gap-4 text-[11px] uppercase tracking-widest opacity-80 font-light">
-                      <span className="font-semibold opacity-60">{DAY_LABELS[day.day] || day.day}</span>
+                      <span className="font-semibold opacity-60">{DAY_LABELS[day.day]}</span>
                       <span className="text-right">{formatDayHours(day)}</span>
                     </div>
                   ))}
@@ -160,7 +153,7 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
 
         {/* Right: Architectural Map Overlay */}
         <div className="relative aspect-[16/10] md:aspect-video lg:aspect-[4/3] w-full overflow-hidden shadow-2xl lg:mt-12">
-          {hasValidCoordinates ? (
+          {site?.business?.coordinates ? (
               <div className="w-full h-full grayscale-[0.9] contrast-[1.1] brightness-[1.1] scale-100 hover:grayscale-0 transition-all duration-1000">
                 <iframe
                   title="Office Location"

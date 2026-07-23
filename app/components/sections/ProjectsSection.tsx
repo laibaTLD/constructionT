@@ -1,217 +1,153 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { projectApi } from '@/app/lib/api';
-import { Page, Project } from '@/app/lib/types';
-import {
-  getLatestPublishedProjectsForSite,
-  isProjectIntroEnabled,
-  isProjectsPortfolioEnabled,
-} from '@/app/lib/projects';
+import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn, getImageSrc } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
+import { useThemeColors } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 interface ProjectsSectionProps {
-  projectsSection?: Page['projectsSection'];
-  projectSection?: Page['projectSection'];
-  /** When set (e.g. 3 on home), only the newest published projects are shown. */
-  maxProjectCards?: number;
+  projectsSection: Page['projectsSection'];
   className?: string;
 }
 
-function ProjectCard({
-  item,
-  themeColors,
-  themeFonts,
-}: {
-  item: Project;
-  themeColors: ReturnType<typeof useThemeColors>;
-  themeFonts: ReturnType<typeof useThemeFonts>;
-}) {
-  const imageUrl = getImageSrc(item.featuredImage?.url);
-
-  return (
-    <Link
-      href={`/project-detail/${item.slug}`}
-      className="group flex w-[min(82vw,360px)] shrink-0 flex-col"
-    >
-      {imageUrl ? (
-        <div className="relative mb-6 aspect-[4/5] min-h-[280px] w-full overflow-hidden bg-gray-100">
-          <OptimizedImage
-            src={imageUrl}
-            alt={item.featuredImage?.altText || item.title}
-            fill
-            sizes="(max-width: 768px) 85vw, 360px"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        </div>
-      ) : null}
-
-      {item.title ? (
-        <h3
-          className="text-lg font-light uppercase leading-tight tracking-tight md:text-xl"
-          style={{ color: themeColors.mainText, fontFamily: themeFonts.heading }}
-        >
-          {item.title}
-        </h3>
-      ) : null}
-      {item.location ? (
-        <p
-          className="mt-2 text-[9px] font-bold uppercase tracking-[0.4em]"
-          style={{ color: themeColors.secondaryText }}
-        >
-          {item.location}
-        </p>
-      ) : null}
-    </Link>
-  );
-}
-
-export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
-  projectsSection,
-  projectSection,
-  maxProjectCards,
-  className,
-}) => {
-  const { projects, site, loading } = useWebBuilder();
+export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsSection, className }) => {
   const themeColors = useThemeColors();
-  const themeFonts = useThemeFonts();
-  const [fetchedProjects, setFetchedProjects] = useState<typeof projects>([]);
-
-  const projectPool = projects.length > 0 ? projects : fetchedProjects;
-
-  const projectCards = useMemo(
-    () => getLatestPublishedProjectsForSite(projectPool ?? [], site, maxProjectCards),
-    [projectPool, site, maxProjectCards]
-  );
-
-  const introEnabled = isProjectIntroEnabled(projectSection);
-  const portfolioEnabled = isProjectsPortfolioEnabled(projectsSection);
-  const showProjectCards =
-    (introEnabled || portfolioEnabled) && projectCards.length > 0;
-  const isVisible = introEnabled || showProjectCards;
-
-  const shouldLoadProjects = introEnabled || portfolioEnabled;
+  const { projects } = useWebBuilder();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!shouldLoadProjects || !site?.slug || loading) return;
-    if (projects.length > 0) {
-      setFetchedProjects([]);
-      return;
-    }
+    if (!projectsSection?.enabled) return;
 
-    let cancelled = false;
-    projectApi.getProjectsBySite(site.slug, maxProjectCards).then((data) => {
-      if (!cancelled) setFetchedProjects(data);
-    });
+    const ctx = gsap.context(() => {
+      // Horizontal Scroll Animation
+      if (scrollRef.current && containerRef.current) {
+        const scrollWidth = containerRef.current.offsetWidth - window.innerWidth;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [shouldLoadProjects, site?.slug, loading, projects.length, maxProjectCards]);
+        gsap.to(containerRef.current, {
+          x: -scrollWidth,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: scrollRef.current,
+            start: 'top top',
+            end: () => `+=${scrollWidth}`,
+            scrub: 1,
+            pin: true,
+            invalidateOnRefresh: true,
+          }
+        });
+      }
+    }, scrollRef);
 
-  useEffect(() => {
-    if (projectCards.length === 0 || typeof window === 'undefined') return;
-    import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
-      requestAnimationFrame(() => ScrollTrigger.refresh());
-    });
-  }, [projectCards.length]);
+    return () => ctx.revert();
+  }, [projectsSection, projects]);
 
-  if (!isVisible) return null;
+  if (!projectsSection?.enabled) return null;
 
-  const portfolioHasHeader =
-    portfolioEnabled &&
-    !introEnabled &&
-    Boolean(projectsSection?.title || projectsSection?.description);
+  const brandColor = themeColors.primaryButton;
+
+  // Get projects from provider or manual selection
+  const publishedProjects = (projects || []).filter((p) => p.status === 'published');
+  const displayItems = projectsSection.projects?.length ? projectsSection.projects : publishedProjects;
 
   return (
-    <div className={cn('relative w-full', className)}>
-      {introEnabled && projectSection && (
-        <section
-          id="project-section"
-          data-project-section-intro
-          className="section relative border-t border-black/5"
-          style={{ backgroundColor: themeColors.pageBackground }}
-        >
-          <div className="container mx-auto max-w-4xl px-6 md:px-12 lg:px-20">
-            {projectSection.title && (
-              <h2
-                className="mb-8 text-balance text-3xl font-extralight uppercase leading-[1.05] tracking-[0.12em] md:text-4xl lg:text-5xl"
-                style={{ color: themeColors.mainText, fontFamily: themeFonts.heading }}
-              >
-                <TiptapRenderer content={projectSection.title} as="inline" />
-              </h2>
-            )}
-            {projectSection.description && (
-              <div
-                className="text-sm leading-relaxed tracking-wide opacity-80 md:text-base"
-                style={{ color: themeColors.secondaryText, fontFamily: themeFonts.body }}
-              >
-                <TiptapRenderer content={projectSection.description} />
-              </div>
-            )}
+    <div ref={scrollRef} className="relative overflow-hidden max-w-full" style={{ backgroundColor: brandColor }}>
+      {/* Hide horizontal scrollbar across all browsers */}
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      <section
+        className={cn('relative py-10 md:py-12 flex flex-col justify-center overflow-hidden', className)}
+      >
+        <div className="px-8 md:px-16 lg:px-24 mb-12">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-10 h-[1.5px] bg-white/40" />
+            <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-white/60">
+              Featured Projects
+            </span>
           </div>
-        </section>
-      )}
-
-      {showProjectCards && (
-        <section
-          id="projects-section"
-          data-projects-section
-          className="section relative w-full border-t border-black/5"
-          style={{ backgroundColor: themeColors.pageBackground }}
-        >
-          {portfolioHasHeader && projectsSection && (
-            <div className="mb-10 px-8 md:mb-14 md:px-16 lg:px-24">
-              {projectsSection.title && (
-                <h2
-                  className="max-w-2xl text-3xl font-light uppercase leading-none tracking-tight md:text-4xl lg:text-5xl"
-                  style={{ color: themeColors.mainText, fontFamily: themeFonts.heading }}
-                >
-                  <TiptapRenderer content={projectsSection.title} as="inline" />
-                </h2>
-              )}
-              {projectsSection.description && (
-                <div
-                  className="mt-6 max-w-xl text-sm tracking-wide md:text-base"
-                  style={{ color: themeColors.secondaryText, fontFamily: themeFonts.body }}
-                >
-                  <TiptapRenderer content={projectsSection.description} />
-                </div>
-              )}
-            </div>
+          {projectsSection.title && (
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-sans tracking-tight uppercase font-light text-white leading-none max-w-2xl">
+              <TiptapRenderer content={projectsSection.title} as="inline" />
+            </h2>
           )}
+        </div>
 
+        {/* Horizontal Scrolling Projects Container */}
+        <div className="relative w-full overflow-hidden scrollbar-hide">
           <div
-            className={cn(
-              'projectCards w-full px-6 md:px-16 lg:px-24',
-              '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
-              projectCards.length > 1 ? 'overflow-x-auto' : 'overflow-visible'
-            )}
-            data-project-cards
+            ref={containerRef}
+            className="flex gap-8 md:gap-10 lg:gap-14 px-8 md:px-16 lg:px-24 w-max max-w-full"
           >
-            <div
-              className={cn(
-                'flex gap-6 pb-4 md:gap-10 lg:gap-14',
-                projectCards.length === 1 ? 'justify-start' : 'w-max'
-              )}
-            >
-              {projectCards.map((item) => (
-                <ProjectCard
-                  key={item._id}
-                  item={item}
-                  themeColors={themeColors}
-                  themeFonts={themeFonts}
-                />
-              ))}
-            </div>
+            {displayItems.map((item: any, idx) => {
+              const imageUrl = getImageSrc(item.featuredImage?.url || item.image?.url || item.image || item.featuredImage);
+              const titleText = item.name || item.title || 'Project';
+              const locationText = item.location || 'Madrid';
+
+              return (
+                <Link
+                  key={idx}
+                  href={`/projects/${item.slug || 'detail'}`}
+                  className="group flex flex-col w-[280px] md:w-[320px] lg:w-[360px] shrink-0"
+                >
+                  {/* The Card Image Area - Reduced Size & Tighter Aspect Ratio */}
+                  <div className="relative aspect-[4/5] overflow-hidden bg-white/5 mb-6">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={titleText}
+                        className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-white/10" />
+                    )}
+
+                    {/* Sold Out ribbon removed per user request */}
+
+                    {/* Interactive Drag Hint */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white">
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">←</span>
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0V11m0 0.5V14m0-2.5v-6a1.5 1.5 0 113 0V11m0 0.5V14m0-2.5v-6a1.5 1.5 0 113 0V11m0 0.5V14" />
+                          </svg>
+                          <span className="text-lg">→</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content Info Area - White Minimal Text */}
+                  <div className="space-y-2">
+                    <h3 className="text-lg md:text-xl font-light uppercase tracking-tight text-white leading-tight">
+                      {typeof titleText === 'string' ? titleText : <TiptapRenderer content={titleText} as="inline" />}
+                    </h3>
+                    <div className="text-[9px] font-bold uppercase tracking-[0.4em] text-white/40">
+                      {locationText}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
     </div>
   );
 };

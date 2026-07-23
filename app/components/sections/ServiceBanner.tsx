@@ -9,13 +9,6 @@ interface ServiceBannerProps {
     service: any;
 }
 
-// Utility function to get full image URL
-const getFullImageUrl = (url?: string): string | undefined => {
-    if (!url) return undefined;
-    const resolved = getImageSrc(url);
-    return resolved || undefined;
-};
-
 export const ServiceBanner: React.FC<ServiceBannerProps> = ({ service }) => {
     const themeFonts = useThemeFonts();
     const themeColors = useThemeColors();
@@ -27,9 +20,9 @@ export const ServiceBanner: React.FC<ServiceBannerProps> = ({ service }) => {
 
     // Banner background image
     const bannerBgImage = service.banner?.backgroundImage?.url
-        ? getFullImageUrl(service.banner.backgroundImage.url)
+        ? getImageSrc(service.banner.backgroundImage.url)
         : service.thumbnailImage?.url
-            ? getFullImageUrl(service.thumbnailImage.url)
+            ? getImageSrc(service.thumbnailImage.url)
             : undefined;
 
     // Banner overlay opacity

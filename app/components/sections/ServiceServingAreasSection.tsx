@@ -38,7 +38,7 @@ export const ServiceServingAreasSection: React.FC<ServiceServingAreasSectionProp
 
     return (
         <section
-            className="section border-t border-black/5"
+            className="py-8 md:py-10 lg:py-12 border-t border-black/5"
             style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
         >
             <div className="container mx-auto px-6 lg:px-12">

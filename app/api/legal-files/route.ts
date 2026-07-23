@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Use the same API base URL as the template
-    const rawBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 
+    const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 
       (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
     
     const isLocalRaw = /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?\b/i.test(rawBaseUrl);

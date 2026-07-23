@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn, getImageSrc } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
@@ -159,12 +158,10 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
                   <div key={idx} className="story-journey-part relative w-full">
                      {/* PINNED IMAGE CONTAINER */}
                      <section className="story-image-container relative h-screen w-full overflow-hidden">
-                        <OptimizedImage
+                        <img
                            src={imageUrl}
-                           alt={d.image?.altText || ''}
-                           fill
-                           sizes="100vw"
-                           className="object-cover"
+                           alt={d.image?.altText || 'Company Detail'}
+                           className="w-full h-full object-cover"
                         />
                         {/* Architectural Overlay UI */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -179,7 +176,7 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
 
                      {/* TEXT BAR: This slides over the image */}
                      <section 
-                        className="story-detail-bar section relative z-30 px-8 md:px-16 lg:px-24 w-full" 
+                        className="story-detail-bar relative z-30 py-12 md:py-16 lg:py-20 px-8 md:px-16 lg:px-24 w-full" 
                         style={{ backgroundColor: brandColor }}
                      >
                         <div className="max-w-7xl mx-auto">

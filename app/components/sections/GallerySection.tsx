@@ -3,8 +3,8 @@
 import React, { useMemo } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { getImageSrc, cn } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
+import { getImageSrc } from '@/app/lib/utils';
+import { cn } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 
 interface GallerySectionProps {
@@ -37,7 +37,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
 
     return (
         <section
-            className={cn('section overflow-hidden', className)}
+            className={cn('py-8 md:py-10 lg:py-12 overflow-hidden', className)}
             style={{ backgroundColor: themeColors.pageBackground }}
         >
             <div className="container mx-auto px-6 md:px-12 lg:px-20">
@@ -47,59 +47,62 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
                     <div className="md:col-span-7 flex flex-col gap-12 lg:gap-20">
                         {/* Large Focal Image */}
                         <div className="relative aspect-[4/3] overflow-hidden group bg-gray-50">
-                            <OptimizedImage
+                            <img
                                 src={getImageSrc(mainImg.imageUrl)}
-                                alt={mainImg.altText || ''}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 58vw"
-                                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                alt={mainImg.altText}
+                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                loading="lazy"
                             />
                         </div>
 
                         {/* Editorial Typography Section */}
-                        <div className="space-y-4 max-w-2xl">
-                            <div 
-                                className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-light tracking-[0.2em] transition-all uppercase leading-[1.3] text-balance"
-                                style={{ 
-                                    fontFamily: themeFonts.heading,
-                                    color: themeColors.mainText
-                                }}
-                            >
-                                <TiptapRenderer content={gallerySection.title} />
-                                
-                                {gallerySection.description && (
+                        {(gallerySection.title || gallerySection.description) && (
+                            <div className="space-y-3 max-w-xl">
+                                {gallerySection.title && (
                                     <div 
-                                        className="mt-4 text-sm md:text-base lg:text-lg italic font-medium tracking-[0.06em] leading-relaxed"
-                                        style={{ color: themeColors.primaryButton || '#E31E24' }} 
+                                        className="text-2xl md:text-3xl lg:text-4xl font-light tracking-[0.2em] uppercase leading-[1.3] text-balance"
+                                        style={{ 
+                                            fontFamily: themeFonts.heading,
+                                            color: themeColors.mainText
+                                        }}
+                                    >
+                                        <TiptapRenderer content={gallerySection.title} />
+                                    </div>
+                                )}
+                                {gallerySection.description && (
+                                    <div
+                                        className="text-sm md:text-base lg:text-lg font-light leading-relaxed tracking-[0.02em] max-w-xl [&_p]:mb-2 last:[&_p]:mb-0"
+                                        style={{
+                                            fontFamily: themeFonts.body,
+                                            color: themeColors.secondaryText,
+                                        }}
                                     >
                                         <TiptapRenderer content={gallerySection.description} />
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Right Column: Stacked Architectural Details */}
-                    <div className="md:col-span-5 flex flex-col gap-8 md:pt-16 lg:pt-24">
+                    <div className="md:col-span-5 flex flex-col gap-6 md:pt-4 lg:pt-6">
                         {/* Secondary Image Top (Landscape/Video Aspect) */}
                         <div className="relative aspect-video overflow-hidden group bg-gray-50 shadow-xl">
-                           <OptimizedImage
+                           <img
                                 src={getImageSrc(topSecondaryImg.imageUrl)}
-                                alt={topSecondaryImg.altText || ''}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 42vw"
-                                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                alt={topSecondaryImg.altText}
+                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                loading="lazy"
                             />
                         </div>
 
                         {/* Secondary Image Bottom (Taller Aspect) */}
                         <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden group bg-gray-50 shadow-lg z-10">
-                            <OptimizedImage
+                            <img
                                 src={getImageSrc(bottomSecondaryImg.imageUrl)}
-                                alt={bottomSecondaryImg.altText || ''}
-                                fill
-                                sizes="(max-width: 768px) 100vw, 42vw"
-                                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                alt={bottomSecondaryImg.altText}
+                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
+                                loading="lazy"
                             />
                         </div>
                     </div>
@@ -107,21 +110,19 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
 
                 {/* Optional: Overflow Grid (If more than 3 images exist) */}
                 {images.length > 3 && (
-                    <div className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-6 opacity-60 hover:opacity-100 transition-opacity duration-700">
+                    <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4 opacity-60 hover:opacity-100 transition-opacity duration-700">
                         {images.slice(3, 7).map((img, i) => (
                             <div 
                                 key={img.key} 
                                 className={cn(
-                                    "relative aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-700",
+                                    "aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-700",
                                     i % 2 === 1 ? "md:translate-y-8" : ""
                                 )}
                             >
-                                <OptimizedImage
+                                <img
                                     src={getImageSrc(img.imageUrl)}
-                                    alt={img.altText || ''}
-                                    fill
-                                    sizes="(max-width: 768px) 50vw, 25vw"
-                                    className="object-cover"
+                                    alt={img.altText}
+                                    className="w-full h-full object-cover"
                                 />
                             </div>
                         ))}

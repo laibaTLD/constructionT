@@ -5,12 +5,10 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { getImageSrc, cn } from '@/app/lib/utils';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 
-// Register ScrollTrigger
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -37,57 +35,46 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => 
     return hero.media ? [hero.media] : [];
   }, [hero]);
 
+  const displayMedia = mediaItems.slice(0, 3);
+
   useEffect(() => {
     if (!hero?.enabled) return;
 
     const ctx = gsap.context(() => {
-      // 1. Initial Reveals
-      gsap.fromTo(badgeRef.current,
-        { x: -20, opacity: 0 },
-        { x: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 0.5 }
+      gsap.fromTo(
+        badgeRef.current,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.5 }
       );
 
       const lines = titleContainerRef.current?.querySelectorAll('p, span, h1');
       if (lines && lines.length > 0) {
-        gsap.fromTo(lines,
-          { y: 50, opacity: 0 },
-          { y: 0, opacity: 1, stagger: 0.15, duration: 1.2, ease: 'power3.out', delay: 0.7 }
+        gsap.fromTo(
+          lines,
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, stagger: 0.12, duration: 1.1, ease: 'power3.out', delay: 0.7 }
         );
       }
 
-      gsap.fromTo(subtitleRef.current,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 1.1 }
+      gsap.fromTo(
+        subtitleRef.current,
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out', delay: 1 }
       );
 
-      gsap.fromTo(ctaRef.current,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 1.4 }
+      gsap.fromTo(
+        ctaRef.current,
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 1.2 }
       );
 
-      // 2. Images reveal (Staggered)
       const images = mediaContainerRef.current?.querySelectorAll('.hero-media-item');
       if (images) {
-        gsap.fromTo(images,
-          { opacity: 0, y: 100, scale: 1.1 },
-          { opacity: 1, y: 0, scale: 1, stagger: 0.2, duration: 1.8, ease: 'power2.out', delay: 0.4 }
+        gsap.fromTo(
+          images,
+          { opacity: 0, scale: 1.06 },
+          { opacity: 1, scale: 1, stagger: 0.15, duration: 1.4, ease: 'power2.out', delay: 0.35 }
         );
-      }
-
-      // 3. Scroll parallax for images
-      if (images) {
-        images.forEach((img, i) => {
-          gsap.to(img, {
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: 'top top',
-              end: 'bottom top',
-              scrub: 1
-            },
-            yPercent: (i + 1) * 10,
-            ease: 'none'
-          });
-        });
       }
     }, sectionRef);
 
@@ -97,75 +84,74 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => 
   if (!hero?.enabled) return null;
 
   const brandName = (site?.business?.name || site?.name || '').toUpperCase();
-  const primaryCtaHref = hero.primaryCta?.href?.trim();
-  const primaryCtaLabel = hero.primaryCta?.label?.trim();
 
   return (
-    <section 
+    <section
       ref={sectionRef}
-      className={cn('relative w-full min-h-screen bg-white flex flex-col md:flex-row overflow-hidden pb-12', className)}
+      className={cn(
+        'relative w-full bg-white flex flex-col md:flex-row md:items-stretch',
+        className
+      )}
     >
-      {/* Left Content Area */}
-      <div className="w-full md:w-[50%] flex flex-col justify-center px-8 md:px-16 lg:px-24 xl:px-32 pt-32 md:pt-0 z-20">
-        <div className="max-w-lg">
-          {/* Branded Badge with Theme Color */}
-          <div 
+      {/* Left: content drives section height */}
+      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24 xl:px-28 pt-28 pb-12 md:pt-32 md:pb-16 z-20 overflow-visible">
+        <div className="max-w-lg overflow-visible">
+          <div
             ref={badgeRef}
-            className="inline-block text-white text-[10px] font-bold tracking-[0.4em] px-3 py-1 uppercase mb-10"
-            style={{ 
-              backgroundColor: themeColors.primaryButton 
-            }}
+            className="inline-block max-w-full text-white text-[10px] font-bold tracking-[0.25em] sm:tracking-[0.35em] px-4 py-1.5 uppercase mb-8 whitespace-normal break-words"
+            style={{ backgroundColor: themeColors.primaryButton }}
           >
-             {brandName}
+            {brandName}
           </div>
 
-          {/* Heading - Reduced Size */}
           {hero.title && (
-            <div 
-              ref={titleContainerRef} 
-              className="mb-6"
-            >
+            <div ref={titleContainerRef} className="mb-5">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-sans tracking-tight text-[var(--wb-text-main)] font-light uppercase leading-[1.1] tiptap-hero-title">
                 <TiptapRenderer content={hero.title} as="inline" />
               </h1>
             </div>
           )}
 
-          {/* Subtitle / Description - Reduced Size */}
           {(hero.description || hero.subtitle) && (
-            <div 
-              ref={subtitleRef} 
-              className="mb-12"
-            >
-              <div className="text-[var(--wb-text-secondary)] text-sm md:text-base font-light tracking-wide max-w-sm leading-relaxed">
+            <div ref={subtitleRef} className="mb-8">
+              <div className="text-[var(--wb-text-secondary)] text-base md:text-lg lg:text-xl font-light tracking-wide max-w-md leading-relaxed">
                 <TiptapRenderer content={hero.description || hero.subtitle} as="inline" />
               </div>
             </div>
           )}
 
-          {/* Circular Architectural CTA */}
-          {primaryCtaHref && primaryCtaLabel && (
-            <div ref={ctaRef} className="pt-4">
+          {hero.primaryCta && (
+            <div ref={ctaRef}>
               <a
-                href={primaryCtaHref}
+                href={hero.primaryCta.href || '/'}
                 className="group inline-flex items-center gap-6"
               >
-                <span 
+                <span
                   className="text-[10px] font-bold tracking-[0.3em] uppercase transition-colors duration-300"
                   style={{ color: themeColors.primaryButton }}
                 >
-                  {primaryCtaLabel}
+                  {hero.primaryCta.label}
                 </span>
-                <div 
-                  className="w-12 h-12 rounded-full border flex items-center justify-center transition-all duration-500 group-hover:bg-current group-hover:scale-110"
-                  style={{ 
+                <div
+                  className="w-12 h-12 rounded-full border flex items-center justify-center transition-all duration-500 group-hover:scale-110"
+                  style={{
                     borderColor: themeColors.primaryButton,
-                    color: themeColors.primaryButton 
+                    color: themeColors.primaryButton,
                   }}
                 >
-                   <svg className="w-3 h-3 transition-transform duration-500 group-hover:translate-x-1 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                   </svg>
+                  <svg
+                    className="w-3 h-3 transition-transform duration-500 group-hover:translate-x-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
                 </div>
               </a>
             </div>
@@ -173,51 +159,72 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => 
         </div>
       </div>
 
-      {/* Right Media Grid Area */}
-      <div 
+      {/* Right: stretches to match content height */}
+      <div
         ref={mediaContainerRef}
-        className="w-full md:w-[50%] flex flex-col md:grid md:grid-cols-2 gap-4 p-8 md:p-12 self-center"
+        className="w-full md:w-1/2 relative min-h-[260px] sm:min-h-[320px] md:min-h-0 md:self-stretch"
       >
-        {mediaItems.slice(0, 3).map((item: any, idx: number) => (
-          <div 
-            key={idx}
-            className={cn(
-              "hero-media-item relative overflow-hidden bg-gray-100",
-              idx === 0 ? "col-span-2 aspect-[4/3] md:aspect-video mb-4" : "col-span-1 aspect-square md:aspect-[4/5]",
-              idx === 2 ? "md:-mt-20" : "" // Offset the last image for architectural look
+        {displayMedia.length === 0 ? (
+          <div className="absolute inset-0 bg-[#f4f4f4] md:relative md:min-h-full" />
+        ) : displayMedia.length === 1 ? (
+          <div className="hero-media-item absolute inset-0 overflow-hidden bg-gray-100">
+            {displayMedia[0]?.type === 'video' ? (
+              <video
+                className="h-full w-full object-cover"
+                src={getImageSrc(displayMedia[0].url)}
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              <img
+                src={getImageSrc(displayMedia[0].url)}
+                alt={displayMedia[0].altText || ''}
+                className="h-full w-full object-cover"
+                fetchPriority="high"
+                decoding="async"
+              />
             )}
-          >
-             {item?.type === 'video' ? (
-                <video 
-                  className="h-full w-full object-cover" 
-                  src={getImageSrc(item.url)} 
-                  autoPlay muted loop playsInline 
-                />
-              ) : (
-                <OptimizedImage
-                  src={getImageSrc(item.url)}
-                  alt={item.altText || ''}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="xl:min-h-[500px] h-full w-full object-cover"
-                />
-              )}
-              <div className="absolute inset-0 bg-black/[0.03] pointer-events-none" />
           </div>
-        ))}
-        {mediaItems.length === 0 && (
-          <div className="col-span-2 aspect-video bg-[#f8f8f8]" />
+        ) : (
+          <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-2 p-3 md:p-4 h-full">
+            {displayMedia.map((item: any, idx: number) => (
+              <div
+                key={idx}
+                className={cn(
+                  'hero-media-item relative overflow-hidden bg-gray-100',
+                  idx === 0 ? 'col-span-2 row-span-1' : 'col-span-1 row-span-1'
+                )}
+              >
+                {item?.type === 'video' ? (
+                  <video
+                    className="absolute inset-0 h-full w-full object-cover"
+                    src={getImageSrc(item.url)}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={getImageSrc(item.url)}
+                    alt={item.altText || ''}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={idx === 0 ? 'high' : 'low'}
+                    decoding="async"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Subtle Bottom Scroll Info */}
-      <div className="absolute bottom-10 left-8 md:left-16 flex items-center gap-3 opacity-20 hidden md:flex">
-         <div className="w-8 h-[1px] bg-black" />
-         <span className="text-[8px] uppercase tracking-[0.5em] font-medium text-black">Architectural Excellence</span>
-      </div>
-
       <style jsx global>{`
-        .tiptap-hero-title p, .tiptap-hero-title span {
+        .tiptap-hero-title p,
+        .tiptap-hero-title span {
           display: block;
         }
       `}</style>

@@ -76,12 +76,12 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
   return (
     <section
       ref={sectionRef}
-      className={cn('section relative overflow-hidden bg-[var(--wb-page-bg)]', className)}
+      className={cn('relative py-8 md:py-10 lg:py-12 overflow-hidden bg-[var(--wb-page-bg)]', className)}
     >
       <div className="max-w-[1800px] mx-auto px-8 md:px-16 lg:px-24">
 
         {/* Editorial Header - Large Scale Centered */}
-        <div ref={headlineRef} className="flex flex-col items-center text-center  mb-14 lg:mb-20">
+        <div ref={headlineRef} className="flex flex-col items-center text-center mb-8 lg:mb-10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-[1px]" style={{ backgroundColor: brandColor }} />
             <span className="text-[10px] font-bold tracking-[0.4em] uppercase" style={{ color: primaryTextColor }}>
@@ -120,7 +120,7 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
         {/* Values Grid - High Fidelity Digital Look */}
         <div ref={itemsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 lg:gap-x-24">
           {items.map((item, idx) => (
-            <div key={idx} className="group relative pt-12 border-t border-black/5 flex flex-col space-y-8">
+            <div key={idx} className="group relative pt-8 border-t border-black/5 flex flex-col space-y-5">
 
               {/* Numbering Header */}
               <div className="flex justify-between items-start">

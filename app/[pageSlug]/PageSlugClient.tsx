@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { Header } from '@/app/components/layout/Header';
@@ -18,12 +17,9 @@ import { CompanyDetailSection } from '@/app/components/sections/CompanyDetailSec
 import { ProjectsSection } from '@/app/components/sections/ProjectsSection';
 import { CTA2Section } from '@/app/components/sections/CTA2Section';
 import { CTA3Section } from '@/app/components/sections/CTA3Section';
+import { ServingAreasSection } from '@/app/components/sections/ServingAreasSection';
 import { GallerySection } from '@/app/components/sections/GallerySection';
-import { ContactSection } from '@/app/components/sections/ContactSection';
-import { BlogSection } from '@/app/components/sections/BlogSection';
-import { SiteLoadingScreen } from '@/app/components/ui/SiteLoadingScreen';
 import api from '@/app/lib/fetch-api';
-import { Page, ServiceAreaPage } from '@/app/lib/types';
 
 interface PageSlugClientProps {
   pageSlug: string;
@@ -32,23 +28,20 @@ interface PageSlugClientProps {
 export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClientProps) {
   const params = useParams();
   const pageSlug = params.pageSlug as string || pageSlugProp;
-  const { pages, currentPage, setCurrentPage, loading, initialLoading, site } = useWebBuilder();
+  const { pages, currentPage, setCurrentPage, loading, error, site } = useWebBuilder();
   const themeColors = useThemeColors();
-  const [serviceAreaPage, setServiceAreaPage] = useState<ServiceAreaPage | null>(null);
+  const [serviceAreaPage, setServiceAreaPage] = useState<any | null>(null);
   const [serviceAreaLoading, setServiceAreaLoading] = useState(false);
-  const [serviceAreaResolved, setServiceAreaResolved] = useState(false);
+  const [serviceAreaError, setServiceAreaError] = useState<string | null>(null);
   const hasAttemptedLoad = useRef(false);
 
-  const cmsPage = useMemo(
-    () => pages.find((page) => page.slug === pageSlug),
-    [pages, pageSlug]
-  );
-
+  // Load service area page
   const loadServiceAreaPage = useCallback(async () => {
     if (!site || hasAttemptedLoad.current) return;
 
     hasAttemptedLoad.current = true;
     setServiceAreaLoading(true);
+    setServiceAreaError(null);
 
     try {
       const response = await api.get(`/public/sites/${site.slug}/service-areas/${pageSlug}`);
@@ -57,133 +50,74 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
       } else {
         setServiceAreaPage(null);
       }
-    } catch {
-      setServiceAreaPage(null);
+    } catch (err) {
+      setServiceAreaError('Failed to load service area page');
     } finally {
       setServiceAreaLoading(false);
-      setServiceAreaResolved(true);
     }
   }, [site, pageSlug]);
 
   useEffect(() => {
-    hasAttemptedLoad.current = false;
-    setServiceAreaResolved(false);
-    setServiceAreaPage(null);
-  }, [pageSlug]);
+    if (pages.length === 0) return;
 
-  useEffect(() => {
-    if (initialLoading) return;
-
-    if (cmsPage) {
-      setCurrentPage(cmsPage);
+    const foundPage = pages.find(page => page.slug === pageSlug);
+    if (foundPage) {
+      setCurrentPage(foundPage);
       setServiceAreaPage(null);
-      setServiceAreaResolved(true);
-      return;
+    } else {
+      setCurrentPage(null);
+      if (!hasAttemptedLoad.current) {
+        loadServiceAreaPage();
+      }
     }
+  }, [pageSlug, pages, setCurrentPage, loadServiceAreaPage]);
 
-    setCurrentPage(null);
-    if (site && !hasAttemptedLoad.current) {
-      void loadServiceAreaPage();
-    }
-  }, [cmsPage, initialLoading, site, setCurrentPage, loadServiceAreaPage]);
-
-  const displayPage = cmsPage || serviceAreaPage;
-  const awaitingServiceArea = !cmsPage && Boolean(site) && !serviceAreaResolved;
-
-  if (loading || serviceAreaLoading || awaitingServiceArea) {
-    return (
-      <SiteLoadingScreen siteName={site?.business?.name || site?.name} />
-    );
+  if (loading || serviceAreaLoading) {
+    return null;
   }
+
+  const displayPage = currentPage || serviceAreaPage;
 
   if (!displayPage) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center" style={{ backgroundColor: themeColors.pageBackground }}>
         <h2 className="text-2xl font-bold mb-2" style={{ color: themeColors.lightPrimaryText }}>Page Not Found</h2>
-        <p style={{ color: themeColors.lightSecondaryText }}>The page &quot;{pageSlug}&quot; could not be found.</p>
-        <Link href="/" className="mt-8 hover:underline" style={{ color: themeColors.primaryButton }}>Return Home</Link>
+        <p style={{ color: themeColors.lightSecondaryText }}>The page "{pageSlug}" could not be found.</p>
+        <a href="/" className="mt-8 hover:underline" style={{ color: themeColors.primaryButton }}>Return Home</a>
       </div>
     );
   }
-
-  const page: Page | null = cmsPage || currentPage;
-  const pageType = page?.pageType;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
       <Header />
 
       <main>
-        {pageType === 'home' && (
-          <>
-            <HeroSection hero={page?.hero} />
-            <AboutSection aboutSection={page?.aboutSection} />
-            <ServicesSection servicesSection={page?.servicesSection} />
-            <GallerySection gallerySection={page?.gallerySection} />
-            <TestimonialsSection testimonialsSection={page?.testimonialsSection} />
-            <FAQSection faqSection={page?.faqSection} />
-            <ContactSection contactSection={page?.contactSection} />
-            <BlogSection blogSection={page?.blogSection} />
-            <CTASection ctaSection={page?.ctaSection} />
-            <WhyChooseUsSection whyChooseUsSection={page?.whyChooseUsSection} />
-            <ProjectsSection
-              projectsSection={page?.projectsSection}
-              projectSection={page?.projectSection}
-              maxProjectCards={3}
-            />
-            <CompanyDetailSection companyDetailSection={page?.companyDetailSection} />
-            <CTA2Section cta2Section={page?.cta2Section} />
-            <CTA3Section cta3Section={page?.cta3Section} />
-          </>
-        )}
+        <HeroSection hero={displayPage.hero} />
 
-        {pageType === 'about' && (
-          <>
-            <HeroSection hero={page?.hero} />
-            <AboutSection aboutSection={page?.aboutSection} />
-            <WhyChooseUsSection whyChooseUsSection={page?.whyChooseUsSection} />
-            <CompanyDetailSection companyDetailSection={page?.companyDetailSection} />
-            <CTA2Section cta2Section={page?.cta2Section} />
-          </>
-        )}
+        <AboutSection aboutSection={displayPage.aboutSection} />
 
-        {pageType === 'contact' && (
-          <>
-            <HeroSection hero={page?.hero} />
-            <ContactSection contactSection={page?.contactSection} />
-          </>
-        )}
+        <CTASection ctaSection={displayPage.ctaSection} />
 
-        {pageType === 'service-list' && (
-          <>
-            <HeroSection hero={page?.hero} />
-            <ServicesSection servicesSection={page?.servicesSection} />
-          </>
-        )}
+        <WhyChooseUsSection whyChooseUsSection={displayPage.whyChooseUsSection} />
 
-        {pageType === 'blog-list' && (
-          <>
-            <HeroSection hero={page?.hero} />
-            <BlogSection blogSection={page?.blogSection} />
-          </>
-        )}
+        <CompanyDetailSection companyDetailSection={displayPage.companyDetailSection} />
 
-        {pageType === 'project-detail' && (
-          <>
-            <HeroSection hero={page?.hero} />
-            <ProjectsSection
-              projectsSection={page?.projectsSection}
-              projectSection={page?.projectSection}
-            />
-          </>
-        )}
+        <ProjectsSection projectsSection={displayPage.projectsSection} />
 
-        {page?.slug === 'testimonials' && (
-          <>
-            <HeroSection hero={page?.hero} />
-            <TestimonialsSection testimonialsSection={page?.testimonialsSection} />
-          </>
-        )}
+       
+
+        <CTA2Section cta2Section={displayPage.cta2Section} />
+
+        <CTA3Section cta3Section={displayPage.cta3Section} />
+
+        <ServicesSection servicesSection={displayPage.servicesSection} />
+
+        <TestimonialsSection testimonialsSection={displayPage.testimonialsSection} />
+         <GallerySection gallerySection={displayPage.gallerySection} />
+        <ServingAreasSection />
+
+        <FAQSection faqSection={displayPage.faqSection} />
       </main>
 
       <Footer />

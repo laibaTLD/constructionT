@@ -27,7 +27,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
 
     return (
         <section
-            className={cn('section', className)}
+            className={cn('py-8 md:py-10 lg:py-12', className)}
             style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
         >
             <div className="container mx-auto px-6 lg:px-12">
@@ -84,7 +84,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
                                         <button
                                             type="button"
                                             onClick={() => toggle(index)}
-                                            className="w-full flex items-center justify-between py-10 lg:py-14 text-left group transition-all duration-300"
+                                            className="w-full flex items-center justify-between py-5 lg:py-6 text-left group transition-all duration-300"
                                         >
                                             <div className="flex items-start gap-8 md:gap-12 lg:gap-16">
                                                 <span
@@ -133,7 +133,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
                                         >
                                             <div className="overflow-hidden">
                                                 <div
-                                                    className="pl-12 md:pl-32 lg:pl-44 pb-14 text-sm md:text-base lg:text-lg font-light leading-relaxed tracking-wide opacity-70 max-w-2xl"
+                                                    className="pl-12 md:pl-32 lg:pl-44 pb-6 text-sm md:text-base lg:text-lg font-light leading-relaxed tracking-wide opacity-70 max-w-2xl"
                                                     style={{ color: themeColors.secondaryText }}
                                                 >
                                                     <TiptapRenderer content={item.answer} />

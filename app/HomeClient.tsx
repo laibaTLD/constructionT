@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { Page } from '@/app/lib/types';
 import { Header } from '@/app/components/layout/Header';
@@ -7,25 +8,26 @@ import { Footer } from '@/app/components/layout/Footer';
 import { HeroSection } from '@/app/components/sections/HeroSection';
 import { AboutSection } from '@/app/components/sections/AboutSection';
 import { ServicesSection } from '@/app/components/sections/ServicesSection';
-import { TestimonialsSection } from '@/app/components/sections/TestimonialsSection';
-import { FAQSection } from '@/app/components/sections/FAQSection';
-import { CTASection } from '@/app/components/sections/CTASection';
-import { WhyChooseUsSection } from '@/app/components/sections/WhyChooseUsSection';
-import { CompanyDetailSection } from '@/app/components/sections/CompanyDetailSection';
-import { ProjectsSection } from '@/app/components/sections/ProjectsSection';
-import { CTA2Section } from '@/app/components/sections/CTA2Section';
-import { CTA3Section } from '@/app/components/sections/CTA3Section';
-import { ContactSection } from './components/sections/ContactSection';
-import { GallerySection } from '@/app/components/sections/GallerySection';
-import { BlogSection } from '@/app/components/sections/BlogSection';
+
+// Below-fold sections — code-split to shrink initial JS
+const CTASection = dynamic(() => import('@/app/components/sections/CTASection').then(m => ({ default: m.CTASection })));
+const WhyChooseUsSection = dynamic(() => import('@/app/components/sections/WhyChooseUsSection').then(m => ({ default: m.WhyChooseUsSection })));
+const CTA3Section = dynamic(() => import('@/app/components/sections/CTA3Section').then(m => ({ default: m.CTA3Section })));
+const CompanyDetailSection = dynamic(() => import('@/app/components/sections/CompanyDetailSection').then(m => ({ default: m.CompanyDetailSection })));
+const ProjectsSection = dynamic(() => import('@/app/components/sections/ProjectsSection').then(m => ({ default: m.ProjectsSection })));
+const GallerySection = dynamic(() => import('@/app/components/sections/GallerySection').then(m => ({ default: m.GallerySection })));
+const CTA2Section = dynamic(() => import('@/app/components/sections/CTA2Section').then(m => ({ default: m.CTA2Section })));
+const TestimonialsSection = dynamic(() => import('@/app/components/sections/TestimonialsSection').then(m => ({ default: m.TestimonialsSection })));
+const ServingAreasSection = dynamic(() => import('@/app/components/sections/ServingAreasSection').then(m => ({ default: m.ServingAreasSection })));
+const FAQSection = dynamic(() => import('@/app/components/sections/FAQSection').then(m => ({ default: m.FAQSection })));
+const ContactSection = dynamic(() => import('./components/sections/ContactSection').then(m => ({ default: m.ContactSection })));
 
 export default function HomeClient() {
-  const { site, pages, error } = useWebBuilder();
+  const { site, pages, loading, error } = useWebBuilder();
 
-  // Get theme colors from site using the new dynamic CSS variable system
   const themeColors = {
     primary: 'var(--wb-primary)',
-    secondary: 'var(--wb-primary)', // Using primary as default for secondary if not split
+    secondary: 'var(--wb-primary)',
     accent: 'var(--wb-primary)',
     mainText: 'var(--wb-text-main)',
     secondaryText: 'var(--wb-text-secondary)',
@@ -37,11 +39,14 @@ export default function HomeClient() {
     inactive: 'var(--color-gray-400)',
   };
 
-  // Get theme fonts from site
   const themeFonts = {
     heading: site?.theme?.headingFont,
     body: site?.theme?.bodyFont,
   };
+
+  if (loading) {
+    return null;
+  }
 
   if (error && !site) {
     return (
@@ -79,34 +84,11 @@ export default function HomeClient() {
     );
   }
 
-  const homePage = pages.find((p: Page) => p.pageType === 'home');
+  const homePage = (pages || []).find((p: Page) => p.pageType === 'home');
   const displayPage = homePage;
 
-  if (!displayPage) {
-    return (
-      <div 
-        className="min-h-screen flex flex-col items-center justify-center p-4"
-        style={{ backgroundColor: themeColors.pageBackground }}
-      >
-        <h2 
-          className="text-2xl font-bold mb-4"
-          style={{ 
-            color: themeColors.mainText,
-            fontFamily: themeFonts.heading
-          }}
-        >
-          No Home Page Found
-        </h2>
-        <p 
-          style={{ 
-            color: themeColors.secondaryText,
-            fontFamily: themeFonts.body
-          }}
-        >
-          Please create a page with type &quot;home&quot; in the site builder.
-        </p>
-      </div>
-    );
+  if (!site || !displayPage) {
+    return null;
   }
 
   return (
@@ -121,23 +103,18 @@ export default function HomeClient() {
 
       <main>
         <HeroSection hero={displayPage.hero} />
-
         <AboutSection aboutSection={displayPage.aboutSection} />
         <ServicesSection servicesSection={displayPage.servicesSection} />
-        <GallerySection gallerySection={displayPage.gallerySection} />
-        <TestimonialsSection testimonialsSection={displayPage.testimonialsSection} />
-        <FAQSection faqSection={displayPage.faqSection} />
-        <BlogSection blogSection={displayPage.blogSection} />
         <CTASection ctaSection={displayPage.ctaSection} />
         <WhyChooseUsSection whyChooseUsSection={displayPage.whyChooseUsSection} />
-        <ProjectsSection
-          projectsSection={displayPage.projectsSection}
-          projectSection={displayPage.projectSection}
-          maxProjectCards={3}
-        />
-        <CompanyDetailSection companyDetailSection={displayPage.companyDetailSection} />
-        <CTA2Section cta2Section={displayPage.cta2Section} />
         <CTA3Section cta3Section={displayPage.cta3Section} />
+        <CompanyDetailSection companyDetailSection={displayPage.companyDetailSection} />
+        <ProjectsSection projectsSection={displayPage.projectsSection} />
+        <GallerySection gallerySection={displayPage.gallerySection} />
+        <CTA2Section cta2Section={displayPage.cta2Section} />
+        <TestimonialsSection testimonialsSection={displayPage.testimonialsSection} />
+        <ServingAreasSection />
+        <FAQSection faqSection={displayPage.faqSection} />
         <ContactSection contactSection={displayPage.contactSection} />
       </main>
       

@@ -4,11 +4,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { getImageSrc, cn } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { Page } from '@/app/lib/types';
-import { getPageHref } from '@/app/lib/page-routes';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export const Header: React.FC = () => {
   const { site, pages } = useWebBuilder();
@@ -25,19 +28,15 @@ export const Header: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const el = headerRef.current;
-    if (!site || !el) return;
-
     const ctx = gsap.context(() => {
-      gsap.fromTo(
-        el,
+      // Gentle entrance
+      gsap.fromTo(headerRef.current,
         { y: -20, opacity: 0 },
         { y: 0, opacity: 1, duration: 1.5, ease: 'power3.out', delay: 0.8 }
       );
-    }, el);
-
+    }, headerRef);
     return () => ctx.revert();
-  }, [site]);
+  }, []);
 
   // Specific Order: Home | About | Blog | Service | Serving Areas | Testimonials | Contact
   const orderedNavPages = useMemo(() => {
@@ -54,7 +53,12 @@ export const Header: React.FC = () => {
       'contact': 7
     };
 
-    const published = pages.filter(p => p.status === 'published');
+    const published = pages
+      .filter((p) => p.status === 'published' && (p._id || p.slug))
+      .filter((p, i, arr) => {
+        const key = p._id || p.slug;
+        return arr.findIndex((x) => (x._id || x.slug) === key) === i;
+      });
 
     return published.sort((a, b) => {
       const aVal = orderMap[a.pageType] || 99;
@@ -64,6 +68,21 @@ export const Header: React.FC = () => {
   }, [pages]);
 
   if (!site) return null;
+
+  const getPageHref = (p: Page) => {
+    if (p.pageType === 'home') return '/';
+    if (p.slug) return `/${p.slug}`;
+    const byType: Record<string, string> = {
+      about: '/about-us',
+      contact: '/contact-us',
+      'blog-list': '/blog',
+      'service-list': '/services',
+      testimonials: '/testimonials',
+      'project-list': '/project-detail',
+      'serving-areas': '/services',
+    };
+    return byType[p.pageType] || '/';
+  };
 
   const brandName = (site?.business?.name || site?.name || '').toUpperCase();
   const brandColor = themeColors.primaryButton;
@@ -89,15 +108,11 @@ export const Header: React.FC = () => {
 
           <Link href="/" className="group flex items-center outline-none">
             {site.theme?.logoUrl ? (
-              <OptimizedImage
+              <img
                 src={getImageSrc(site.theme.logoUrl)}
                 alt={brandName}
-                width={320}
-                height={96}
-                priority
-                sizes="(max-width: 768px) 180px, 240px"
                 className={cn(
-                  "h-14 md:h-16 lg:h-20 w-auto transition-all duration-500",
+                  "h-12 md:h-10 w-auto transition-all duration-500",
                   isScrolled ? "brightness-100" : "brightness-0 invert"
                 )}
               />
@@ -145,9 +160,9 @@ export const Header: React.FC = () => {
         >
           {/* Navigation Container Aligned Left */}
           <div className="flex-1 flex items-center gap-4 md:gap-8 lg:gap-10 overflow-x-auto no-scrollbar">
-            {orderedNavPages.map((p) => (
+            {orderedNavPages.map((p, i) => (
               <Link
-                key={p._id}
+                key={p._id || p.slug || `nav-${i}`}
                 href={getPageHref(p)}
                 className="text-[8px] md:text-[9px] font-bold tracking-[0.3em] uppercase whitespace-nowrap hover:opacity-60 transition-opacity"
                 onClick={() => setIsMenuOpen(false)}

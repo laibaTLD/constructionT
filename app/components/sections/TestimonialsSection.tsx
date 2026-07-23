@@ -66,14 +66,14 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
 
     return (
         <section
-            className={cn('section relative overflow-hidden', className)}
+            className={cn('relative py-8 md:py-10 lg:py-12 overflow-hidden', className)}
             style={{ backgroundColor: themeColors.sectionBackground }}
         >
             <div className="container mx-auto px-6">
                 
                 {/* Section Header */}
-                <div className="mb-12 flex flex-col items-center text-center">
-                    <div className="mb-6 flex items-center gap-3">
+                <div className="mb-8 flex flex-col items-center text-center">
+                    <div className="mb-4 flex items-center gap-3">
                         {testimonialsSection.description && (
                             <span 
                                 className="text-[10px] tracking-[0.4em] uppercase font-bold"
@@ -102,10 +102,10 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
                 </div>
 
                 {/* Main Carousel Display */}
-                <div className="relative mt-16">
+                <div className="relative mt-8">
                     <div
                         ref={trackRef}
-                        className="flex gap-12 lg:gap-24 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-12 items-center"
+                        className="flex gap-12 lg:gap-24 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-6 items-center"
                         style={{ scrollbarWidth: 'none' }}
                     >
                         {items.map((t, idx) => {

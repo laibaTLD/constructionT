@@ -4,7 +4,6 @@ import React, { useEffect, useRef } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc, cn } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
@@ -29,7 +28,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
     if (!aboutSection?.enabled) return;
 
     const ctx = gsap.context(() => {
-      // 1. Image Clip Reveal
+      // Image clip reveal
       gsap.fromTo(imageContainerRef.current,
         { clipPath: 'inset(0 100% 0 0)' },
         {
@@ -43,23 +42,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
         }
       );
 
-      // 2. Image Parallax and Slight Zoom
-      gsap.fromTo(imageRef.current,
-        { scale: 1.2, yPercent: 10 },
-        {
-          scale: 1,
-          yPercent: -10,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: true,
-          }
-        }
-      );
-
-      // 3. Text Staggered Reveal
+      // Text staggered reveal
       const children = textRef.current?.children;
       if (children) {
         gsap.fromTo(children,
@@ -99,11 +82,11 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
   return (
     <section
       ref={sectionRef}
-      className={cn('section relative w-full overflow-hidden', className)}
+      className={cn('relative w-full py-8 md:py-10 lg:py-12 overflow-hidden', className)}
       style={{ backgroundColor: 'var(--wb-page-bg)' }}
     >
       <div className="container mx-auto px-8 md:px-16 lg:px-24">
-        <div className="flex flex-col lg:flex-row gap-16 lg:gap-32 items-center">
+        <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 xl:gap-32 lg:items-stretch">
 
           {/* Left Content Column */}
           <div ref={textRef} className="w-full lg:w-[45%] space-y-12">
@@ -172,26 +155,26 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
             </div>
           </div>
 
-          {/* Right Image Column */}
-          <div className="w-full lg:w-[55%]">
+          {/* Right Image Column — fills content height, no letterboxing */}
+          <div className="w-full lg:w-[55%] lg:self-stretch flex">
             <div
               ref={imageContainerRef}
-              className="relative aspect-[4/5] md:aspect-[16/11] lg:aspect-[4/3] overflow-hidden bg-gray-100 group shadow-sm"
+              className="relative w-full overflow-hidden bg-[#f3f3f3] group shadow-sm aspect-[4/3] lg:aspect-auto lg:min-h-full lg:h-auto lg:flex-1"
             >
               {imageUrl ? (
-                <OptimizedImage
+                <img
                   ref={imageRef}
                   src={imageUrl}
-                  alt={aboutSection.title || ''}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 55vw"
-                  className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                  alt={
+                    typeof aboutSection.image === 'object' && aboutSection.image?.altText
+                      ? aboutSection.image.altText
+                      : 'About us'
+                  }
+                  className="absolute inset-0 w-full h-full object-cover object-center"
                 />
               ) : (
-                <div className="w-full h-full bg-[#f4f4f4]" />
+                <div className="absolute inset-0 bg-[#f4f4f4]" />
               )}
-              
-              <div className="absolute inset-0 bg-black/5 pointer-events-none" />
             </div>
           </div>
 

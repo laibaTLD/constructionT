@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { getImageSrc } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 
 interface OtherServicesCardProps {
     otherServices: any[];
@@ -17,13 +16,6 @@ interface QuickContactCardProps {
 export const OtherServicesCard: React.FC<OtherServicesCardProps> = ({ otherServices }) => {
     const themeColors = useThemeColors();
     const themeFonts = useThemeFonts();
-
-    // Utility function to get full image URL
-    const getFullImageUrl = (url?: string): string | undefined => {
-        if (!url) return undefined;
-        const resolved = getImageSrc(url);
-        return resolved || undefined;
-    };
 
     if (otherServices.length === 0) return null;
 
@@ -52,12 +44,9 @@ export const OtherServicesCard: React.FC<OtherServicesCardProps> = ({ otherServi
                             className="group flex items-center gap-3 transition-all duration-300"
                         >
                             {otherService.thumbnailImage?.url && (
-                                <OptimizedImage
-                                    src={getFullImageUrl(otherService.thumbnailImage.url) || ''}
+                                <img
+                                    src={getImageSrc(otherService.thumbnailImage.url) || ''}
                                     alt={otherService.name}
-                                    width={40}
-                                    height={40}
-                                    sizes="40px"
                                     className="w-10 h-10 object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                                 />
                             )}

@@ -6,6 +6,11 @@ import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { HeroSection } from '@/app/components/sections/HeroSection';
 import { ServicesSection } from '@/app/components/sections/ServicesSection';
+import { ServiceHighlightsSection } from '@/app/components/sections/ServiceHighlightsSection';
+import { CTASection } from '@/app/components/sections/CTASection';
+import { TestimonialsSection } from '@/app/components/sections/TestimonialsSection';
+import { FAQSection } from '@/app/components/sections/FAQSection';
+import { ServingAreasSection } from '@/app/components/sections/ServingAreasSection';
 
 export default function ServicesPage() {
   const { site, pages, loading, error } = useWebBuilder();
@@ -32,20 +37,7 @@ export default function ServicesPage() {
   };
 
   if (loading && !site) {
-    return (
-      <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: themeColors.pageBackground }}
-      >
-        <div 
-          className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2"
-          style={{ 
-            borderTopColor: themeColors.primaryButton,
-            borderBottomColor: themeColors.primaryButton
-          }}
-        ></div>
-      </div>
-    );
+    return null;
   }
 
   if (error && !site) {
@@ -127,7 +119,18 @@ export default function ServicesPage() {
 
       <main>
         <HeroSection hero={displayPage.hero} />
+
+        <ServiceHighlightsSection serviceHighlightsSection={displayPage.serviceHighlightsSection} />
+
         <ServicesSection servicesSection={displayPage.servicesSection} />
+
+        <CTASection ctaSection={displayPage.ctaSection} />
+
+        <TestimonialsSection testimonialsSection={displayPage.testimonialsSection} />
+
+        <ServingAreasSection />
+
+        <FAQSection faqSection={displayPage.faqSection} />
       </main>
 
       <Footer />

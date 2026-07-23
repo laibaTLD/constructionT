@@ -26,7 +26,7 @@ export const FAQs: React.FC<FAQsProps> = ({ faqs, className }) => {
 
   return (
     <section
-      className={cn('section', className)}
+      className={cn('py-24 md:py-32 lg:py-48', className)}
       style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
     >
       <div className="container mx-auto px-6 lg:px-12">

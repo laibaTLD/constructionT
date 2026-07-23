@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { cn, getImageSrc } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { TiptapContent, TiptapAnyNode, TiptapMark } from '@/app/lib/tiptap-types';
 
 interface TiptapRendererProps {
@@ -21,9 +20,8 @@ const isBlockNode = (node: any): boolean => {
 };
 
 const getFullImageUrl = (url?: string): string | undefined => {
-  if (!url) return undefined;
-  const resolved = getImageSrc(url);
-  return resolved || undefined;
+  const src = getImageSrc(url);
+  return src || undefined;
 };
 
 // Normalize common malformed structures
@@ -82,7 +80,6 @@ const normalizeNode = (node: any): any => {
     
     // If we extracted blocks, return them as siblings (not nested)
     if (extractedBlocks.length > 0) {
-      console.log('normalizeNode: extracted', extractedBlocks.length, 'blocks from paragraph');
       // Return as a doc with multiple children so the parent can handle them
       const children: any[] = [];
       if (inlineContent.length > 0) {
@@ -249,15 +246,13 @@ const renderNode = (node: any, key?: React.Key): React.ReactNode => {
     const alt = normalized.attrs?.alt || '';
     const title = normalized.attrs?.title;
     return (
-      <OptimizedImage
+      <img
         key={key}
         src={src}
         alt={alt}
         title={title}
-        width={1200}
-        height={800}
-        sizes="(max-width: 768px) 100vw, 800px"
         className="max-w-full h-auto rounded-lg"
+        loading="lazy"
       />
     );
   }

@@ -1,8 +1,5 @@
 import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
-import { getImageSrc } from './utils'
-import api from './fetch-api'
-import { unwrapApiPayload } from './api-response'
 
 interface SEOData {
   title?: string
@@ -10,28 +7,6 @@ interface SEOData {
   keywords?: string[]
   ogImageUrl?: string
   noIndex?: boolean
-}
-
-export function getFaviconIcons(site?: Site | null): Metadata['icons'] | undefined {
-  const raw = site?.seo?.faviconUrl
-  if (!raw) return undefined
-  const url = getImageSrc(raw)
-  if (!url) return undefined
-  return { icon: [{ url }] }
-}
-
-export async function loadSiteForMetadata(): Promise<Site | null> {
-  const siteSlug = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG
-  if (!siteSlug) return null
-  try {
-    const response = await api.get(`/public/sites/${siteSlug}`)
-    if (response && typeof response === 'object' && 'error' in response && response.error) {
-      return null
-    }
-    return unwrapApiPayload<Site>(response)
-  } catch {
-    return null
-  }
 }
 
 export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
@@ -74,9 +49,6 @@ export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
       },
     }
   }
-
-  const icons = getFaviconIcons(site)
-  if (icons) metadata.icons = icons
 
   return metadata
 }

@@ -10,7 +10,6 @@ import { Footer } from '@/app/components/layout/Footer';
 import { BlogPost } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { SeoHead } from '@/app/components/ui/SeoHead';
 import { normalizeSeoImage, tiptapToText, truncate } from '@/app/lib/seo';
@@ -53,7 +52,7 @@ export default function BlogPostPage() {
     }, [site, postSlug, siteLoading]);
 
     if (siteLoading || loading) {
-        return <div className="min-h-screen flex items-center justify-center animate-pulse uppercase tracking-[0.3em] text-xs">Loading Perspective...</div>;
+        return null;
     }
 
     if (error || !post) {
@@ -75,13 +74,10 @@ export default function BlogPostPage() {
                 <div className="relative h-[70vh] md:h-[85vh] w-full overflow-hidden flex items-end">
                     {post.featuredImage && (
                         <div className="absolute inset-0 z-0">
-                            <OptimizedImage
+                            <img
                                 src={getImageSrc(post.featuredImage.url)}
                                 alt={post.featuredImage.altText || post.title}
-                                fill
-                                sizes="100vw"
-                                priority
-                                className="object-cover"
+                                className="w-full h-full object-cover"
                             />
                             <div className="absolute inset-0 bg-black/40" /> 
                         </div>

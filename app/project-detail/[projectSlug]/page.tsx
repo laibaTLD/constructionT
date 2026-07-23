@@ -5,13 +5,11 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { projectApi } from '@/app/lib/api';
-import { isPublishedProject } from '@/app/lib/projects';
 import { Project } from '@/app/lib/types';
 import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc } from '@/app/lib/utils';
-import { OptimizedImage } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { SeoHead } from '@/app/components/ui/SeoHead';
 import { normalizeSeoImage, tiptapToText, truncate } from '@/app/lib/seo';
@@ -29,8 +27,8 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const otherProjects = useMemo(() => {
-    const published = (projects || []).filter(isPublishedProject);
-    return published.filter((p) => p.slug !== projectSlug).slice(0, 3);
+    const published = (projects || []).filter(p => p.status === 'published');
+    return published.filter(p => p.slug !== projectSlug).slice(0, 3);
   }, [projects, projectSlug]);
 
   useEffect(() => {
@@ -53,7 +51,7 @@ export default function ProjectDetailPage() {
   }, [site, siteLoading, projectSlug]);
 
   if (siteLoading || loading) {
-    return <div className="min-h-screen flex items-center justify-center animate-pulse uppercase tracking-[0.3em] text-xs" style={{ backgroundColor: themeColors.pageBackground }}>Loading Experience...</div>;
+    return null;
   }
 
   if (error || !project) {
@@ -75,13 +73,10 @@ export default function ProjectDetailPage() {
         <div className="relative h-[70vh] md:h-[85vh] w-full overflow-hidden flex items-end">
           {project.featuredImage?.url && (
             <div className="absolute inset-0 z-0">
-              <OptimizedImage
+              <img
                 src={getImageSrc(project.featuredImage.url)}
                 alt={project.featuredImage.altText || project.title}
-                fill
-                sizes="100vw"
-                priority
-                className="object-cover"
+                className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/50" />
             </div>
@@ -147,13 +142,11 @@ export default function ProjectDetailPage() {
                    <h3 className="text-[11px] uppercase tracking-[0.6em] opacity-40 text-black">Gallery</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                     {project.galleryImages.map((img, idx) => (
-                      <div key={idx} className="relative overflow-hidden bg-gray-100 aspect-[4/3]">
-                        <OptimizedImage
+                      <div key={idx} className="overflow-hidden bg-gray-100">
+                        <img
                           src={getImageSrc(img.url)}
                           alt={img.altText || project.title}
-                          fill
-                          sizes="(max-width: 1024px) 100vw, 50vw"
-                          className="object-cover hover:scale-105 transition-transform duration-700"
+                          className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700"
                         />
                       </div>
                     ))}

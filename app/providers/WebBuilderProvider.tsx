@@ -3,37 +3,8 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Site, Page, Service, BlogPost, Project } from '@/app/lib/types';
 import { siteApi, pageApi, serviceApi, blogApi, projectApi, testimonialApi, serviceAreaApi } from '@/app/lib/api';
-import { isPublishedProject, projectBelongsToSite } from '@/app/lib/projects';
-import { SiteLoadingScreen } from '@/app/components/ui/SiteLoadingScreen';
 
-// Site slug from environment variable
-const SITE_SLUG = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG;
-
-/** Parsed poll interval in ms; 0 disables polling. Defaults avoid API rate limits in production. */
-function readPollIntervalMs(envKey: string, defaultMs: number): number {
-  const raw = process.env[envKey];
-  if (raw === undefined || raw === '') return defaultMs;
-  const n = Number(raw);
-  return Number.isFinite(n) && n >= 0 ? n : defaultMs;
-}
-
-const isProdBuild = process.env.NODE_ENV === 'production';
-
-/** Site/theme refresh (formerly every 3s — far too aggressive for deployed APIs). */
-const SITE_POLL_INTERVAL_MS = readPollIntervalMs(
-  'NEXT_PUBLIC_WEBBUILDER_SITE_POLL_INTERVAL_MS',
-  isProdBuild ? 0 : 15_000
-);
-
-/** Pages, projects, services refresh (formerly every 5s each). */
-const CONTENT_POLL_INTERVAL_MS = readPollIntervalMs(
-  'NEXT_PUBLIC_WEBBUILDER_CONTENT_POLL_INTERVAL_MS',
-  isProdBuild ? 0 : 60_000
-);
-
-
-
-
+const SITE_SLUG = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG || 'brightpath-home-services-mm9bo6ed-2n7p';
 
 interface WebBuilderContextType {
   site: Site | null;
@@ -46,7 +17,6 @@ interface WebBuilderContextType {
   currentPage: Page | null;
   setCurrentPage: (page: Page | null) => void;
   loading: boolean;
-  initialLoading: boolean;
   error: string | null;
   loadPage: (siteSlug: string, pageSlug: string) => Promise<void>;
 }
@@ -74,38 +44,87 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
   const [testimonials, setTestimonials] = useState<{ title?: string; description?: string; testimonials: any[] } | null>(null);
   const [serviceAreaPages, setServiceAreaPages] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<Page | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const loadPages = async (siteSlug: string) => {
+    try {
+      const pagesData = await pageApi.getPagesBySite(siteSlug);
+      setPages(Array.isArray(pagesData) ? pagesData : []);
+    } catch {
+      setPages([]);
+    }
+  };
+
+  const loadServicesBySiteSlug = async (siteSlug: string) => {
+    try {
+      const servicesData = await serviceApi.getServicesBySite(siteSlug);
+      setServices(Array.isArray(servicesData) ? servicesData : []);
+    } catch {
+      /* non-blocking */
+    }
+  };
+
+  const loadBlogPosts = async (siteSlug: string, limit?: number) => {
+    try {
+      const postsData = await blogApi.getPostsBySite(siteSlug, limit);
+      setBlogPosts(Array.isArray(postsData) ? postsData : []);
+    } catch {
+      /* non-blocking */
+    }
+  };
+
+  const loadProjects = async (siteSlug: string, limit?: number) => {
+    try {
+      const projectsData = await projectApi.getProjectsBySite(siteSlug, limit);
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
+    } catch {
+      /* non-blocking */
+    }
+  };
+
+  const loadTestimonials = async (siteSlug: string) => {
+    try {
+      const testimonialsData = await testimonialApi.getTestimonialsBySite(siteSlug);
+      setTestimonials(testimonialsData);
+    } catch {
+      /* non-blocking */
+    }
+  };
+
+  const loadServiceAreaPages = async (siteSlug: string) => {
+    try {
+      const serviceAreaPagesData = await serviceAreaApi.getServiceAreaPagesBySite(siteSlug);
+      setServiceAreaPages(Array.isArray(serviceAreaPagesData) ? serviceAreaPagesData : []);
+    } catch {
+      /* non-blocking */
+    }
+  };
 
   const loadSite = async (slug: string) => {
     try {
       setLoading(true);
-      setInitialLoading(true);
       setError(null);
 
       const siteData = await siteApi.getSiteBySlug(slug);
-      const [pagesData, servicesData, postsData, projectsData, testimonialsData, serviceAreaPagesData] =
-        await Promise.all([
-          pageApi.getPagesBySite(siteData.slug),
-          serviceApi.getServicesBySite(siteData.slug),
-          blogApi.getPostsBySite(siteData.slug),
-          projectApi.getProjectsBySite(siteData.slug),
-          testimonialApi.getTestimonialsBySite(siteData.slug),
-          serviceAreaApi.getServiceAreaPagesBySite(siteData.slug),
-        ]);
-
       setSite(siteData);
-      setPages(pagesData);
-      setServices(servicesData);
-      setBlogPosts(postsData);
-      setProjects(projectsData.filter((p) => projectBelongsToSite(p, siteData)));
-      setTestimonials(testimonialsData);
-      setServiceAreaPages(serviceAreaPagesData);
+
+      // Critical path only — unblock first paint ASAP
+      await Promise.all([
+        loadPages(siteData.slug),
+        loadServicesBySiteSlug(siteData.slug),
+      ]);
+      setLoading(false);
+
+      // Defer secondary data (does not block home render)
+      void Promise.all([
+        loadBlogPosts(siteData.slug),
+        loadProjects(siteData.slug),
+        loadTestimonials(siteData.slug),
+        loadServiceAreaPages(siteData.slug),
+      ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load site');
-    } finally {
-      setInitialLoading(false);
       setLoading(false);
     }
   };
@@ -123,151 +142,14 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     }
   };
 
-  const loadPages = async (siteSlug: string) => {
-    try {
-      const pagesData = await pageApi.getPagesBySite(siteSlug);
-      setPages(pagesData);
-    } catch (err) {
-      console.warn('Failed to load pages:', err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
-
-  const loadServicesBySiteSlug = async (siteSlug: string) => {
-    try {
-      const servicesData = await serviceApi.getServicesBySite(siteSlug);
-      setServices(servicesData);
-    } catch (err) {
-      console.warn('Failed to load services:', err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
-
-  const loadBlogPosts = async (siteSlug: string, limit?: number) => {
-    try {
-      const postsData = await blogApi.getPostsBySite(siteSlug, limit);
-      setBlogPosts(postsData);
-    } catch (err) {
-      console.warn('Failed to load blog posts:', err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
-
-  const loadProjects = async (siteSlug: string, limit?: number, siteForScope?: Site | null) => {
-    try {
-      const projectsData = await projectApi.getProjectsBySite(siteSlug, limit);
-      const scoped = siteForScope
-        ? projectsData.filter((p) => projectBelongsToSite(p, siteForScope))
-        : projectsData;
-      setProjects(scoped);
-    } catch {
-      /* ignore project load errors */
-    }
-  };
-
-  const loadTestimonials = async (siteSlug: string) => {
-    try {
-      const testimonialsData = await testimonialApi.getTestimonialsBySite(siteSlug);
-      setTestimonials(testimonialsData);
-    } catch (err) {
-      console.warn(
-        '[WebBuilderProvider] Failed to load testimonials:',
-        err instanceof Error ? err.message : err
-      );
-    }
-  };
-
-  const loadServiceAreaPages = async (siteSlug: string) => {
-    try {
-      const serviceAreaPagesData = await serviceAreaApi.getServiceAreaPagesBySite(siteSlug);
-      setServiceAreaPages(serviceAreaPagesData);
-    } catch (err) {
-      console.warn('Failed to load service area pages:', err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
-
-  // Auto-load site from env variable on mount
   useEffect(() => {
     if (!SITE_SLUG) {
       setError('NEXT_PUBLIC_WEBBUILDER_SITE_SLUG environment variable is not defined. Please check your .env file.');
-      setInitialLoading(false);
       setLoading(false);
       return;
     }
     loadSite(SITE_SLUG);
   }, []);
-
-  // Optional: poll site for theme edits from builder (disabled in production by default — see rate limits)
-  useEffect(() => {
-    if (!site?.slug || SITE_POLL_INTERVAL_MS <= 0) return;
-
-    const intervalId = setInterval(async () => {
-      try {
-        const siteData = await siteApi.getSiteBySlug(site.slug);
-        setSite((prevSite) => {
-          if (prevSite && JSON.stringify(prevSite.theme) !== JSON.stringify(siteData.theme)) {
-            return siteData;
-          }
-          return prevSite;
-        });
-      } catch {
-        /* ignore polling errors */
-      }
-    }, SITE_POLL_INTERVAL_MS);
-
-    return () => clearInterval(intervalId);
-  }, [site?.slug]);
-
-  useEffect(() => {
-    if (!site?.slug || CONTENT_POLL_INTERVAL_MS <= 0) return;
-
-    const intervalId = setInterval(async () => {
-      try {
-        const projectsData = await projectApi.getProjectsBySite(site.slug);
-        const scoped = projectsData.filter((p) => projectBelongsToSite(p, site));
-        setProjects((prevProjects) =>
-          JSON.stringify(prevProjects) !== JSON.stringify(scoped) ? scoped : prevProjects
-        );
-      } catch {
-        /* ignore polling errors */
-      }
-    }, CONTENT_POLL_INTERVAL_MS);
-
-    return () => clearInterval(intervalId);
-  }, [site?.slug]);
-
-  useEffect(() => {
-    if (!site?.slug || CONTENT_POLL_INTERVAL_MS <= 0) return;
-
-    const intervalId = setInterval(async () => {
-      try {
-        const pagesData = await pageApi.getPagesBySite(site.slug);
-        setPages((prevPages) =>
-          JSON.stringify(prevPages) !== JSON.stringify(pagesData) ? pagesData : prevPages
-        );
-      } catch {
-        /* ignore */
-      }
-    }, CONTENT_POLL_INTERVAL_MS);
-
-    return () => clearInterval(intervalId);
-  }, [site?.slug]);
-
-  useEffect(() => {
-    if (!site?.slug || CONTENT_POLL_INTERVAL_MS <= 0) return;
-
-    const intervalId = setInterval(async () => {
-      try {
-        const servicesData = await serviceApi.getServicesBySite(site.slug);
-        setServices((prevServices) =>
-          JSON.stringify(prevServices) !== JSON.stringify(servicesData)
-            ? servicesData
-            : prevServices
-        );
-      } catch {
-        /* ignore */
-      }
-    }, CONTENT_POLL_INTERVAL_MS);
-
-    return () => clearInterval(intervalId);
-  }, [site?.slug]);
 
   const contextValue: WebBuilderContextType = {
     site,
@@ -280,16 +162,13 @@ export const WebBuilderProvider: React.FC<WebBuilderProviderProps> = ({ children
     currentPage,
     setCurrentPage,
     loading,
-    initialLoading,
     error,
     loadPage,
   };
 
-  const loadingLabel = site?.business?.name || site?.name;
-
   return (
     <WebBuilderContext.Provider value={contextValue}>
-      {initialLoading ? <SiteLoadingScreen siteName={loadingLabel} /> : children}
+      {children}
     </WebBuilderContext.Provider>
   );
 };

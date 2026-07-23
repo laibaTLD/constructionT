@@ -99,19 +99,19 @@ export const CTASection: React.FC<CTASectionProps> = ({ ctaSection, className })
   return (
     <section
       ref={sectionRef}
-      className={cn('section relative flex flex-col items-center bg-white', className)}
+      className={cn('relative flex flex-col items-center bg-white', className)}
     >
       {/* 1. White Statement Block - Centered Editorial Design */}
       <div
         ref={textSectionRef}
-        className="relative z-20 w-fit p-10 flex flex-col items-center text-center px-6 bg-white"
+        className="relative z-20 w-fit p-6 md:p-8 flex flex-col items-center text-center px-6 bg-white"
       >
         <div ref={contentRef} className="max-w-4xl flex flex-col items-center">
 
           {/* Header Title - Huge, Centered, Multiple Lines */}
           {ctaSection.title && (
             <h2
-              className="text-4xl md:text-5xl lg:text-7xl font-sans tracking-tight leading-[1.1] uppercase font-light mb-12"
+              className="text-4xl md:text-5xl lg:text-7xl font-sans tracking-tight leading-[1.1] uppercase font-light mb-6"
               style={{ color: primaryTextColor }}
             >
               <div className="text-balance [&_strong]:text-primary [&_span.brand]:text-primary">
@@ -139,7 +139,7 @@ export const CTASection: React.FC<CTASectionProps> = ({ ctaSection, className })
 
           {/* Note Text (Optional Small Detail) */}
           {((ctaSection as any).subtitle || (ctaSection as any).noteText) && (
-            <div className="text-[10px] md:text-[11px] font-light tracking-[0.2em] opacity-60 mb-16" style={{ color: primaryTextColor }}>
+            <div className="text-[10px] md:text-[11px] font-light tracking-[0.2em] opacity-60 mb-8" style={{ color: primaryTextColor }}>
               <TiptapRenderer content={(ctaSection as any).subtitle || (ctaSection as any).noteText} as="inline" />
             </div>
           )}
@@ -175,15 +175,15 @@ export const CTASection: React.FC<CTASectionProps> = ({ ctaSection, className })
       {backgroundImageUrl && (
         <div
           ref={bgImageContainerRef}
-          className="relative w-full h-[60vh] md:h-[85vh] lg:h-[110vh] overflow-hidden -mt-32 md:-mt-48 lg:-mt-64 z-10"
+          className="relative w-full h-[40vh] md:h-[50vh] lg:h-[55vh] overflow-hidden -mt-16 md:-mt-20 lg:-mt-24 z-10"
         >
           <div
             ref={bgImageRef}
-            className="absolute inset-x-0 -top-20 h-[140%] bg-cover bg-center"
+            className="absolute inset-x-0 -top-10 h-[120%] bg-cover bg-center"
             style={{ backgroundImage: `url(${backgroundImageUrl})` }}
           >
             {/* Subtle Linear Fade for smooth overlap transition */}
-            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white to-transparent" />
           </div>
         </div>
       )}

@@ -38,7 +38,7 @@ BACKEND_API_URL=http://localhost:5000
 
 # Site configuration
 NEXT_PUBLIC_WEBBUILDER_SITE_SLUG=your-site-slug
-NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
 ### SMTP Settings
