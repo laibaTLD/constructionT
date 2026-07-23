@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiBaseUrl } from '@/app/lib/utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,14 +9,7 @@ export async function GET(request: NextRequest) {
       throw new Error('Site slug not configured');
     }
 
-    // Use the same API base URL as the template
-    const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 
-      (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
-    
-    const isLocalRaw = /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?\b/i.test(rawBaseUrl);
-    const API_BASE_URL = rawBaseUrl.startsWith('http://') && !isLocalRaw
-      ? rawBaseUrl.replace(/^http:\/\//i, 'https://')
-      : rawBaseUrl;
+    const API_BASE_URL = getApiBaseUrl();
 
     // Direct fetch to avoid circular dependency
     const response = await fetch(`${API_BASE_URL}/public/sites/${siteSlug}`);

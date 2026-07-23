@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getApiBaseUrl } from '@/app/lib/utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,14 +9,7 @@ export async function GET(request: NextRequest) {
       throw new Error('Site slug not configured');
     }
 
-    // Use the same API base URL as the template
-    const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 
-      (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
-    
-    const isLocalRaw = /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?\b/i.test(rawBaseUrl);
-    const API_BASE_URL = rawBaseUrl.startsWith('http://') && !isLocalRaw
-      ? rawBaseUrl.replace(/^http:\/\//i, 'https://')
-      : rawBaseUrl;
+    const API_BASE_URL = getApiBaseUrl();
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -34,10 +28,14 @@ export async function GET(request: NextRequest) {
     const siteData = await siteResponse.json();
     const site = siteData.data?.data ?? siteData.data;
 
-    // Parse other responses
-    const pages = pagesResponse.ok ? (await pagesResponse.json()).data?.data ?? (await pagesResponse.json()).data ?? [] : [];
-    const services = servicesResponse.ok ? (await servicesResponse.json()).data?.data ?? (await servicesResponse.json()).data ?? [] : [];
-    const blogPosts = blogResponse?.ok ? (await blogResponse.json()).data?.data ?? (await blogResponse.json()).data ?? [] : [];
+    // Parse other responses (body can only be read once)
+    const pagesData = pagesResponse.ok ? await pagesResponse.json() : null;
+    const servicesData = servicesResponse.ok ? await servicesResponse.json() : null;
+    const blogData = blogResponse?.ok ? await blogResponse.json() : null;
+
+    const pages = pagesData?.data?.data ?? pagesData?.data ?? [];
+    const services = servicesData?.data?.data ?? servicesData?.data ?? [];
+    const blogPosts = blogData?.data?.data ?? blogData?.data ?? [];
 
     // Build sitemap entries
     const sitemapEntries = [];

@@ -1,6 +1,8 @@
 // Lightweight fetch-based API client to replace axios
 // Reduces bundle size and improves performance
 
+import { getApiBaseUrl } from './utils';
+
 interface FetchOptions extends RequestInit {
   timeout?: number;
 }
@@ -135,14 +137,8 @@ const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
   };
 };
 
-// Create API instance
-const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 
-  (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
-
-const isLocalRaw = /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?\b/i.test(rawBaseUrl);
-const API_BASE_URL = rawBaseUrl.startsWith('http://') && !isLocalRaw
-  ? rawBaseUrl.replace(/^http:\/\//i, 'https://')
-  : rawBaseUrl;
+// Create API instance — always absolute (relative /api breaks Node fetch in SSR/build)
+const API_BASE_URL = getApiBaseUrl();
 
 export const api = createFetchApi(API_BASE_URL);
 
