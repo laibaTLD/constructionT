@@ -18,8 +18,9 @@ class FetchError extends Error {
   }
 }
 
-const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
+const createFetchApi = (baseURL: string | (() => string), defaultTimeout = 30000) => {
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const resolveBase = () => (typeof baseURL === 'function' ? baseURL() : baseURL);
 
   const request = async <T = any>(
     endpoint: string,
@@ -30,7 +31,7 @@ const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
     
     const url = endpoint.startsWith('http') 
       ? endpoint 
-      : `${baseURL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+      : `${resolveBase().replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -137,11 +138,8 @@ const createFetchApi = (baseURL: string, defaultTimeout = 30000) => {
   };
 };
 
-// Create API instance — always absolute (relative /api breaks Node fetch in SSR/build)
-const API_BASE_URL = getApiBaseUrl();
+// Lazy base so browser uses `/api` proxy; SSR uses absolute BACKEND_API_URL
+export const api = createFetchApi(getApiBaseUrl);
 
-export const api = createFetchApi(API_BASE_URL);
-
-// Export for testing or custom instances
 export { createFetchApi, FetchError };
 export default api;
