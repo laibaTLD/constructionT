@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc, cn } from '@/app/lib/utils';
+import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 
@@ -72,8 +73,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => 
       if (images) {
         gsap.fromTo(
           images,
-          { opacity: 0, scale: 1.06 },
-          { opacity: 1, scale: 1, stagger: 0.15, duration: 1.4, ease: 'power2.out', delay: 0.35 }
+          { scale: 1.04 },
+          { scale: 1, stagger: 0.12, duration: 1.2, ease: 'power2.out', delay: 0.1 }
         );
       }
     }, sectionRef);
@@ -94,7 +95,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => 
       )}
     >
       {/* Left: content drives section height */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24 xl:px-28 pt-28 pb-12 md:pt-32 md:pb-16 z-20 overflow-visible">
+      <div className="w-full md:w-1/2 flex flex-col justify-center px-4 sm:px-8 md:px-16 lg:px-24 xl:px-28 pt-24 pb-10 sm:pt-28 sm:pb-12 md:pt-32 md:pb-16 z-20 overflow-visible min-w-0">
         <div className="max-w-lg overflow-visible">
           <div
             ref={badgeRef}
@@ -178,12 +179,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => 
                 playsInline
               />
             ) : (
-              <img
-                src={getImageSrc(displayMedia[0].url)}
+              <OptimizedImage
+                src={displayMedia[0].url}
                 alt={displayMedia[0].altText || ''}
-                className="h-full w-full object-cover"
-                fetchPriority="high"
-                decoding="async"
+                fill
+                priority
+                sizes={IMAGE_SIZES.hero}
+                className="object-cover"
               />
             )}
           </div>
@@ -207,13 +209,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ hero, className }) => 
                     playsInline
                   />
                 ) : (
-                  <img
-                    src={getImageSrc(item.url)}
+                  <OptimizedImage
+                    src={item.url}
                     alt={item.altText || ''}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    loading={idx === 0 ? 'eager' : 'lazy'}
-                    fetchPriority={idx === 0 ? 'high' : 'low'}
-                    decoding="async"
+                    fill
+                    priority={idx === 0}
+                    sizes={idx === 0 ? IMAGE_SIZES.hero : IMAGE_SIZES.card}
+                    className="object-cover"
                   />
                 )}
               </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc, cn } from '@/app/lib/utils';
+import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
@@ -22,7 +23,6 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (!aboutSection?.enabled) return;
@@ -162,15 +162,16 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
               className="relative w-full overflow-hidden bg-[#f3f3f3] group shadow-sm aspect-[4/3] lg:aspect-auto lg:min-h-full lg:h-auto lg:flex-1"
             >
               {imageUrl ? (
-                <img
-                  ref={imageRef}
+                <OptimizedImage
                   src={imageUrl}
                   alt={
                     typeof aboutSection.image === 'object' && aboutSection.image?.altText
                       ? aboutSection.image.altText
                       : 'About us'
                   }
-                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  fill
+                  sizes={IMAGE_SIZES.sectionHalf}
+                  className="object-cover object-center"
                 />
               ) : (
                 <div className="absolute inset-0 bg-[#f4f4f4]" />

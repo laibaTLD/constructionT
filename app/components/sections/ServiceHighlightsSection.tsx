@@ -112,7 +112,7 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
       className={cn('relative py-3 md:py-8 lg:py-12 overflow-hidden', className)}
       style={{ backgroundColor: themeColors.sectionBackground || '#FFFFFF' }}
     >
-      <div className="max-w-[1800px] mx-auto px-8 md:px-16 lg:px-24">
+      <div className="wb-page-shell py-3 md:py-8 lg:py-12">
         
         {/* Header Area */}
         <div ref={headlineRef} className="mb-12 lg:mb-22">
@@ -123,7 +123,7 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
               </span>
            </div>
            {serviceHighlightsSection.title && (
-              <h2 className="text-4xl md:text-5xl lg:text-7xl font-sans tracking-tight uppercase font-light leading-none">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-sans tracking-tight uppercase font-light leading-none break-words">
                  <div className="[&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
                    {/* Hierarchical styling to match image: First line Red, Subtitle Black */}
                    <style jsx>{`
@@ -138,15 +138,15 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
         </div>
 
         {/* Highlights Display - Using Brand Color for High Impact Data */}
-        <div ref={gridRef} className="flex flex-col md:flex-row flex-wrap items-start justify-between gap-y-20 gap-x-12 lg:gap-x-24">
+        <div ref={gridRef} className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:flex lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-y-16 lg:gap-x-12 xl:gap-x-24">
           {highlights.map((highlight, index) => {
             const counter = parseCounter((highlight as any).price);
 
             return (
-              <div key={index} className="highlight-item flex flex-col group min-w-[200px] flex-1">
+              <div key={index} className="highlight-item flex min-w-0 flex-col group sm:max-w-none lg:min-w-[180px] lg:flex-1">
                 <div className="relative mb-8">
                   <div 
-                     className="big-number text-5xl md:text-6xl lg:text-[5.5vw] font-extralight tracking-[0.1em] leading-none whitespace-nowrap"
+                     className="big-number text-4xl sm:text-5xl md:text-6xl lg:text-[5.5vw] font-extralight tracking-[0.1em] leading-none break-words"
                      data-value={counter?.value || 0}
                      data-suffix={counter?.suffix || ''}
                      style={{ color: brandColor }} // High Impact Brand Color as per image design

@@ -30,11 +30,11 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
             className={cn('py-8 md:py-10 lg:py-12', className)}
             style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
         >
-            <div className="container mx-auto px-6 lg:px-12">
-                <div className="grid lg:grid-cols-12 gap-20 lg:gap-24 items-start">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-12 min-w-0">
+                <div className="grid lg:grid-cols-12 gap-12 lg:gap-16 xl:gap-20 items-start">
 
                     {/* Left Column: Architectural Section Header */}
-                    <div className="lg:col-span-4 lg:sticky lg:top-36 space-y-10">
+                    <div className="wb-sticky-heading lg:col-span-4 min-w-0 self-start lg:top-28 xl:top-36 space-y-10 z-10">
                         <div className="space-y-6">
                             <span
                                 className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-30"
@@ -45,7 +45,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
 
                             {faqSection.title && (
                                 <h2
-                                    className="text-4xl md:text-5xl lg:text-6xl font-extralight tracking-[0.1em] uppercase leading-[1.1] text-balance"
+                                    className="text-3xl md:text-4xl lg:text-[2.75rem] xl:text-5xl font-extralight tracking-[0.06em] uppercase leading-[1.15] break-words [overflow-wrap:anywhere]"
                                     style={{
                                         color: themeColors.mainText,
                                         fontFamily: themeFonts.heading
@@ -58,7 +58,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
 
                         {faqSection.description && (
                             <div
-                                className="max-w-xs text-xs md:text-sm font-light leading-relaxed tracking-wider opacity-60 uppercase"
+                                className="max-w-xs text-xs md:text-sm font-light leading-relaxed tracking-wider opacity-60 uppercase break-words"
                                 style={{ color: themeColors.secondaryText }}
                             >
                                 <TiptapRenderer content={faqSection.description} />
@@ -72,7 +72,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
                     </div>
 
                     {/* Right Column: Premium Minimalist Accordion */}
-                    <div className="lg:col-span-8">
+                    <div className="lg:col-span-8 min-w-0">
                         <div className="border-t border-black/10">
                             {faqSection.items.map((item, index) => {
                                 const isOpen = openIndex === index;
@@ -84,12 +84,12 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
                                         <button
                                             type="button"
                                             onClick={() => toggle(index)}
-                                            className="w-full flex items-center justify-between py-5 lg:py-6 text-left group transition-all duration-300"
+                                            className="w-full flex items-start justify-between gap-4 py-5 lg:py-6 text-left group transition-all duration-300"
                                         >
-                                            <div className="flex items-start gap-8 md:gap-12 lg:gap-16">
+                                            <div className="flex min-w-0 flex-1 items-start gap-6 md:gap-10 lg:gap-12">
                                                 <span
                                                     className={cn(
-                                                        "text-[10px] mt-2.5 font-bold tracking-[0.2em] transition-all duration-500",
+                                                        "shrink-0 text-[10px] mt-2.5 font-bold tracking-[0.2em] transition-all duration-500",
                                                         isOpen ? "opacity-100" : "opacity-20"
                                                     )}
                                                     style={{ color: isOpen ? brandColor : themeColors.mainText }}
@@ -98,8 +98,8 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
                                                 </span>
                                                 <h3
                                                     className={cn(
-                                                        "text-xl md:text-2xl lg:text-4xl font-extralight tracking-[0.05em] uppercase transition-all duration-500",
-                                                        isOpen ? "italic scale-[1.01]" : "group-hover:opacity-50"
+                                                        "min-w-0 flex-1 text-lg md:text-xl lg:text-2xl xl:text-3xl font-extralight tracking-[0.04em] uppercase leading-snug break-words [overflow-wrap:anywhere] transition-all duration-500",
+                                                        isOpen ? "italic" : "group-hover:opacity-50"
                                                     )}
                                                     style={{
                                                         color: themeColors.mainText,
@@ -112,7 +112,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
 
                                             <div
                                                 className={cn(
-                                                    "shrink-0 ml-4 transition-all duration-500 rounded-full w-10 md:w-12 h-10 md:h-12 flex items-center justify-center border",
+                                                    "shrink-0 transition-all duration-500 rounded-full w-10 md:w-12 h-10 md:h-12 flex items-center justify-center border",
                                                     isOpen ? "rotate-180 border-transparent shadow-lg text-white" : "border-black/10 group-hover:border-black/30"
                                                 )}
                                                 style={{
@@ -133,7 +133,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({ faqSection, className })
                                         >
                                             <div className="overflow-hidden">
                                                 <div
-                                                    className="pl-12 md:pl-32 lg:pl-44 pb-6 text-sm md:text-base lg:text-lg font-light leading-relaxed tracking-wide opacity-70 max-w-2xl"
+                                                    className="pl-12 md:pl-20 lg:pl-28 pb-6 text-sm md:text-base lg:text-lg font-light leading-relaxed tracking-wide opacity-70 max-w-2xl"
                                                     style={{ color: themeColors.secondaryText }}
                                                 >
                                                     <TiptapRenderer content={item.answer} />

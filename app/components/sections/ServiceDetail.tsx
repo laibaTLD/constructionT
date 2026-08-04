@@ -61,9 +61,9 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
             <ServiceBanner service={service} />
 
             {/* Main Content Architecture */}
-            <main className="relative py-20 lg:py-32">
-                <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
-                    <div className="grid lg:grid-cols-12 gap-16 xl:gap-24">
+            <main className="relative py-12 md:py-20 lg:py-32">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl min-w-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16 xl:gap-24">
                         
                         {/* Left Side: Editorial Content */}
                         <div className="lg:col-span-8 space-y-20">

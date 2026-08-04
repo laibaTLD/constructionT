@@ -7,6 +7,8 @@ import { getImageSrc } from '@/app/lib/utils';
 import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import type { Page } from '@/app/lib/types';
+import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
+import { tiptapToText } from '@/app/lib/seo';
 
 export const Footer: React.FC = () => {
   const { site, pages, services } = useWebBuilder();
@@ -18,6 +20,12 @@ export const Footer: React.FC = () => {
   const legal = site?.legal;
   const brandName = business?.name || site?.name || 'Site Name';
   const logoUrl = getImageSrc(site?.theme?.logoUrl);
+  const copyrightContent = site?.footer?.copyright;
+  const hasCopyright = Boolean(
+    typeof copyrightContent === 'string'
+      ? copyrightContent.trim()
+      : tiptapToText(copyrightContent).trim()
+  );
 
   const defaultSlugByType: Record<string, string> = {
     home: '',
@@ -99,7 +107,7 @@ export const Footer: React.FC = () => {
         style={{ backgroundColor: themeColors.primaryButton }}
       />
 
-      <div className="relative mx-auto max-w-[1800px] px-6 py-10 md:px-12 md:py-12 lg:px-16">
+      <div className="relative mx-auto max-w-[1800px] px-4 sm:px-6 md:px-12 lg:px-16 py-10 md:py-12">
         {/* Compact top row */}
         <div className="mb-8 flex flex-col gap-5 border-b border-white/10 pb-8 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-4">
@@ -233,10 +241,14 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Copyright */}
-        <div className="pt-6 text-[9px] uppercase tracking-[0.2em] text-white/40">
-          <span>
-            © {new Date().getFullYear()} {brandName}
-          </span>
+        <div className="pt-6 text-[9px] uppercase tracking-[0.2em] text-white/40 [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-white [&_p]:m-0">
+          {hasCopyright ? (
+            <TiptapRenderer content={copyrightContent} as="inline" />
+          ) : (
+            <span>
+              © {new Date().getFullYear()} {brandName}
+            </span>
+          )}
         </div>
       </div>
     </footer>

@@ -3,7 +3,6 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { HeroSection } from '@/app/components/sections/serving-area-detail-sections/Hero';
 import { About } from '@/app/components/sections/serving-area-detail-sections/About';

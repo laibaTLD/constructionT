@@ -22,6 +22,7 @@ interface ServingAreasdetailSectionProps {
     highlights?: any;
     about?: any;
     ourServices?: any;
+    pageServiceId?: string;
     cta?: any;
     serviceOverview?: any;
     serviceDetails?: any;
@@ -53,25 +54,43 @@ export const ServingAreasdetailSection: React.FC<ServingAreasdetailSectionProps>
       {data.about && <About about={data.about} />}
 
       {/* Our Services Section */}
-      {data.ourServices && <OurServices services={data.ourServices} />}
+      {data.ourServices && (
+        <OurServices services={data.ourServices} pageServiceId={data.pageServiceId} />
+      )}
 
-      {/* Service Details Section */}
-      {data.serviceDetails && <ServiceDetails details={data.serviceDetails} />}
+      {/* CTA Section */}
+      {data.cta && <CTA cta={data.cta} />}
 
       {/* Service Overview Section */}
       {data.serviceOverview && <ServiceOverview overview={data.serviceOverview} />}
 
-      {/* Why Choose Us Section */}
-      {data.whyChooseUs && <WhyChooseUs whyChooseUs={data.whyChooseUs} />}
+      {/* Service Details + Why Choose Us — equal side-by-side */}
+      {(data.serviceDetails || data.whyChooseUs) && (
+        <div
+          className={
+            data.serviceDetails && data.whyChooseUs
+              ? 'grid grid-cols-1 lg:grid-cols-2 items-stretch'
+              : 'grid grid-cols-1'
+          }
+        >
+          {data.serviceDetails && (
+            <div className="min-w-0 h-full">
+              <ServiceDetails details={data.serviceDetails} className="h-full" />
+            </div>
+          )}
+          {data.whyChooseUs && (
+            <div className="min-w-0 h-full">
+              <WhyChooseUs whyChooseUs={data.whyChooseUs} className="h-full" />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* FAQs Section */}
       {data.faqs && <FAQs faqs={data.faqs} />}
 
       {/* Serving Areas Section */}
       {data.servingAreas && <ServingAreas service={data.servingAreas} />}
-
-      {/* CTA Section */}
-      {data.cta && <CTA cta={data.cta} />}
     </div>
   );
 };

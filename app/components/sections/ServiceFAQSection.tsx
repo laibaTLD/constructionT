@@ -32,11 +32,11 @@ export const ServiceFAQSection: React.FC<ServiceFAQSectionProps> = ({ service })
             className="py-24 md:py-32 lg:py-48"
             style={{ backgroundColor: themeColors.pageBackground, fontFamily: themeFonts.body }}
         >
-            <div className="container mx-auto px-6 lg:px-12">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-12 min-w-0">
                 <div className="grid lg:grid-cols-12 gap-20 lg:gap-24 items-start">
 
                     {/* Left Column: Architectural Section Header */}
-                    <div className="lg:col-span-4 lg:sticky lg:top-36 space-y-10">
+                    <div className="wb-sticky-heading lg:col-span-4 min-w-0 self-start lg:top-28 xl:top-36 space-y-10 z-10">
                         <div className="space-y-6">
                             <span
                                 className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-30"
