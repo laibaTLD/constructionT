@@ -80,7 +80,7 @@ export const ServiceContactFormSection: React.FC<ServiceContactFormSectionProps>
                 color: themeColors.primaryButton || '#E31E24' 
             }}
           >
-           {service.name}
+           This is your home
           </h3>
         </div>
 

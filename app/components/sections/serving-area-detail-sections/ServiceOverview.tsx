@@ -185,7 +185,7 @@ export const ServiceOverview: React.FC<ServiceOverviewProps> = ({ overview, clas
 
           {/* Image — equal column, sticky, no border or letterbox frame */}
           {hasImage && (
-            <aside className="relative min-w-0 lg:sticky lg:self-start" style={{ top: 'calc(var(--wb-header-height) + 1.25rem)' }}>
+            <aside className="relative min-w-0 lg:sticky lg:self-start lg:top-24" style={{ top: 'calc(var(--wb-header-height, 6rem) + 1.25rem)' }}>
               <div
                 className="w-full"
                 style={{

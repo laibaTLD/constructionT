@@ -34,7 +34,8 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
 
     // CTA Logic (Matching Home Page Pattern)
     const cta = service.cta;
-    const isCtaEnabled = cta?.enabled ?? true;
+    // Always render the CTA section (same as home page)
+    const isCtaEnabled = true;
     
     // Constructing the CTA object to match your exact CTASection requirements
     const ctaSectionFromService: any = {
@@ -45,7 +46,7 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
             label: cta?.buttonText || 'Schedule Now',
             href: cta?.buttonUrl || '/contact',
         },
-        image: cta?.image?.url ? { url: cta.image.url } : undefined,
+        backgroundImage: cta?.image?.url,
         // Passing theme colors to ensure consistency
         backgroundColor: themeColors.sectionBackgroundDark,
     };
