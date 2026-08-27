@@ -36,17 +36,25 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      // Browser hits /api/* → Next proxies to backend
-      {
-        source: "/api/:path*",
-        destination: `${apiOrigin}/api/:path*`,
-      },
-      {
-        source: "/uploads/:path*",
-        destination: `${apiOrigin}/api/uploads/:path*`,
-      },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: "/favicon.ico",
+          destination: "/site-icon",
+        },
+      ],
+      afterFiles: [
+        // Browser hits /api/* → Next proxies to backend
+        {
+          source: "/api/:path*",
+          destination: `${apiOrigin}/api/:path*`,
+        },
+        {
+          source: "/uploads/:path*",
+          destination: `${apiOrigin}/api/uploads/:path*`,
+        },
+      ],
+    };
   },
 };
 

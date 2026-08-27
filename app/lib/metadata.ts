@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
+import { getImageSrc } from './utils'
 
 interface SEOData {
   title?: string
@@ -7,6 +8,33 @@ interface SEOData {
   keywords?: string[]
   ogImageUrl?: string
   noIndex?: boolean
+}
+
+export function getSiteFaviconUrl(site?: Site | null): string {
+  return getImageSrc(site?.seo?.faviconUrl)
+}
+
+function getFaviconMimeType(url: string): string | undefined {
+  const ext = url.split('?')[0].split('.').pop()?.toLowerCase()
+  if (ext === 'svg') return 'image/svg+xml'
+  if (ext === 'png') return 'image/png'
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg'
+  if (ext === 'webp') return 'image/webp'
+  if (ext === 'gif') return 'image/gif'
+  if (ext === 'ico') return 'image/x-icon'
+  return undefined
+}
+
+export function getSiteFaviconIcons(site?: Site | null): Metadata['icons'] | undefined {
+  const url = getSiteFaviconUrl(site)
+  if (!url) return undefined
+
+  const type = getFaviconMimeType(url)
+  return {
+    icon: [{ url, type }],
+    shortcut: url,
+    apple: url,
+  }
 }
 
 export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
@@ -20,6 +48,11 @@ export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
     title: finalTitle,
     description: description || site?.business?.description || 'Generated site using Web Builder',
     keywords: keywords?.join(', ') || site?.seo?.keywords?.join(', '),
+  }
+
+  const faviconIcons = getSiteFaviconIcons(site)
+  if (faviconIcons) {
+    metadata.icons = faviconIcons
   }
 
   // Add Open Graph metadata
