@@ -149,7 +149,7 @@ export interface Page {
   siteId: string;
   name: string;
   slug: string;
-  pageType: 'home' | 'about' | 'contact' | 'service-list' | 'blog-list' | 'project-detail';
+  pageType: 'home' | 'about' | 'contact' | 'service-list' | 'blog-list' | 'project-detail' | 'testimonials';
   status: 'draft' | 'published' | 'archived';
   serviceListTitle?: any;
   serviceListDescription?: any;
@@ -268,6 +268,12 @@ export interface Page {
     showForm: boolean;
     showMap: boolean;
     showContactInfo: boolean;
+  };
+  servingAreasSection?: {
+    enabled: boolean;
+    title?: any;
+    description?: any;
+    serviceSlug?: string;
   };
   blogSection?: {
     enabled: boolean;

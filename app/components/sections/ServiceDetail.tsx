@@ -34,7 +34,8 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
 
     // CTA Logic (Matching Home Page Pattern)
     const cta = service.cta;
-    const isCtaEnabled = cta?.enabled ?? true;
+    // Always render the CTA section (same as home page)
+    const isCtaEnabled = true;
     
     // Constructing the CTA object to match your exact CTASection requirements
     const ctaSectionFromService: any = {
@@ -45,7 +46,7 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
             label: cta?.buttonText || 'Schedule Now',
             href: cta?.buttonUrl || '/contact',
         },
-        image: cta?.image?.url ? { url: cta.image.url } : undefined,
+        backgroundImage: cta?.image?.url,
         // Passing theme colors to ensure consistency
         backgroundColor: themeColors.sectionBackgroundDark,
     };
@@ -61,9 +62,9 @@ export const ServiceDetail: React.FC<ServiceDetailProps> = ({
             <ServiceBanner service={service} />
 
             {/* Main Content Architecture */}
-            <main className="relative py-20 lg:py-32">
-                <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
-                    <div className="grid lg:grid-cols-12 gap-16 xl:gap-24">
+            <main className="relative py-12 md:py-20 lg:py-32">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl min-w-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 md:gap-16 xl:gap-24">
                         
                         {/* Left Side: Editorial Content */}
                         <div className="lg:col-span-8 space-y-20">

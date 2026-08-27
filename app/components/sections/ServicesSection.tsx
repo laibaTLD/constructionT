@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc, cn } from '@/app/lib/utils';
+import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { ArrowRight } from 'lucide-react';
@@ -28,7 +29,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ servicesSectio
       className={cn('py-8 md:py-10 lg:py-12 border-t border-black/5', className)}
       style={{ backgroundColor: themeColors.pageBackground }}
     >
-      <div className="container mx-auto px-6 md:px-12 lg:px-20">
+      <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-20 min-w-0">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
 
           {/* LEFT SIDE: STICKY HEADER & NAV */}
@@ -63,11 +64,12 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ servicesSectio
                 >
                   {/* Square Editorial Image */}
                   <div className="relative aspect-square overflow-hidden bg-gray-50 border border-black/5">
-                    <img
+                    <OptimizedImage
                       src={imageUrl}
                       alt={service.name}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
-                      loading="lazy"
+                      fill
+                      sizes={IMAGE_SIZES.card}
+                      className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
                     />
                   </div>
 

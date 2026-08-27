@@ -56,7 +56,16 @@ export function tiptapToText(content: any): string {
         parts.push(node.text);
       }
       if (Array.isArray(node.content)) {
-        node.content.forEach(walk);
+        node.content.forEach((child: any, index: number) => {
+          if (
+            index > 0 &&
+            child?.type &&
+            ['paragraph', 'heading', 'bulletList', 'orderedList', 'listItem', 'blockquote'].includes(child.type)
+          ) {
+            parts.push(' ');
+          }
+          walk(child);
+        });
       }
     };
 

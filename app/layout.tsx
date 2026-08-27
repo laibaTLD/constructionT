@@ -1,8 +1,9 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { WebBuilderProvider } from '@/app/providers/WebBuilderProvider'
 import { ErrorBoundary } from '@/app/components/ui/ErrorBoundary'
 import { ThemeFontWrapper } from './components/ui/ThemeFontWrapper'
+import { GsapInit } from './components/ui/GsapInit'
 import { LanguageProvider } from '@/app/i18n/LanguageProvider'
 import { SiteFavicon } from './components/ui/SiteFavicon'
 import { generateMetadata as buildMetadata, getSiteSeoData } from '@/app/lib/metadata'
@@ -29,6 +30,12 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -36,13 +43,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="overflow-x-clip">
+        <GsapInit />
         <ErrorBoundary>
           <WebBuilderProvider>
             <SiteFavicon />
             <LanguageProvider>
               <ThemeFontWrapper>
-                <main className="min-h-screen">
+                <main className="min-h-screen w-full min-w-0 overflow-x-clip">
                   {children}
                 </main>
               </ThemeFontWrapper>

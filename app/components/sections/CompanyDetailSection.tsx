@@ -140,7 +140,7 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
          >
             <div className="title-inner w-full text-center select-none px-6">
                {companyDetailSection.title && (
-                  <h2 className="text-[10vw] md:text-[12vw] font-bold uppercase tracking-[-0.05em] leading-none" style={{ color: brandColor }}>
+                  <h2 className="text-4xl md:text-6xl lg:text-8xl font-bold uppercase tracking-[-0.05em] leading-none" style={{ color: brandColor }}>
                      <TiptapRenderer content={companyDetailSection.title} as="inline" />
                   </h2>
                )}
@@ -163,14 +163,11 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
                            alt={d.image?.altText || 'Company Detail'}
                            className="w-full h-full object-cover"
                         />
-                        {/* Architectural Overlay UI */}
+{/* Architectural Overlay UI */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                           <div className="w-20 h-20 rounded-full border border-white/20 backdrop-blur-sm flex items-center justify-center">
-                               <div className="w-1 h-1 bg-white rounded-full shadow-xl" />
-                           </div>
-                           <div className="absolute text-white/40 text-[11px] tracking-[1em] mt-48 uppercase font-light">
-                              Vision 0{idx + 1}
-                           </div>
+                            <div className="w-20 h-20 rounded-full border border-white/20 backdrop-blur-sm flex items-center justify-center">
+                                <div className="w-1 h-1 bg-white rounded-full shadow-xl" />
+                            </div>
                         </div>
                      </section>
 
@@ -185,7 +182,7 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
                                  <span className="reveal-text block text-[10px] font-bold tracking-[0.6em] uppercase text-white/40 mb-8">
                                     {d.label || `Part 0${idx + 1}`}
                                  </span>
-                                 <h3 className="reveal-text text-5xl md:text-7xl lg:text-8xl font-sans font-light uppercase tracking-tighter text-white leading-[0.85]">
+                                 <h3 className="reveal-text text-3xl md:text-5xl lg:text-6xl font-sans font-light uppercase tracking-tighter text-white leading-[0.85]">
                                     <TiptapRenderer content={title} as="inline" />
                                  </h3>
                               </div>

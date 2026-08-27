@@ -3,8 +3,8 @@
 import React, { useMemo } from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
-import { getImageSrc } from '@/app/lib/utils';
 import { cn } from '@/app/lib/utils';
+import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 
 interface GallerySectionProps {
@@ -40,18 +40,20 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
             className={cn('py-8 md:py-10 lg:py-12 overflow-hidden', className)}
             style={{ backgroundColor: themeColors.pageBackground }}
         >
-            <div className="container mx-auto px-6 md:px-12 lg:px-20">
+            <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-20 min-w-0">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-14 items-start">
                     
                     {/* Left Column: Main Focal Image & Typography */}
                     <div className="md:col-span-7 flex flex-col gap-12 lg:gap-20">
                         {/* Large Focal Image */}
                         <div className="relative aspect-[4/3] overflow-hidden group bg-gray-50">
-                            <img
-                                src={getImageSrc(mainImg.imageUrl)}
-                                alt={mainImg.altText}
-                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
-                                loading="lazy"
+                            <OptimizedImage
+                                src={mainImg.imageUrl}
+                                alt={mainImg.altText || 'Gallery'}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 58vw"
+                                loading="eager"
+                                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
                             />
                         </div>
 
@@ -88,21 +90,24 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
                     <div className="md:col-span-5 flex flex-col gap-6 md:pt-4 lg:pt-6">
                         {/* Secondary Image Top (Landscape/Video Aspect) */}
                         <div className="relative aspect-video overflow-hidden group bg-gray-50 shadow-xl">
-                           <img
-                                src={getImageSrc(topSecondaryImg.imageUrl)}
-                                alt={topSecondaryImg.altText}
-                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
-                                loading="lazy"
+                           <OptimizedImage
+                                src={topSecondaryImg.imageUrl}
+                                alt={topSecondaryImg.altText || 'Gallery'}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 42vw"
+                                loading="eager"
+                                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
                             />
                         </div>
 
                         {/* Secondary Image Bottom (Taller Aspect) */}
                         <div className="relative aspect-[4/5] md:aspect-[3/4] overflow-hidden group bg-gray-50 shadow-lg z-10">
-                            <img
-                                src={getImageSrc(bottomSecondaryImg.imageUrl)}
-                                alt={bottomSecondaryImg.altText}
-                                className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
-                                loading="lazy"
+                            <OptimizedImage
+                                src={bottomSecondaryImg.imageUrl}
+                                alt={bottomSecondaryImg.altText || 'Gallery'}
+                                fill
+                                sizes="(max-width: 768px) 100vw, 42vw"
+                                className="object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105"
                             />
                         </div>
                     </div>
@@ -115,14 +120,16 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallerySection, 
                             <div 
                                 key={img.key} 
                                 className={cn(
-                                    "aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-700",
+                                    "relative aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-700",
                                     i % 2 === 1 ? "md:translate-y-8" : ""
                                 )}
                             >
-                                <img
-                                    src={getImageSrc(img.imageUrl)}
-                                    alt={img.altText}
-                                    className="w-full h-full object-cover"
+                                <OptimizedImage
+                                    src={img.imageUrl}
+                                    alt={img.altText || 'Gallery'}
+                                    fill
+                                    sizes={IMAGE_SIZES.card}
+                                    className="object-cover"
                                 />
                             </div>
                         ))}

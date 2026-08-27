@@ -78,7 +78,7 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
       ref={sectionRef}
       className={cn('relative py-8 md:py-10 lg:py-12 overflow-hidden bg-[var(--wb-page-bg)]', className)}
     >
-      <div className="max-w-[1800px] mx-auto px-8 md:px-16 lg:px-24">
+      <div className="wb-page-shell">
 
         {/* Editorial Header - Large Scale Centered */}
         <div ref={headlineRef} className="flex flex-col items-center text-center mb-8 lg:mb-10">

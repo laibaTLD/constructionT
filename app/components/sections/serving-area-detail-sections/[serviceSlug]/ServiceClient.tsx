@@ -3,7 +3,6 @@
 import { useParams } from 'next/navigation';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { ServiceDetail } from '@/app/components/sections/ServiceDetail';
-import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import Link from 'next/link';
 
@@ -20,7 +19,14 @@ export default function ServiceClient({ serviceSlug: serviceSlugProp }: ServiceC
   const service = services.find((s: any) => s.slug === serviceSlug);
   
   if (loading) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading service...</p>
+        </div>
+      </div>
+    );
   }
   
   if (error) {
@@ -53,7 +59,6 @@ export default function ServiceClient({ serviceSlug: serviceSlugProp }: ServiceC
 
   return (
     <div className="min-h-screen">
-      <Header />
       <ServiceDetail service={service} allServices={services} />
       <Footer />
     </div>

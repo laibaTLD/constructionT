@@ -69,7 +69,7 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
             className={cn('relative py-8 md:py-10 lg:py-12 overflow-hidden', className)}
             style={{ backgroundColor: themeColors.sectionBackground }}
         >
-            <div className="container mx-auto px-6">
+            <div className="container mx-auto px-4 sm:px-6 min-w-0">
                 
                 {/* Section Header */}
                 <div className="mb-8 flex flex-col items-center text-center">
