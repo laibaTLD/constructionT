@@ -46,14 +46,10 @@ function normalizeSectionConfig(
     serviceSlugFromUrl ||
     undefined;
 
-  if (!data && !serviceSlug) return { enabled: true };
-
-  if (!data) {
-    return { enabled: true, serviceSlug };
-  }
+  if (!data) return null;
 
   return {
-    enabled: true,
+    enabled: data.enabled !== false,
     title: data.title as ServingAreasSectionData['title'],
     description: (data.description ?? data.shortDescription) as ServingAreasSectionData['description'],
     serviceSlug,
@@ -71,21 +67,15 @@ export const ServingAreas: React.FC<ServingAreasProps> = ({ service, className }
     [service, serviceSlugFromUrl]
   );
 
-  if (servingAreasSection?.enabled === false) return null;
-
-  const config: Page['servingAreasSection'] =
-    servingAreasSection ??
-    (serviceSlugFromUrl
-      ? { enabled: true, serviceSlug: resolveServiceSlug({ slug: serviceSlugFromUrl }) }
-      : { enabled: true });
+  if (!servingAreasSection || servingAreasSection.enabled === false) return null;
 
   return (
     <ServingAreasSection
-      enabled={config?.enabled !== false}
-      title={toPlainText(config?.title)}
-      description={toPlainText(config?.description)}
+      enabled
+      title={toPlainText(servingAreasSection.title)}
+      description={toPlainText(servingAreasSection.description)}
       serviceSlug={
-        (typeof config?.serviceSlug === 'string' && config.serviceSlug) ||
+        (typeof servingAreasSection.serviceSlug === 'string' && servingAreasSection.serviceSlug) ||
         resolveServiceSlug({ slug: serviceSlugFromUrl }) ||
         ''
       }

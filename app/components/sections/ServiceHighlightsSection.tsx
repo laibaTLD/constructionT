@@ -27,8 +27,7 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
   const gridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const isEnabled = serviceHighlightsSection?.enabled === true || serviceHighlightsSection != null;
-    if (!isEnabled) return;
+    if (!serviceHighlightsSection?.enabled) return;
 
     const ctx = gsap.context(() => {
       // 1. Headline Reveal
@@ -85,8 +84,7 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
     return () => ctx.revert();
   }, [serviceHighlightsSection]);
 
-  const isEnabled = serviceHighlightsSection?.enabled === true || serviceHighlightsSection != null;
-  if (!isEnabled) return null;
+  if (!serviceHighlightsSection?.enabled) return null;
 
   const brandColor = themeColors.primaryButton;
   const primaryTextColor = themeColors.lightPrimaryText;

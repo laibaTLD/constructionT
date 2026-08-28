@@ -5,6 +5,7 @@ import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn } from '@/app/lib/utils';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
+import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { ArrowLeft, ArrowRight, Quote } from 'lucide-react';
 
 interface TestimonialsSectionProps {
@@ -15,11 +16,17 @@ interface TestimonialsSectionProps {
 export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonialsSection, className }) => {
     const trackRef = useRef<HTMLDivElement | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
+    const { testimonials: siteTestimonials } = useWebBuilder();
 
     const themeColors = useThemeColors();
     const themeFonts = useThemeFonts();
 
-    const items = testimonialsSection?.testimonials || [];
+    const pageItems = testimonialsSection?.testimonials || [];
+    const apiItems = (siteTestimonials?.testimonials || []).map((t: any) => ({
+        ...t,
+        text: t.text || t.content || '',
+    }));
+    const items = pageItems.length > 0 ? pageItems : apiItems;
 
     const scrollToIndex = (idx: number) => {
         const track = trackRef.current;

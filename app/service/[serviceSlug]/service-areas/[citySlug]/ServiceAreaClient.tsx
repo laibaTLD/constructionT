@@ -88,7 +88,7 @@ export default function ServiceAreaClient({ serviceSlug: serviceSlugProp, citySl
   // Individual section data
   const serviceOverviewData = serviceAreaPage.serviceOverview;
   const serviceDetailsData = serviceAreaPage.serviceDetails;
-  const whyChooseUsData = serviceAreaPage.whyChooseUs || serviceAreaPage.about;
+  const whyChooseUsData = serviceAreaPage.whyChooseUs;
   const servingAreasData = serviceAreaPage.servingAreas;
 
   // Section verification
@@ -152,8 +152,7 @@ export default function ServiceAreaClient({ serviceSlug: serviceSlugProp, citySl
         {/* 9. FAQs */}
         <FAQs faqs={serviceAreaPage.faqs} />
 
-        {/* 10. Serving Areas */}
-        <ServingAreas service={servingAreasData} />
+        {servingAreasData ? <ServingAreas service={servingAreasData} /> : null}
       </main>
 
       {/* 11. Footer */}

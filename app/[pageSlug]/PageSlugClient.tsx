@@ -6,19 +6,8 @@ import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
-import { HeroSection } from '@/app/components/sections/HeroSection';
-import { AboutSection } from '@/app/components/sections/AboutSection';
-import { ServicesSection } from '@/app/components/sections/ServicesSection';
-import { TestimonialsSection } from '@/app/components/sections/TestimonialsSection';
-import { FAQSection } from '@/app/components/sections/FAQSection';
-import { CTASection } from '@/app/components/sections/CTASection';
-import { WhyChooseUsSection } from '@/app/components/sections/WhyChooseUsSection';
-import { CompanyDetailSection } from '@/app/components/sections/CompanyDetailSection';
-import { ProjectsSection } from '@/app/components/sections/ProjectsSection';
-import { CTA2Section } from '@/app/components/sections/CTA2Section';
-import { CTA3Section } from '@/app/components/sections/CTA3Section';
-import { ServingAreasSection } from '@/app/components/sections/ServingAreasSection';
-import { GallerySection } from '@/app/components/sections/GallerySection';
+import { PageSections } from '@/app/components/sections/PageSections';
+import { ServingAreasdetailSection } from '@/app/components/sections/ServingAreasdetailSection';
 import api from '@/app/lib/fetch-api';
 
 interface PageSlugClientProps {
@@ -28,7 +17,7 @@ interface PageSlugClientProps {
 export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClientProps) {
   const params = useParams();
   const pageSlug = params.pageSlug as string || pageSlugProp;
-  const { pages, currentPage, setCurrentPage, loading, error, site } = useWebBuilder();
+  const { pages, currentPage, setCurrentPage, loading, site } = useWebBuilder();
   const themeColors = useThemeColors();
   const [serviceAreaPage, setServiceAreaPage] = useState<any | null>(null);
   const [serviceAreaLoading, setServiceAreaLoading] = useState(false);
@@ -76,9 +65,19 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
     return null;
   }
 
-  const displayPage = currentPage || serviceAreaPage;
+  if (currentPage) {
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
+        <Header />
+        <main>
+          <PageSections page={currentPage} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-  if (!displayPage) {
+  if (!serviceAreaPage) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center" style={{ backgroundColor: themeColors.pageBackground }}>
         <h2 className="text-2xl font-bold mb-2" style={{ color: themeColors.lightPrimaryText }}>Page Not Found</h2>
@@ -93,31 +92,24 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
       <Header />
 
       <main>
-        <HeroSection hero={displayPage.hero} />
-
-        <AboutSection aboutSection={displayPage.aboutSection} />
-
-        <CTASection ctaSection={displayPage.ctaSection} />
-
-        <WhyChooseUsSection whyChooseUsSection={displayPage.whyChooseUsSection} />
-
-        <CompanyDetailSection companyDetailSection={displayPage.companyDetailSection} />
-
-        <ProjectsSection projectsSection={displayPage.projectsSection} />
-
-       
-
-        <CTA2Section cta2Section={displayPage.cta2Section} />
-
-        <CTA3Section cta3Section={displayPage.cta3Section} />
-
-        <ServicesSection servicesSection={displayPage.servicesSection} />
-
-        <TestimonialsSection testimonialsSection={displayPage.testimonialsSection} />
-         <GallerySection gallerySection={displayPage.gallerySection} />
-        <ServingAreasSection />
-
-        <FAQSection faqSection={displayPage.faqSection} />
+        <ServingAreasdetailSection
+          data={{
+            hero: serviceAreaPage.hero,
+            highlights: serviceAreaPage.highlights,
+            about: serviceAreaPage.about,
+            ourServices: serviceAreaPage.ourServices,
+            pageServiceId:
+              typeof serviceAreaPage.serviceId === 'string'
+                ? serviceAreaPage.serviceId
+                : serviceAreaPage.serviceId?._id,
+            cta: serviceAreaPage.cta,
+            serviceDetails: serviceAreaPage.serviceDetails,
+            serviceOverview: serviceAreaPage.serviceOverview,
+            whyChooseUs: serviceAreaPage.whyChooseUs,
+            faqs: serviceAreaPage.faqs,
+            servingAreas: serviceAreaPage.servingAreas,
+          }}
+        />
       </main>
 
       <Footer />

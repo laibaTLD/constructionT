@@ -16,7 +16,7 @@ interface ServingAreasSectionProps {
 }
 
 export const ServingAreasSection: React.FC<ServingAreasSectionProps> = ({
-  enabled = true,
+  enabled = false,
   title,
   description,
   className,
@@ -43,10 +43,8 @@ export const ServingAreasSection: React.FC<ServingAreasSectionProps> = ({
     return [];
   }, [site?.serviceAreas, services]);
 
-  if (!enabled) return null;
+  if (!enabled || areas.length === 0) return null;
 
-  const resolvedTitle = title || `Locations`.trim();
-  const resolvedDescription = description || 'Discover the locales where we offer our bespoke services.';
   const brandColor = themeColors.primaryButton || '#E31E24';
 
   return (
@@ -67,23 +65,27 @@ export const ServingAreasSection: React.FC<ServingAreasSectionProps> = ({
                 Our Reach
               </span>
 
-              <h2
-                className="text-3xl md:text-4xl lg:text-6xl font-extralight tracking-[0.1em] uppercase leading-[1.1] text-balance"
-                style={{
-                  color: themeColors.mainText,
-                  fontFamily: themeFonts.heading
-                }}
-              >
-                {resolvedTitle}
-              </h2>
+              {title ? (
+                <h2
+                  className="text-3xl md:text-4xl lg:text-6xl font-extralight tracking-[0.1em] uppercase leading-[1.1] text-balance"
+                  style={{
+                    color: themeColors.mainText,
+                    fontFamily: themeFonts.heading
+                  }}
+                >
+                  {title}
+                </h2>
+              ) : null}
             </div>
 
-            <div
-              className="max-w-xs text-xs md:text-sm font-light leading-relaxed tracking-wider opacity-60 uppercase"
-              style={{ color: themeColors.secondaryText }}
-            >
-              {resolvedDescription}
-            </div>
+            {description ? (
+              <div
+                className="max-w-xs text-xs md:text-sm font-light leading-relaxed tracking-wider opacity-60 uppercase"
+                style={{ color: themeColors.secondaryText }}
+              >
+                {description}
+              </div>
+            ) : null}
 
             {/* Signature Brand Detail */}
             <div className="pt-8">
@@ -93,16 +95,6 @@ export const ServingAreasSection: React.FC<ServingAreasSectionProps> = ({
 
           {/* RIGHT SIDE: EDITORIAL LIST OF LOCATIONS */}
           <div className="lg:col-span-8">
-            {areas.length === 0 ? (
-              <div className="text-center py-12">
-                <p 
-                  className="text-lg"
-                  style={{ color: themeColors.mainText, fontFamily: themeFonts.body }}
-                >
-                  No service areas configured yet.
-                </p>
-              </div>
-            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 border-t border-black/10">
                 {areas.map((area, idx) => {
                   const areaName = typeof area === 'string' ? area : area;
@@ -153,7 +145,6 @@ export const ServingAreasSection: React.FC<ServingAreasSectionProps> = ({
                   );
                 })}
               </div>
-            )}
           </div>
         </div>
       </div>
