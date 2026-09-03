@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
-import { getFaviconMimeType, getSiteFaviconUrl } from './site-favicon'
+import { getFaviconMimeType, getSiteFaviconUrl } from './favicon-url'
 
-export { getSiteFaviconUrl } from './site-favicon'
+export { getSiteFaviconUrl } from './favicon-url'
 
 interface SEOData {
   title?: string

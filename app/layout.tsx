@@ -8,7 +8,8 @@ import { LanguageProvider } from '@/app/i18n/LanguageProvider'
 import { SiteFavicon } from './components/ui/SiteFavicon'
 import { generateMetadata as buildMetadata, getSiteSeoData } from '@/app/lib/metadata'
 import { Site } from '@/app/lib/types'
-import { fetchSiteRecord, getFaviconMimeType, getSiteFaviconUrl } from '@/app/lib/site-favicon'
+import { fetchSiteRecord } from '@/app/lib/site-favicon'
+import { getFaviconMimeType, getSiteFaviconUrl } from '@/app/lib/favicon-url'
 
 const fallbackMetadata: Metadata = {
   title: 'Web Builder Site',
