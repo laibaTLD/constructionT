@@ -7,26 +7,28 @@ import { GsapInit } from './components/ui/GsapInit'
 import { LanguageProvider } from '@/app/i18n/LanguageProvider'
 import { SiteFavicon } from './components/ui/SiteFavicon'
 import { generateMetadata as buildMetadata, getSiteSeoData } from '@/app/lib/metadata'
-import { siteApi } from '@/app/lib/api'
 import { Site } from '@/app/lib/types'
+import { fetchSiteRecord, getFaviconMimeType, getSiteFaviconUrl } from '@/app/lib/site-favicon'
+
+const fallbackMetadata: Metadata = {
+  title: 'Web Builder Site',
+  description: 'Generated site using Web Builder',
+  icons: { icon: [{ url: '/icon' }] },
+}
 
 export async function generateMetadata(): Promise<Metadata> {
-  const fallback: Metadata = {
-    title: 'Web Builder Site',
-    description: 'Generated site using Web Builder',
-  }
-
   try {
-    const siteSlug = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG
-    if (!siteSlug) return fallback
+    const site = (await fetchSiteRecord()) as Site | null
+    if (!site) return fallbackMetadata
 
-    const site: Site = await siteApi.getSiteBySlug(siteSlug)
-    if (!site) return fallback
-
-    return buildMetadata(getSiteSeoData(site), site)
+    const metadata = buildMetadata(getSiteSeoData(site), site)
+    if (!metadata.icons) {
+      metadata.icons = { icon: [{ url: '/icon' }] }
+    }
+    return metadata
   } catch (error) {
     console.error('Error generating root metadata:', error)
-    return fallback
+    return fallbackMetadata
   }
 }
 
@@ -36,13 +38,30 @@ export const viewport: Viewport = {
   maximumScale: 5,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  let faviconHref = ''
+  try {
+    const site = await fetchSiteRecord()
+    faviconHref = getSiteFaviconUrl(site)
+  } catch {
+    faviconHref = ''
+  }
+
+  const faviconType = faviconHref ? getFaviconMimeType(faviconHref) : undefined
+
   return (
     <html lang="en">
+      {faviconHref ? (
+        <head>
+          <link rel="icon" href={faviconHref} {...(faviconType ? { type: faviconType } : {})} />
+          <link rel="shortcut icon" href={faviconHref} {...(faviconType ? { type: faviconType } : {})} />
+          <link rel="apple-touch-icon" href={faviconHref} />
+        </head>
+      ) : null}
       <body suppressHydrationWarning className="overflow-x-clip">
         <GsapInit />
         <ErrorBoundary>

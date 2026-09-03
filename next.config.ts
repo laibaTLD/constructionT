@@ -50,12 +50,6 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: [
-        {
-          source: "/favicon.ico",
-          destination: "/site-icon",
-        },
-      ],
       afterFiles: [
         // Browser hits /api/* → Next proxies to backend
         {
