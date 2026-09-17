@@ -13,33 +13,10 @@ export const Header: React.FC = () => {
   const themeColors = useThemeColors();
 
   const headerRef = useRef<HTMLElement>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [openServiceKey, setOpenServiceKey] = useState<string | null>(null);
   const servicesDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let rafId = 0;
-
-    const update = () => {
-      rafId = 0;
-      const next = window.scrollY > 60;
-      setIsScrolled((prev) => (prev === next ? prev : next));
-    };
-
-    const handleScroll = () => {
-      if (rafId) return;
-      rafId = window.requestAnimationFrame(update);
-    };
-
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId) window.cancelAnimationFrame(rafId);
-    };
-  }, []);
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -153,8 +130,7 @@ export const Header: React.FC = () => {
       <header
         ref={headerRef}
         className={cn(
-          'fixed top-0 left-0 w-full z-[100] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] px-4 sm:px-8 md:px-16 lg:px-20',
-          isScrolled ? 'py-4 bg-white shadow-[0_1px_10px_rgba(0,0,0,0.05)]' : 'py-8 md:py-12 bg-transparent',
+          'fixed top-0 left-0 w-full z-[100] py-4 bg-white shadow-[0_1px_10px_rgba(0,0,0,0.05)] px-4 sm:px-8 md:px-16 lg:px-20',
           isMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         )}
       >
@@ -165,16 +141,10 @@ export const Header: React.FC = () => {
               <img
                 src={getImageSrc(site.theme.logoUrl)}
                 alt={brandName}
-                className={cn(
-                  "h-12 md:h-10 w-auto transition-all duration-500",
-                  isScrolled ? "brightness-100" : "brightness-0 invert"
-                )}
+                className="h-12 md:h-10 w-auto"
               />
             ) : (
-              <span className={cn(
-                "text-xs md:text-sm font-medium tracking-[0.5em] uppercase transition-colors duration-500",
-                isScrolled ? "text-black" : "text-white"
-              )}>
+              <span className="text-xs md:text-sm font-medium tracking-[0.5em] uppercase text-black">
                 {brandName}
               </span>
             )}
@@ -185,10 +155,7 @@ export const Header: React.FC = () => {
               onClick={() => setIsMenuOpen(true)}
               className="flex items-center gap-4 group outline-none"
             >
-              <span className={cn(
-                "text-[9px] font-bold tracking-[0.3em] uppercase transition-colors duration-500",
-                isScrolled ? "text-black" : "text-white"
-              )}>Menu</span>
+              <span className="text-[9px] font-bold tracking-[0.3em] uppercase text-black">Menu</span>
               <div className="flex flex-col gap-1.5">
                 <div className="w-6 h-[1.5px] transition-all duration-500" style={{ backgroundColor: brandColor }} />
                 <div className="w-6 h-[1.5px] transition-all duration-500" style={{ backgroundColor: brandColor }} />
