@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { blogApi } from '@/app/lib/api';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { BlogPost } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
@@ -67,7 +66,6 @@ export default function BlogPostPage() {
     return (
         <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
             <SeoHead title={seoTitle} description={seoDescription} canonicalPath={`/blog/${post.slug}`} ogType="article" ogImage={ogImage} />
-            <Header />
 
             <main className="relative">
                 {/* HERO SECTION - WHITE TEXT OVER IMAGE */}

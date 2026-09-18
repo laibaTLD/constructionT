@@ -43,7 +43,7 @@ export const ServicesSection: React.FC<ServicesSectionProps> = ({ servicesSectio
               </h2>
 
               <div
-                className="text-[11px] md:text-xs uppercase tracking-[0.35em] leading-relaxed opacity-60 max-w-xs"
+                className="max-w-xs text-xs md:text-sm font-light leading-relaxed tracking-wide opacity-60 line-clamp-3"
                 style={{ color: themeColors.secondaryText }}
               >
                 <TiptapRenderer content={servicesSection.description} />

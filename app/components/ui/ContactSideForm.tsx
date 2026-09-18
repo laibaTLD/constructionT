@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import gsap from 'gsap';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
+import { cn } from '@/app/lib/utils';
 
 interface ContactSideFormProps {
   isOpen: boolean;
@@ -12,8 +12,6 @@ interface ContactSideFormProps {
 }
 
 export const ContactSideForm: React.FC<ContactSideFormProps> = ({ isOpen, onClose }) => {
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLDivElement>(null);
   const themeColors = useThemeColors();
   const themeFonts = useThemeFonts();
   const { site } = useWebBuilder();
@@ -30,39 +28,11 @@ export const ContactSideForm: React.FC<ContactSideFormProps> = ({ isOpen, onClos
   });
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      const tl = gsap.timeline();
-      
-      tl.to(overlayRef.current, { 
-        opacity: 1, 
-        visibility: 'visible', 
-        duration: 0.5, 
-        ease: 'power2.out' 
-      })
-      .to(formRef.current, { 
-        x: 0, 
-        duration: 0.8, 
-        ease: 'expo.out' 
-      }, '-=0.3');
-    } else {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          document.body.style.overflow = '';
-        }
-      });
-
-      tl.to(formRef.current, { 
-        x: '100%', 
-        duration: 0.6, 
-        ease: 'expo.in' 
-      })
-      .to(overlayRef.current, { 
-        opacity: 0, 
-        visibility: 'hidden', 
-        duration: 0.4 
-      }, '-=0.2');
-    }
+    if (!isOpen) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,18 +69,22 @@ export const ContactSideForm: React.FC<ContactSideFormProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] overflow-hidden pointer-events-none">
+    <div className={cn('fixed inset-0 z-[1000] overflow-hidden', isOpen ? 'pointer-events-auto' : 'pointer-events-none')}>
       {/* Overlay */}
       <div 
-        ref={overlayRef}
         onClick={onClose}
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 invisible pointer-events-auto cursor-pointer"
+        className={cn(
+          'absolute inset-0 bg-black/40 backdrop-blur-sm cursor-pointer transition-opacity duration-500',
+          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        )}
       />
 
       {/* Form Container */}
       <div 
-        ref={formRef}
-        className="absolute top-0 right-0 h-full w-full max-w-[600px] bg-white pointer-events-auto transform translate-x-full shadow-[-20px_0_50px_rgba(0,0,0,0.1)] flex flex-col"
+        className={cn(
+          'absolute top-0 right-0 h-full w-full max-w-[600px] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] flex flex-col transition-transform duration-700 ease-out',
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        )}
         style={{ fontFamily: themeFonts.body }}
       >
         {/* Header/Close */}

@@ -1,18 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { blogApi } from '@/app/lib/api';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import { Header } from '@/app/components/layout/Header';
 import { BlogPost } from '@/app/lib/types';
 import { getImageSrc } from '@/app/lib/utils';
 import { SeoHead } from '@/app/components/ui/SeoHead';
-import { truncate } from '@/app/lib/seo';
 import { useThemeColors, useThemeFonts } from '@/app/hooks/useTheme';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useGSAP } from '@gsap/react';
 
 export default function BlogPageContent() {
     const { site, loading: siteLoading } = useWebBuilder();
@@ -20,9 +15,6 @@ export default function BlogPageContent() {
     const themeFonts = useThemeFonts();
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [loading, setLoading] = useState(true);
-    
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const sectionsRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         async function loadPosts() {
@@ -41,37 +33,6 @@ export default function BlogPageContent() {
         if (!siteLoading) loadPosts();
     }, [site, siteLoading]);
 
-    useGSAP(() => {
-        if (loading || posts.length === 0 || !sectionsRef.current || !scrollContainerRef.current) return;
-
-        gsap.registerPlugin(ScrollTrigger);
-
-        const target = sectionsRef.current;
-        
-        // The distance we need to move is the total width minus the visible window width
-        const getScrollAmount = () => {
-            return -(target.scrollWidth - window.innerWidth);
-        };
-
-        const tween = gsap.to(target, {
-            x: getScrollAmount,
-            ease: "none",
-            scrollTrigger: {
-                trigger: scrollContainerRef.current,
-                start: "top top",
-                end: () => `+=${target.scrollWidth}`,
-                pin: true,
-                scrub: 1, // Smoothly catches up to scroll position
-                invalidateOnRefresh: true, // Recalculates on resize
-            }
-        });
-
-        return () => {
-            tween.kill();
-            ScrollTrigger.getAll().forEach(t => t.kill());
-        };
-    }, { dependencies: [loading, posts.length], scope: scrollContainerRef });
-
     if (siteLoading || loading) {
         return null;
     }
@@ -82,16 +43,13 @@ export default function BlogPageContent() {
     return (
         <div className="relative" style={{ backgroundColor: themeColors.pageBackground }}>
             <SeoHead title={seoTitle} canonicalPath="/blog" ogType="website" />
-            
-            <Header />
 
-            {/* GSAP Trigger Container */}
-            <main ref={scrollContainerRef} className="h-screen overflow-hidden flex flex-col">
+            {/* Horizontal scroller */}
+            <main className="h-[100dvh] overflow-x-auto overflow-y-hidden flex no-scrollbar">
                 
                 {/* Content wrapper that actually slides */}
                 <div 
-                    ref={sectionsRef} 
-                    className="flex h-full w-max will-change-transform"
+                    className="flex h-full w-max"
                 >
                     {/* Intro Panel */}
                     <section 

@@ -1,18 +1,12 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn, getImageSrc } from '@/app/lib/utils';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 interface ProjectsSectionProps {
   projectsSection: Page['projectsSection'];
@@ -22,34 +16,6 @@ interface ProjectsSectionProps {
 export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsSection, className }) => {
   const themeColors = useThemeColors();
   const { projects } = useWebBuilder();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!projectsSection?.enabled) return;
-
-    const ctx = gsap.context(() => {
-      // Horizontal Scroll Animation
-      if (scrollRef.current && containerRef.current) {
-        const scrollWidth = containerRef.current.offsetWidth - window.innerWidth;
-
-        gsap.to(containerRef.current, {
-          x: -scrollWidth,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: scrollRef.current,
-            start: 'top top',
-            end: () => `+=${scrollWidth}`,
-            scrub: 1,
-            pin: true,
-            invalidateOnRefresh: true,
-          }
-        });
-      }
-    }, scrollRef);
-
-    return () => ctx.revert();
-  }, [projectsSection, projects]);
 
   if (!projectsSection?.enabled) return null;
 
@@ -60,17 +26,7 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsSectio
   const displayItems = projectsSection.projects?.length ? projectsSection.projects : publishedProjects;
 
   return (
-    <div ref={scrollRef} className="relative overflow-hidden max-w-full" style={{ backgroundColor: brandColor }}>
-      {/* Hide horizontal scrollbar across all browsers */}
-      <style jsx global>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+    <div className="relative overflow-hidden max-w-full" style={{ backgroundColor: brandColor }}>
       <section
         className={cn('relative py-10 md:py-12 flex flex-col justify-center overflow-hidden', className)}
       >
@@ -89,10 +45,9 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projectsSectio
         </div>
 
         {/* Horizontal Scrolling Projects Container */}
-        <div className="relative w-full overflow-hidden scrollbar-hide">
+        <div className="relative w-full overflow-x-auto overflow-y-hidden no-scrollbar">
           <div
-            ref={containerRef}
-            className="flex gap-8 md:gap-10 lg:gap-14 px-8 md:px-16 lg:px-24 w-max max-w-full"
+            className="flex gap-8 md:gap-10 lg:gap-14 px-8 md:px-16 lg:px-24 w-max"
           >
             {displayItems.map((item: any, idx) => {
               const imageUrl = getImageSrc(item.featuredImage?.url || item.image?.url || item.image || item.featuredImage);

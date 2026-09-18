@@ -1,16 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn } from '@/app/lib/utils';
 import { useThemeColors } from '@/app/hooks/useTheme';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import { Reveal } from '@/app/components/ui/Reveal';
 
 interface WhyChooseUsSectionProps {
   whyChooseUsSection: Page['whyChooseUsSection'];
@@ -19,51 +14,6 @@ interface WhyChooseUsSectionProps {
 
 export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChooseUsSection, className }) => {
   const themeColors = useThemeColors();
-  const sectionRef = useRef<HTMLElement>(null);
-  const headlineRef = useRef<HTMLDivElement>(null);
-  const itemsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!whyChooseUsSection?.enabled) return;
-
-    const ctx = gsap.context(() => {
-      // 1. Headline Reveal
-      gsap.fromTo(headlineRef.current?.children || [],
-        { y: 30, opacity: 0 },
-        {
-          y: 0, opacity: 1,
-          stagger: 0.15,
-          duration: 1,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: headlineRef.current,
-            start: 'top 85%',
-          }
-        }
-      );
-
-      // 2. Items Staggered Reveal
-      const elements = itemsRef.current?.children;
-      if (elements) {
-        gsap.fromTo(elements,
-          { y: 50, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            stagger: 0.2,
-            duration: 1.2,
-            ease: 'power4.out',
-            scrollTrigger: {
-              trigger: itemsRef.current,
-              start: 'top 85%',
-            }
-          }
-        );
-      }
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, [whyChooseUsSection]);
 
   if (!whyChooseUsSection?.enabled) return null;
 
@@ -75,13 +25,12 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
 
   return (
     <section
-      ref={sectionRef}
       className={cn('relative py-8 md:py-10 lg:py-12 overflow-hidden bg-[var(--wb-page-bg)]', className)}
     >
       <div className="wb-page-shell">
 
         {/* Editorial Header - Large Scale Centered */}
-        <div ref={headlineRef} className="flex flex-col items-center text-center mb-8 lg:mb-10">
+        <Reveal className="flex flex-col items-center text-center mb-8 lg:mb-10">
           <div className="flex items-center gap-4">
             <div className="w-12 h-[1px]" style={{ backgroundColor: brandColor }} />
             <span className="text-[10px] font-bold tracking-[0.4em] uppercase" style={{ color: primaryTextColor }}>
@@ -92,16 +41,7 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
 
           {whyChooseUsSection.title && (
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-sans tracking-tight uppercase font-light leading-none max-w-5xl">
-              <div className="[&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
-                <style jsx>{`
-                     h2 :global(p:first-child), h2 :global(span:first-child) {
-                        color: ${brandColor} !important;
-                     }
-                     h2 :global(strong), h2 :global(b) {
-                        color: ${brandColor} !important;
-                        font-weight: 300;
-                     }
-                   `}</style>
+              <div className="brand-first-line brand-emphasis [&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
                 <TiptapRenderer content={whyChooseUsSection.title} as="inline" />
               </div>
             </h2>
@@ -115,12 +55,12 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
               <TiptapRenderer content={whyChooseUsSection.description} />
             </div>
           )}
-        </div>
+        </Reveal>
 
         {/* Values Grid - High Fidelity Digital Look */}
-        <div ref={itemsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 lg:gap-x-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 lg:gap-x-24">
           {items.map((item, idx) => (
-            <div key={idx} className="group relative pt-8 border-t border-black/5 flex flex-col space-y-5">
+            <Reveal key={idx} delayMs={idx * 120} className="group relative pt-8 border-t border-black/5 flex flex-col space-y-5">
 
               {/* Numbering Header */}
               <div className="flex justify-between items-start">
@@ -163,7 +103,7 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsSectionProps> = ({ whyChoos
                 className="absolute bottom-0 left-0 w-0 h-[1px] transition-all duration-1000 group-hover:w-full"
                 style={{ backgroundColor: brandColor }}
               />
-            </div>
+            </Reveal>
           ))}
         </div>
       </div>

@@ -5,11 +5,11 @@ import api from '@/app/lib/fetch-api'
 import PageSlugClient from './PageSlugClient'
 
 interface PageSlugPageProps {
-  params: { pageSlug: string }
+  params: Promise<{ pageSlug: string }>
 }
 
 export async function generateMetadata({ params }: PageSlugPageProps): Promise<Metadata> {
-  const { pageSlug } = params
+  const { pageSlug } = await params
   
   try {
     // Try to fetch default site first
@@ -45,6 +45,7 @@ export async function generateMetadata({ params }: PageSlugPageProps): Promise<M
   }
 }
 
-export default function PageSlugPage({ params }: PageSlugPageProps) {
-  return <PageSlugClient pageSlug={params.pageSlug} />
+export default async function PageSlugPage({ params }: PageSlugPageProps) {
+  const { pageSlug } = await params
+  return <PageSlugClient key={pageSlug} pageSlug={pageSlug} />
 }

@@ -46,6 +46,10 @@
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
+
+  --wb-font: ui-sans-serif, system-ui, sans-serif;
+  --wb-heading-font: var(--wb-font);
+  --wb-body-font: var(--wb-font);
 }
 
 html {
@@ -53,6 +57,7 @@ html {
   scroll-behavior: auto;
   overflow-x: clip;
   max-width: 100%;
+  font-family: var(--wb-font);
 }
 
 body {
@@ -63,6 +68,12 @@ body {
   overflow-x: clip;
   max-width: 100%;
   min-width: 0;
+  font-family: inherit;
+}
+
+h1, h2, h3, h4, h5, h6,
+button, input, textarea, select, optgroup {
+  font-family: inherit;
 }
 
 img,
@@ -256,4 +267,35 @@ svg {
 
 .text-balance {
   text-wrap: balance;
+}
+
+html.menu-open,
+body.menu-open {
+  overflow: hidden;
+  height: 100vh;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tiptap-hero-title p,
+.tiptap-hero-title span {
+  display: block;
+}
+
+.brand-first-line p:first-child,
+.brand-first-line span:first-child {
+  color: var(--wb-primary) !important;
+}
+
+.brand-emphasis strong,
+.brand-emphasis b {
+  color: var(--wb-primary) !important;
+  font-weight: 300;
 }

@@ -358,44 +358,27 @@ export const TiptapRenderer: React.FC<TiptapRendererProps> = ({
     return <span className={className}>{normalized}</span>;
   }
   
-  // If it's a doc with single paragraph/heading, render inline-friendly ONLY when as="inline"
-  if (as === 'inline' && normalized.type === 'doc' && Array.isArray(normalized.content) && normalized.content.length > 0) {
-    const firstNode = normalized.content[0];
-    
-    // Single heading - render just the heading content
-    if (normalized.content.length === 1 && firstNode?.type === 'heading') {
-      const children = firstNode.content?.map((child: any, i: number) => renderNode(child, i));
-      return <span className={className}>{children}</span>;
-    }
-    
-    // Single paragraph - render just the paragraph content
-    if (normalized.content.length === 1 && firstNode?.type === 'paragraph') {
-      const children = firstNode.content?.map((child: any, i: number) => renderNode(child, i));
-      return <span className={className}>{children}</span>;
-    }
-    
-    // For inline mode with multiple nodes, render all nodes but without block-level formatting
-    const children = normalized.content.map((child: any, i: number) => {
-      if (child.type === 'heading') {
-        return child.content?.map((textChild: any, j: number) => renderNode(textChild, `${i}-${j}`));
-      } else if (child.type === 'paragraph') {
-        return child.content?.map((textChild: any, j: number) => renderNode(textChild, `${i}-${j}`));
+  // If normalized is a doc, flatten to inline-friendly nodes
+  if (as === 'inline') {
+    const nodes = normalized.type === 'doc' && Array.isArray(normalized.content)
+      ? normalized.content
+      : [normalized];
+
+    const children = nodes.flatMap((child: any, i: number) => {
+      if (child?.type === 'heading' || child?.type === 'paragraph' || child?.type === 'blockquote') {
+        return (child.content || []).map((textChild: any, j: number) => renderNode(textChild, `${i}-${j}`));
       }
-      return renderNode(child, i);
-    }).flat();
+      if (child?.type === 'hardBreak') return [<br key={i} />];
+      if (child?.type === 'text') return [renderNode(child, i)];
+      return [extractText(child)];
+    });
+
     return <span className={className}>{children}</span>;
   }
-  
-  // Render full structure
-  const rendered = renderNode(normalized);
-  
-  if (as === 'inline') {
-    return <span className={className}>{rendered}</span>;
-  }
-  
+
   return (
     <div className={cn('prose prose-gray max-w-none', className)}>
-      {rendered}
+      {renderNode(normalized)}
     </div>
   );
 };

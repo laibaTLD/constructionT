@@ -2,27 +2,50 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { getImageSrc, cn } from '@/app/lib/utils';
 import { useThemeColors } from '@/app/hooks/useTheme';
 import { Page } from '@/app/lib/types';
-import gsap from 'gsap';
+
+function unlockDocumentScroll() {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.remove('menu-open');
+  document.body.classList.remove('menu-open');
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('height');
+  document.body.style.removeProperty('transform');
+  document.body.style.removeProperty('transition');
+}
 
 export const Header: React.FC = () => {
   const { site, pages, services } = useWebBuilder();
   const themeColors = useThemeColors();
+  const pathname = usePathname();
 
-  const headerRef = useRef<HTMLElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const [openServiceKey, setOpenServiceKey] = useState<string | null>(null);
   const servicesDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isMenuOpen) {
+    setIsMenuOpen(false);
+    setIsServicesOpen(false);
+    setOpenServiceKey(null);
+    unlockDocumentScroll();
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.documentElement.classList.add('menu-open');
+      document.body.classList.add('menu-open');
+    } else {
+      unlockDocumentScroll();
       setIsServicesOpen(false);
       setOpenServiceKey(null);
     }
+    return () => unlockDocumentScroll();
   }, [isMenuOpen]);
 
   useEffect(() => {
@@ -40,17 +63,6 @@ export const Header: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isServicesOpen]);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Gentle entrance
-      gsap.fromTo(headerRef.current,
-        { y: -20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.5, ease: 'power3.out', delay: 0.8 }
-      );
-    }, headerRef);
-    return () => ctx.revert();
-  }, []);
 
   // Specific Order: Home | About | Blog | Service | Serving Areas | Testimonials | Contact
   const orderedNavPages = useMemo(() => {
@@ -100,19 +112,30 @@ export const Header: React.FC = () => {
 
   if (!site) return null;
 
+  const defaultSlugByType: Record<string, string> = {
+    home: '',
+    about: 'about-us',
+    contact: 'contact-us',
+    'blog-list': 'blog',
+    'service-list': 'services',
+    testimonials: 'testimonials',
+    'project-list': 'project-detail',
+    'serving-areas': 'services',
+  };
+
+  const normalizeSlug = (slug: unknown) => {
+    if (typeof slug !== 'string') return '';
+    return slug.trim().replace(/^\/+|\/+$/g, '').toLowerCase();
+  };
+
   const getPageHref = (p: Page) => {
     if (p.pageType === 'home') return '/';
-    if (p.slug) return `/${p.slug}`;
-    const byType: Record<string, string> = {
-      about: '/about-us',
-      contact: '/contact-us',
-      'blog-list': '/blog',
-      'service-list': '/services',
-      testimonials: '/testimonials',
-      'project-list': '/project-detail',
-      'serving-areas': '/services',
-    };
-    return byType[p.pageType] || '/';
+    const slug = normalizeSlug(p.slug) || defaultSlugByType[p.pageType];
+    return slug ? `/${slug}` : '/';
+  };
+
+  const handleNavClick = () => {
+    unlockDocumentScroll();
   };
 
   const brandName = (site?.business?.name || site?.name || '').toUpperCase();
@@ -128,15 +151,14 @@ export const Header: React.FC = () => {
   return (
     <>
       <header
-        ref={headerRef}
         className={cn(
-          'fixed top-0 left-0 w-full z-[100] py-4 bg-white shadow-[0_1px_10px_rgba(0,0,0,0.05)] px-4 sm:px-8 md:px-16 lg:px-20',
+          'fixed top-0 left-0 w-full z-[100] py-4 bg-white shadow-[0_1px_10px_rgba(0,0,0,0.05)] px-4 sm:px-8 md:px-16 lg:px-20 animate-nav-enter motion-reduce:animate-none',
           isMenuOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         )}
       >
         <div className="max-w-[1800px] mx-auto flex items-center justify-between">
 
-          <Link href="/" className="group flex items-center outline-none">
+          <Link href="/" className="group flex items-center outline-none" onClick={handleNavClick}>
             {site.theme?.logoUrl ? (
               <img
                 src={getImageSrc(site.theme.logoUrl)}
@@ -229,11 +251,7 @@ export const Header: React.FC = () => {
                         <Link
                           href={getPageHref(p)}
                           className="block px-5 py-2.5 text-[8px] md:text-[9px] font-bold tracking-[0.25em] uppercase text-black/40 hover:text-black transition-colors"
-                          onClick={() => {
-                            setIsServicesOpen(false);
-                            setOpenServiceKey(null);
-                            setIsMenuOpen(false);
-                          }}
+                          onClick={handleNavClick}
                         >
                           All Services
                         </Link>
@@ -255,11 +273,7 @@ export const Header: React.FC = () => {
                                 <Link
                                   href={`/service/${service.slug}`}
                                   className="flex-1 px-5 py-2.5 text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase break-words hover:bg-black/5 transition-colors"
-                                  onClick={() => {
-                                    setIsServicesOpen(false);
-                                    setOpenServiceKey(null);
-                                    setIsMenuOpen(false);
-                                  }}
+                                  onClick={handleNavClick}
                                 >
                                   {service.name}
                                 </Link>
@@ -318,11 +332,7 @@ export const Header: React.FC = () => {
                                           key={`${serviceKey}-${citySlug}-${idx}`}
                                           href={`/service/${service.slug}/service-areas/${citySlug}`}
                                           className="block px-5 py-2.5 text-[8px] md:text-[9px] font-bold tracking-[0.2em] uppercase break-words hover:bg-black/5 transition-colors"
-                                          onClick={() => {
-                                            setIsServicesOpen(false);
-                                            setOpenServiceKey(null);
-                                            setIsMenuOpen(false);
-                                          }}
+                                          onClick={handleNavClick}
                                         >
                                           {displayName}
                                         </Link>
@@ -345,7 +355,7 @@ export const Header: React.FC = () => {
                   key={p._id || p.slug || `nav-${i}`}
                   href={getPageHref(p)}
                   className="text-[8px] md:text-[9px] font-bold tracking-[0.3em] uppercase break-words sm:whitespace-nowrap hover:opacity-60 transition-opacity"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleNavClick}
                 >
                   {p.name}
                 </Link>
@@ -393,21 +403,6 @@ export const Header: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        ${isMenuOpen ? `
-          body {
-            overflow: hidden;
-            height: 100vh;
-            transition: transform 0.7s cubic-bezier(0.85, 0, 0.15, 1);
-          }
-          @media (min-width: 1024px) {
-            body { transform: scale(0.98); }
-          }
-        ` : ''}
-      `}</style>
     </>
   );
 };

@@ -1,16 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn, getImageSrc } from '@/app/lib/utils';
 import { useThemeColors } from '@/app/hooks/useTheme';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-   gsap.registerPlugin(ScrollTrigger);
-}
+import { Reveal } from '@/app/components/ui/Reveal';
 
 interface CompanyDetailSectionProps {
    companyDetailSection: Page['companyDetailSection'];
@@ -19,107 +14,6 @@ interface CompanyDetailSectionProps {
 
 export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ companyDetailSection, className }) => {
    const themeColors = useThemeColors();
-   const containerRef = useRef<HTMLDivElement>(null);
-   const stickyTitleRef = useRef<HTMLDivElement>(null);
-   const [isMounted, setIsMounted] = useState(false);
-
-   useEffect(() => {
-      setIsMounted(true);
-   }, []);
-
-   useEffect(() => {
-      if (!isMounted || !companyDetailSection?.enabled) return;
-
-      const timer = setTimeout(() => {
-         const ctx = gsap.context(() => {
-            
-            // 1. HERO PINNING (The Caledonian "Philosophy" Title)
-            if (stickyTitleRef.current) {
-               ScrollTrigger.create({
-                  trigger: stickyTitleRef.current,
-                  start: "top top",
-                  end: "bottom top",
-                  pin: true,
-                  pinSpacing: false,
-                  scrub: true,
-               });
-
-               gsap.to(stickyTitleRef.current.querySelector('.title-inner'), {
-                  scale: 0.9,
-                  opacity: 0,
-                  ease: 'none',
-                  scrollTrigger: {
-                     trigger: stickyTitleRef.current,
-                     start: 'top top',
-                     end: 'bottom top',
-                     scrub: true,
-                  }
-               });
-            }
-
-            // 2. SUB-SECTION PARALLAX & PINNING
-            const sections = gsap.utils.toArray<HTMLElement>('.story-journey-part');
-            sections.forEach((section) => {
-               const imgContainer = section.querySelector('.story-image-container');
-               const img = section.querySelector('.story-image-container img');
-               const bar = section.querySelector('.story-detail-bar');
-
-               // PIN THE IMAGE: It stays fixed while the bar scrolls over it
-               if (imgContainer) {
-                  ScrollTrigger.create({
-                     trigger: imgContainer,
-                     start: "top top",
-                     endTrigger: bar, // Keep pinned until the text bar finishes
-                     end: "bottom bottom",
-                     pin: true,
-                     pinSpacing: false,
-                  });
-               }
-
-               // IMAGE INTERNAL PARALLAX: The image moves inside its pinned container
-               if (img) {
-                  gsap.fromTo(img, 
-                     { yPercent: -15, scale: 1.1 },
-                     {
-                        yPercent: 15,
-                        scale: 1.2,
-                        ease: 'none',
-                        scrollTrigger: {
-                           trigger: section,
-                           start: 'top bottom',
-                           end: 'bottom top',
-                           scrub: true
-                        }
-                     }
-                  );
-               }
-
-               // TEXT REVEAL
-               if (bar) {
-                  gsap.fromTo(bar.querySelectorAll('.reveal-text'),
-                     { opacity: 0, y: 100 },
-                     {
-                        opacity: 1,
-                        y: 0,
-                        stagger: 0.15,
-                        duration: 1.5,
-                        ease: 'power4.out',
-                        scrollTrigger: {
-                           trigger: bar,
-                           start: "top 80%",
-                        }
-                     }
-                  );
-               }
-            });
-
-         }, containerRef);
-
-         return () => ctx.revert();
-      }, 100);
-
-      return () => clearTimeout(timer);
-   }, [companyDetailSection, isMounted]);
 
    if (!companyDetailSection?.enabled) return null;
 
@@ -128,14 +22,12 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
 
    return (
       <div 
-         ref={containerRef} 
-         className={cn("relative w-full overflow-hidden", className)} 
+         className={cn("relative w-full", className)} 
          style={{ backgroundColor: brandColor }} 
       >
          {/* PHASE 1: HERO TITLE */}
          <section
-            ref={stickyTitleRef}
-            className="relative h-screen w-full flex items-center justify-center z-10"
+            className="sticky top-0 h-screen w-full flex items-center justify-center z-10"
             style={{ backgroundColor: themeColors.pageBackground }}
          >
             <div className="title-inner w-full text-center select-none px-6">
@@ -157,11 +49,11 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
                return (
                   <div key={idx} className="story-journey-part relative w-full">
                      {/* PINNED IMAGE CONTAINER */}
-                     <section className="story-image-container relative h-screen w-full overflow-hidden">
+                     <section className="story-image-container sticky top-0 h-screen w-full overflow-hidden">
                         <img
                            src={imageUrl}
                            alt={d.image?.altText || 'Company Detail'}
-                           className="w-full h-full object-cover"
+                           className="w-full h-full object-cover scale-110"
                         />
 {/* Architectural Overlay UI */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -179,18 +71,22 @@ export const CompanyDetailSection: React.FC<CompanyDetailSectionProps> = ({ comp
                         <div className="max-w-7xl mx-auto">
                            <div className="flex flex-col gap-12">
                               <div className="border-l border-white/30 pl-8 md:pl-12">
+                                 <Reveal>
                                  <span className="reveal-text block text-[10px] font-bold tracking-[0.6em] uppercase text-white/40 mb-8">
                                     {d.label || `Part 0${idx + 1}`}
                                  </span>
                                  <h3 className="reveal-text text-3xl md:text-5xl lg:text-6xl font-sans font-light uppercase tracking-tighter text-white leading-[0.85]">
                                     <TiptapRenderer content={title} as="inline" />
                                  </h3>
+                                 </Reveal>
                               </div>
 
                               <div className="max-w-2xl ml-auto md:mr-12">
+                                 <Reveal delayMs={120}>
                                  <div className="reveal-text text-white/70 text-lg md:text-2xl font-light leading-relaxed">
                                     <TiptapRenderer content={description} />
                                  </div>
+                                 </Reveal>
                               </div>
                            </div>
                         </div>

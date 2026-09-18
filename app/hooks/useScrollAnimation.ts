@@ -8,7 +8,7 @@ export interface UseScrollAnimationOptions {
   once?: boolean;
 }
 
-export function useScrollAnimation<T extends HTMLElement = HTMLElement>(
+export function useScrollAnimation<T extends HTMLElement = HTMLDivElement>(
   options: UseScrollAnimationOptions = {}
 ) {
   const { threshold = 0.1, rootMargin = '0px', once = true } = options;

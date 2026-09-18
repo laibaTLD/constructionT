@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { projectApi } from '@/app/lib/api';
 import { Project } from '@/app/lib/types';
-import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc } from '@/app/lib/utils';
@@ -66,7 +65,6 @@ export default function ProjectDetailPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
       <SeoHead title={seoTitle} description={seoDescription} canonicalPath={`/project-detail/${project.slug}`} ogType="article" ogImage={ogImage} />
-      <Header />
 
       <main className="relative pt-0">
         {/* HERO SECTION - HIGH IMPACT */}

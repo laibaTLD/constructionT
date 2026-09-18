@@ -3,13 +3,13 @@ import './globals.css'
 import { WebBuilderProvider } from '@/app/providers/WebBuilderProvider'
 import { ErrorBoundary } from '@/app/components/ui/ErrorBoundary'
 import { ThemeFontWrapper } from './components/ui/ThemeFontWrapper'
-import { GsapInit } from './components/ui/GsapInit'
+import { PathnameKey } from './components/layout/PathnameKey'
+import { Header } from './components/layout/Header'
 import { LanguageProvider } from '@/app/i18n/LanguageProvider'
 import { SiteFavicon } from './components/ui/SiteFavicon'
 import { generateMetadata as buildMetadata, getSiteSeoData } from '@/app/lib/metadata'
 import { Site } from '@/app/lib/types'
 import { fetchSiteRecord } from '@/app/lib/site-favicon'
-import { getFaviconMimeType, getSiteFaviconUrl } from '@/app/lib/favicon-url'
 
 const fallbackMetadata: Metadata = {
   title: 'Web Builder Site',
@@ -44,35 +44,19 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  let faviconHref = ''
-  try {
-    const site = await fetchSiteRecord()
-    faviconHref = getSiteFaviconUrl(site)
-  } catch {
-    faviconHref = ''
-  }
-
-  const faviconType = faviconHref ? getFaviconMimeType(faviconHref) : undefined
 
   return (
     <html lang="en">
-      {faviconHref ? (
-        <head>
-          <link rel="icon" href={faviconHref} {...(faviconType ? { type: faviconType } : {})} />
-          <link rel="shortcut icon" href={faviconHref} {...(faviconType ? { type: faviconType } : {})} />
-          <link rel="apple-touch-icon" href={faviconHref} />
-        </head>
-      ) : null}
       <body suppressHydrationWarning className="overflow-x-clip">
-        <GsapInit />
         <ErrorBoundary>
           <WebBuilderProvider>
             <SiteFavicon />
             <LanguageProvider>
               <ThemeFontWrapper>
-                <main className="min-h-screen w-full min-w-0 overflow-x-clip">
-                  {children}
-                </main>
+                <Header />
+                <div className="min-h-screen w-full min-w-0 overflow-x-clip">
+                  <PathnameKey>{children}</PathnameKey>
+                </div>
               </ThemeFontWrapper>
             </LanguageProvider>
           </WebBuilderProvider>

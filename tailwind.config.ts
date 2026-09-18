@@ -8,6 +8,35 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--wb-font)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['var(--wb-font)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['var(--wb-font)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      keyframes: {
+        navEnter: {
+          from: { opacity: '0', transform: 'translateY(-16px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeUp: {
+          from: { opacity: '0', transform: 'translateY(24px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        heroZoom: {
+          from: { transform: 'scale(1.04)' },
+          to: { transform: 'scale(1)' },
+        },
+        clipReveal: {
+          from: { clipPath: 'inset(0 100% 0 0)' },
+          to: { clipPath: 'inset(0 0% 0 0)' },
+        },
+      },
+      animation: {
+        'nav-enter': 'navEnter 0.8s ease-out both',
+        'fade-up': 'fadeUp 0.9s ease-out both',
+        'hero-zoom': 'heroZoom 1.2s ease-out both',
+        'clip-reveal': 'clipReveal 1.4s ease-in-out both',
+      },
       colors: {
         primary: {
           50: 'var(--color-primary-50)',

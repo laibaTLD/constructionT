@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { getImageSrc, cn } from '@/app/lib/utils';
 import { OptimizedImage, IMAGE_SIZES } from '@/app/components/ui/OptimizedImage';
 import { useThemeColors } from '@/app/hooks/useTheme';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import { Reveal } from '@/app/components/ui/Reveal';
+import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 
 interface AboutSectionProps {
   aboutSection: Page['aboutSection'];
@@ -20,50 +16,7 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, className }) => {
   const themeColors = useThemeColors();
-  const sectionRef = useRef<HTMLElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-  const imageContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!aboutSection?.enabled) return;
-
-    const ctx = gsap.context(() => {
-      // Image clip reveal
-      gsap.fromTo(imageContainerRef.current,
-        { clipPath: 'inset(0 100% 0 0)' },
-        {
-          clipPath: 'inset(0 0% 0 0)',
-          duration: 1.8,
-          ease: 'expo.inOut',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 80%',
-          }
-        }
-      );
-
-      // Text staggered reveal
-      const children = textRef.current?.children;
-      if (children) {
-        gsap.fromTo(children,
-          { y: 60, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            stagger: 0.2,
-            duration: 1.2,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: textRef.current,
-              start: 'top 85%',
-            }
-          }
-        );
-      }
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, [aboutSection]);
+  const { ref: imageRevealRef, isVisible: imageVisible } = useScrollAnimation();
 
   if (!aboutSection?.enabled) return null;
 
@@ -81,7 +34,6 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
 
   return (
     <section
-      ref={sectionRef}
       className={cn('relative w-full py-8 md:py-10 lg:py-12 overflow-hidden', className)}
       style={{ backgroundColor: 'var(--wb-page-bg)' }}
     >
@@ -89,8 +41,9 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 xl:gap-32 lg:items-stretch">
 
           {/* Left Content Column */}
-          <div ref={textRef} className="w-full lg:w-[45%] space-y-12">
+          <div className="w-full lg:w-[45%] space-y-12">
 
+            <Reveal className="space-y-12">
             {/* Architectural Label - Using Brand Color line */}
             <div className="flex items-center gap-4">
               <div className="w-10 h-[1.5px]" style={{ backgroundColor: brandColor }} />
@@ -105,13 +58,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
                 className="text-4xl md:text-5xl lg:text-6xl font-sans tracking-tight leading-[1.05] uppercase font-light"
                 style={{ color: primaryTextColor }}
               >
-                <div className="[&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
-                   {/* We wrap the renderer to apply hierarchical coloring. First element gets brand color if multiple. */}
-                   <style jsx>{`
-                     h2 :global(p:first-child), h2 :global(span:first-child) {
-                        color: ${brandColor} !important;
-                     }
-                   `}</style>
+                <div className="brand-first-line [&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
                    <TiptapRenderer content={aboutSection.title} as="inline" />
                 </div>
               </h2>
@@ -153,13 +100,17 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ aboutSection, classN
                 </div>
               </a>
             </div>
+            </Reveal>
           </div>
 
           {/* Right Image Column — fills content height, no letterboxing */}
           <div className="w-full lg:w-[55%] lg:self-stretch flex">
             <div
-              ref={imageContainerRef}
-              className="relative w-full overflow-hidden bg-[#f3f3f3] group shadow-sm aspect-[4/3] lg:aspect-auto lg:min-h-full lg:h-auto lg:flex-1"
+              ref={imageRevealRef}
+              className={cn(
+                'relative w-full overflow-hidden bg-[#f3f3f3] group shadow-sm aspect-[4/3] lg:aspect-auto lg:min-h-full lg:h-auto lg:flex-1',
+                imageVisible && 'animate-clip-reveal motion-reduce:animate-none'
+              )}
             >
               {imageUrl ? (
                 <OptimizedImage

@@ -3,7 +3,6 @@
 import { useParams } from 'next/navigation';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { ServiceDetail } from '@/app/components/sections/ServiceDetail';
-import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import Link from 'next/link';
 
@@ -53,7 +52,6 @@ export default function ServiceClient({ serviceSlug: serviceSlugProp }: ServiceC
 
   return (
     <div className="min-h-screen">
-      <Header />
       <ServiceDetail service={service} allServices={services} />
       <Footer />
     </div>

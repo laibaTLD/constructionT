@@ -34,18 +34,6 @@ function upsertLink(rel: string, href: string, type?: string) {
   }
 }
 
-function removeDefaultIconLinks() {
-  document.head
-    .querySelectorAll<HTMLLinkElement>(
-      'link[rel="icon"]:not([data-site-favicon]), link[rel="shortcut icon"]:not([data-site-favicon]), link[rel="apple-touch-icon"]:not([data-site-favicon])'
-    )
-    .forEach((el) => el.remove());
-}
-
-function removeSiteFaviconLinks() {
-  document.head.querySelectorAll('link[data-site-favicon]').forEach((el) => el.remove());
-}
-
 export function SiteFavicon() {
   const { site, loading } = useWebBuilder();
   const href = getImageSrc(site?.seo?.faviconUrl);
@@ -58,11 +46,7 @@ export function SiteFavicon() {
       upsertLink('icon', href, type);
       upsertLink('shortcut icon', href, type);
       upsertLink('apple-touch-icon', href);
-    } else {
-      removeSiteFaviconLinks();
     }
-
-    removeDefaultIconLinks();
   }, [href, loading]);
 
   return null;

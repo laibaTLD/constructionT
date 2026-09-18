@@ -1,10 +1,9 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
 import { useThemeColors } from '@/app/hooks/useTheme';
-import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { PageSections } from '@/app/components/sections/PageSections';
 import { ServingAreasdetailSection } from '@/app/components/sections/ServingAreasdetailSection';
@@ -16,62 +15,69 @@ interface PageSlugClientProps {
 
 export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClientProps) {
   const params = useParams();
-  const pageSlug = params.pageSlug as string || pageSlugProp;
-  const { pages, currentPage, setCurrentPage, loading, site } = useWebBuilder();
+  const pageSlug =
+    (typeof params.pageSlug === 'string' ? params.pageSlug : pageSlugProp) || '';
+  const { pages, setCurrentPage, loading, site } = useWebBuilder();
   const themeColors = useThemeColors();
   const [serviceAreaPage, setServiceAreaPage] = useState<any | null>(null);
   const [serviceAreaLoading, setServiceAreaLoading] = useState(false);
   const [serviceAreaError, setServiceAreaError] = useState<string | null>(null);
-  const hasAttemptedLoad = useRef(false);
+  const loadedSlug = useRef<string | null>(null);
 
-  // Load service area page
-  const loadServiceAreaPage = useCallback(async () => {
-    if (!site || hasAttemptedLoad.current) return;
+  const foundPage = useMemo(
+    () => pages.find((page) => page.slug?.toLowerCase() === pageSlug.toLowerCase()) || null,
+    [pages, pageSlug]
+  );
 
-    hasAttemptedLoad.current = true;
+  const loadServiceAreaPage = useCallback(async (slug: string) => {
+    if (!site) return;
+    if (loadedSlug.current === slug) return;
+
+    loadedSlug.current = slug;
     setServiceAreaLoading(true);
     setServiceAreaError(null);
 
     try {
-      const response = await api.get(`/public/sites/${site.slug}/service-areas/${pageSlug}`);
+      const response = await api.get(`/public/sites/${site.slug}/service-areas/${slug}`);
       if (response.success) {
         setServiceAreaPage(response.data);
       } else {
         setServiceAreaPage(null);
       }
-    } catch (err) {
+    } catch {
       setServiceAreaError('Failed to load service area page');
+      setServiceAreaPage(null);
     } finally {
       setServiceAreaLoading(false);
     }
-  }, [site, pageSlug]);
+  }, [site]);
 
   useEffect(() => {
-    if (pages.length === 0) return;
+    loadedSlug.current = null;
+    setServiceAreaPage(null);
+    setServiceAreaError(null);
+  }, [pageSlug]);
 
-    const foundPage = pages.find(page => page.slug === pageSlug);
+  useEffect(() => {
+    setCurrentPage(foundPage);
+
     if (foundPage) {
-      setCurrentPage(foundPage);
       setServiceAreaPage(null);
-    } else {
-      setCurrentPage(null);
-      if (!hasAttemptedLoad.current) {
-        loadServiceAreaPage();
-      }
+      return;
     }
-  }, [pageSlug, pages, setCurrentPage, loadServiceAreaPage]);
+
+    if (pages.length === 0) return;
+    loadServiceAreaPage(pageSlug);
+  }, [foundPage, pageSlug, pages.length, setCurrentPage, loadServiceAreaPage]);
 
   if (loading || serviceAreaLoading) {
     return null;
   }
 
-  if (currentPage) {
+  if (foundPage) {
     return (
       <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
-        <Header />
-        <main>
-          <PageSections page={currentPage} />
-        </main>
+        <PageSections page={foundPage} />
         <Footer />
       </div>
     );
@@ -81,7 +87,7 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center" style={{ backgroundColor: themeColors.pageBackground }}>
         <h2 className="text-2xl font-bold mb-2" style={{ color: themeColors.lightPrimaryText }}>Page Not Found</h2>
-        <p style={{ color: themeColors.lightSecondaryText }}>The page "{pageSlug}" could not be found.</p>
+        <p style={{ color: themeColors.lightSecondaryText }}>The page "{pageSlug}" could not be found.{serviceAreaError ? ` ${serviceAreaError}` : ''}</p>
         <a href="/" className="mt-8 hover:underline" style={{ color: themeColors.primaryButton }}>Return Home</a>
       </div>
     );
@@ -89,10 +95,7 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: themeColors.pageBackground }}>
-      <Header />
-
-      <main>
-        <ServingAreasdetailSection
+      <ServingAreasdetailSection
           data={{
             hero: serviceAreaPage.hero,
             highlights: serviceAreaPage.highlights,
@@ -110,8 +113,6 @@ export default function PageSlugClient({ pageSlug: pageSlugProp }: PageSlugClien
             servingAreas: serviceAreaPage.servingAreas,
           }}
         />
-      </main>
-
       <Footer />
     </div>
   );

@@ -1,8 +1,8 @@
 'use client';
 
 import { useWebBuilder } from '@/app/providers/WebBuilderProvider';
+import { useThemeFonts } from '@/app/hooks/useTheme';
 import { Page } from '@/app/lib/types';
-import { Header } from '@/app/components/layout/Header';
 import { Footer } from '@/app/components/layout/Footer';
 import { PageSections } from '@/app/components/sections/PageSections';
 
@@ -18,10 +18,7 @@ export function TypedPageView({ pageType }: TypedPageViewProps) {
     pageBackground: 'var(--wb-page-bg)',
   };
 
-  const themeFonts = {
-    heading: site?.theme?.headingFont,
-    body: site?.theme?.bodyFont,
-  };
+  const themeFonts = useThemeFonts();
 
   if (loading) {
     return null;
@@ -82,10 +79,7 @@ export function TypedPageView({ pageType }: TypedPageViewProps) {
         fontFamily: themeFonts.body,
       }}
     >
-      <Header />
-      <main>
-        <PageSections page={page} />
-      </main>
+      <PageSections page={page} />
       <Footer />
     </div>
   );

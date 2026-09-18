@@ -1,20 +1,30 @@
 'use client';
 
-import React, { useMemo, useEffect, useRef } from 'react';
+import React from 'react';
+import CountUp from 'react-countup';
 import { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
 import { cn } from '@/app/lib/utils';
 import { useThemeColors } from '@/app/hooks/useTheme';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
+import { Reveal } from '@/app/components/ui/Reveal';
+import { useScrollAnimation } from '@/app/hooks/useScrollAnimation';
 
 interface ServiceHighlightsSectionProps {
   serviceHighlightsSection: Page['serviceHighlightsSection'];
   className?: string;
+}
+
+function HighlightNumber({ value, suffix, color }: { value: number; suffix: string; color: string }) {
+  const { ref, isVisible } = useScrollAnimation();
+  return (
+    <div
+      ref={ref}
+      className="big-number text-4xl sm:text-5xl md:text-6xl lg:text-[5.5vw] font-extralight tracking-[0.1em] leading-none break-words"
+      style={{ color }}
+    >
+      {isVisible ? <CountUp end={value} duration={2.5} suffix={suffix} separator="," /> : `0${suffix}`}
+    </div>
+  );
 }
 
 export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> = ({
@@ -22,67 +32,6 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
   className
 }) => {
   const themeColors = useThemeColors();
-  const sectionRef = useRef<HTMLElement>(null);
-  const headlineRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!serviceHighlightsSection?.enabled) return;
-
-    const ctx = gsap.context(() => {
-      // 1. Headline Reveal
-      gsap.fromTo(headlineRef.current?.children || [],
-        { y: 30, opacity: 0 },
-        { 
-          y: 0, opacity: 1, 
-          stagger: 0.1, 
-          duration: 1, 
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: headlineRef.current,
-            start: 'top 90%',
-          }
-        }
-      );
-
-      // 2. Highlights Items Reveal & Counter
-      const items = gridRef.current?.querySelectorAll('.highlight-item');
-      if (items) {
-        items.forEach((item) => {
-          const numberObj = { val: 0 };
-          const numberEl = item.querySelector('.big-number');
-          const targetValue = parseInt(numberEl?.getAttribute('data-value') || '0', 10);
-          const suffix = numberEl?.getAttribute('data-suffix') || '';
-
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: item,
-              start: 'top 90%',
-            }
-          });
-
-          tl.fromTo(item,
-            { y: 30, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1, ease: 'power3.out' }
-          );
-
-          if (!isNaN(targetValue) && numberEl) {
-            tl.to(numberObj, {
-              val: targetValue,
-              duration: 2.5,
-              ease: 'power2.out',
-              onUpdate: () => {
-                const formatted = Math.round(numberObj.val).toLocaleString();
-                numberEl.textContent = formatted + suffix;
-              }
-            }, "-=0.6");
-          }
-        });
-      }
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, [serviceHighlightsSection]);
 
   if (!serviceHighlightsSection?.enabled) return null;
 
@@ -106,14 +55,13 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
 
   return (
     <section
-      ref={sectionRef}
       className={cn('relative py-3 md:py-8 lg:py-12 overflow-hidden', className)}
       style={{ backgroundColor: themeColors.sectionBackground || '#FFFFFF' }}
     >
       <div className="wb-page-shell py-3 md:py-8 lg:py-12">
         
         {/* Header Area */}
-        <div ref={headlineRef} className="mb-12 lg:mb-22">
+        <Reveal className="mb-12 lg:mb-22">
            <div className="flex items-center gap-4 mb-6">
               <div className="w-10 h-[1.5px]" style={{ backgroundColor: brandColor }} />
               <span className="text-[10px] font-bold tracking-[0.4em] uppercase" style={{ color: primaryTextColor }}>
@@ -122,40 +70,36 @@ export const ServiceHighlightsSection: React.FC<ServiceHighlightsSectionProps> =
            </div>
            {serviceHighlightsSection.title && (
               <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-sans tracking-tight uppercase font-light leading-none break-words">
-                 <div className="[&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
-                   {/* Hierarchical styling to match image: First line Red, Subtitle Black */}
-                   <style jsx>{`
-                     h2 :global(p:first-child), h2 :global(span:first-child) {
-                        color: ${brandColor} !important;
-                     }
-                   `}</style>
+                 <div className="brand-first-line [&_p:first-child]:text-primary [&_span:first-of-type]:text-primary" style={{ color: primaryTextColor }}>
                    <TiptapRenderer content={serviceHighlightsSection.title} as="inline" />
                 </div>
               </h2>
            )}
-        </div>
+        </Reveal>
 
         {/* Highlights Display - Using Brand Color for High Impact Data */}
-        <div ref={gridRef} className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:flex lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-y-16 lg:gap-x-12 xl:gap-x-24">
+        <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:flex lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-y-16 lg:gap-x-12 xl:gap-x-24">
           {highlights.map((highlight, index) => {
             const counter = parseCounter((highlight as any).price);
 
             return (
               <div key={index} className="highlight-item flex min-w-0 flex-col group sm:max-w-none lg:min-w-[180px] lg:flex-1">
-                <div className="relative mb-8">
-                  <div 
-                     className="big-number text-4xl sm:text-5xl md:text-6xl lg:text-[5.5vw] font-extralight tracking-[0.1em] leading-none break-words"
-                     data-value={counter?.value || 0}
-                     data-suffix={counter?.suffix || ''}
-                     style={{ color: brandColor }} // High Impact Brand Color as per image design
-                  >
-                     {counter ? '0' : ((highlight as any).price || '—')}
-                  </div>
+                <Reveal delayMs={index * 100} className="relative mb-8">
+                  {counter ? (
+                    <HighlightNumber value={counter.value} suffix={counter.suffix} color={brandColor} />
+                  ) : (
+                    <div
+                      className="big-number text-4xl sm:text-5xl md:text-6xl lg:text-[5.5vw] font-extralight tracking-[0.1em] leading-none break-words"
+                      style={{ color: brandColor }}
+                    >
+                      {(highlight as any).price || '—'}
+                    </div>
+                  )}
                   <div 
                     className="w-12 h-[1px] opacity-20 transition-all duration-700 group-hover:w-full group-hover:bg-primary"
                     style={{ backgroundColor: brandColor }}
                   />
-                </div>
+                </Reveal>
 
                 <div className="">
                   {highlight.title && (

@@ -36,6 +36,26 @@ export interface ThemeFonts {
   body?: string;
 }
 
+type ThemeFontSource = {
+  headingFont?: string;
+  bodyFont?: string;
+};
+
+/** One typeface for the whole site. Prefer the heading font, then body. */
+export function resolveThemeFont(theme?: ThemeFontSource | null): string | undefined {
+  const heading = typeof theme?.headingFont === 'string' ? theme.headingFont.trim() : '';
+  const body = typeof theme?.bodyFont === 'string' ? theme.bodyFont.trim() : '';
+  return heading || body || undefined;
+}
+
+export function toCssFontFamily(fontName: string): string {
+  const name = fontName.trim();
+  if (!name) return 'ui-sans-serif, system-ui, sans-serif';
+  if (name.includes(',')) return name;
+  const quoted = /\s/.test(name) ? `"${name.replace(/"/g, '')}"` : name;
+  return `${quoted}, ui-sans-serif, system-ui, sans-serif`;
+}
+
 export function useThemeColors(): ThemeColors {
   const { site } = useWebBuilder();
   const theme = site?.theme;
@@ -69,8 +89,9 @@ export function useThemeColors(): ThemeColors {
 
 export function useThemeFonts(): ThemeFonts {
   const { site } = useWebBuilder();
+  const font = resolveThemeFont(site?.theme);
   return {
-    heading: site?.theme?.headingFont,
-    body: site?.theme?.bodyFont,
+    heading: font,
+    body: font,
   };
 }
