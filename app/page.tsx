@@ -27,7 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
             description: homePage.seo?.description || site.seo?.description || site.business?.description,
             keywords: homePage.seo?.keywords || site.seo?.keywords,
             ogImageUrl: homePage.seo?.ogImageUrl || site.seo?.ogImageUrl,
-            noIndex: homePage.seo?.noIndex || false
+            noIndex: homePage.seo?.noIndex || false,
+            canonicalPath: '/',
           }
 
           return buildMetadata(seoData, site)
@@ -35,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       }
       
       // Fallback: use site SEO data
-      return buildMetadata(getSiteSeoData(site), site)
+      return buildMetadata({ ...getSiteSeoData(site), canonicalPath: '/' }, site)
     }
   } catch (error) {
     console.error('Error generating home metadata:', error)

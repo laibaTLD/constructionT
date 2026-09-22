@@ -23,7 +23,10 @@ export async function generateMetadata({ params }: ServiceAreaPageProps): Promis
       
       if (serviceAreaResponse.success && serviceAreaResponse.data) {
         const serviceAreaPage = serviceAreaResponse.data
-        return generatePageMetadata(getPageSeoData(serviceAreaPage), site)
+        return generatePageMetadata(
+          { ...getPageSeoData(serviceAreaPage), canonicalPath: `/service/${serviceSlug}/service-area/${areaSlug}` },
+          site
+        )
       }
     }
   } catch (error) {

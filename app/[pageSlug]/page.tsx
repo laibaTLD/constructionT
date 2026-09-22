@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageSlugPageProps): Promise<M
       
       if (pageResponse.success && pageResponse.data) {
         const page: Page = pageResponse.data
-        return buildMetadata(getPageSeoData(page), site)
+        return buildMetadata({ ...getPageSeoData(page), canonicalPath: `/${pageSlug}` }, site)
       }
       
       // Try to fetch service area page
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageSlugPageProps): Promise<M
       
       if (serviceAreaResponse.success && serviceAreaResponse.data) {
         const serviceAreaPage: ServiceAreaPage = serviceAreaResponse.data
-        return buildMetadata(getPageSeoData(serviceAreaPage), site)
+        return buildMetadata({ ...getPageSeoData(serviceAreaPage), canonicalPath: `/${pageSlug}` }, site)
       }
     }
   } catch (error) {

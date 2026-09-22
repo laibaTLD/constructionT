@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
 import { getFaviconMimeType, getSiteFaviconUrl } from './favicon-url'
 import { extractGoogleVerificationToken } from './integrations'
+import { buildCanonicalUrl, getSiteOrigin } from './seo'
 
 export { getSiteFaviconUrl } from './favicon-url'
 
@@ -11,6 +12,39 @@ interface SEOData {
   keywords?: string[]
   ogImageUrl?: string
   noIndex?: boolean
+  /** Pathname such as `/` or `/privacy-policy`. */
+  canonicalPath?: string
+}
+
+const indexableRobots: Metadata['robots'] = {
+  index: true,
+  follow: true,
+  googleBot: { index: true, follow: true },
+}
+
+const hiddenRobots: Metadata['robots'] = {
+  index: false,
+  follow: false,
+  googleBot: { index: false, follow: false },
+}
+
+export function getMetadataBase(): URL | undefined {
+  const fromSite = getSiteOrigin()
+  const fromBase = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/$/, '')
+  const raw = fromSite || fromBase || ''
+  if (!raw) return undefined
+  try {
+    return new URL(raw)
+  } catch {
+    return undefined
+  }
+}
+
+export function canonicalMetadata(pathname: string): Metadata {
+  const path = pathname.startsWith('/') ? pathname : `/${pathname}`
+  const absolute = buildCanonicalUrl(path)
+  const canonical = absolute.startsWith('http') ? absolute : path
+  return { alternates: { canonical } }
 }
 
 export function getSiteFaviconIcons(site?: Site | null): Metadata['icons'] | undefined {
@@ -36,6 +70,19 @@ export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
     title: finalTitle,
     description: description || site?.business?.description || 'Generated site using Web Builder',
     keywords: keywords?.join(', ') || site?.seo?.keywords?.join(', '),
+    robots: noIndex ? hiddenRobots : indexableRobots,
+  }
+
+  const metadataBase = getMetadataBase()
+  if (metadataBase) {
+    metadata.metadataBase = metadataBase
+  }
+
+  if (seoData.canonicalPath) {
+    const path = seoData.canonicalPath.startsWith('/') ? seoData.canonicalPath : `/${seoData.canonicalPath}`
+    const absolute = buildCanonicalUrl(path)
+    const canonical = absolute.startsWith('http') ? absolute : path
+    metadata.alternates = { canonical }
   }
 
   const faviconIcons = getSiteFaviconIcons(site)
@@ -43,31 +90,28 @@ export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
     metadata.icons = faviconIcons
   }
 
+  const canonical = metadata.alternates && 'canonical' in metadata.alternates
+    ? metadata.alternates.canonical
+    : undefined
+
   // Add Open Graph metadata
-  if (ogImageUrl || site?.seo?.ogImageUrl) {
+  if (ogImageUrl || site?.seo?.ogImageUrl || canonical) {
     metadata.openGraph = {
       title: finalTitle,
       description: description || site?.business?.description || 'Generated site using Web Builder',
-      images: [
-        {
-          url: ogImageUrl || site?.seo?.ogImageUrl || '',
-          width: 1200,
-          height: 630,
-          alt: finalTitle,
-        },
-      ],
-    }
-  }
-
-  // Add robots meta tag for no-index
-  if (noIndex) {
-    metadata.robots = {
-      index: false,
-      follow: false,
-      googleBot: {
-        index: false,
-        follow: false,
-      },
+      ...(typeof canonical === 'string' ? { url: canonical } : {}),
+      ...(ogImageUrl || site?.seo?.ogImageUrl
+        ? {
+            images: [
+              {
+                url: ogImageUrl || site?.seo?.ogImageUrl || '',
+                width: 1200,
+                height: 630,
+                alt: finalTitle,
+              },
+            ],
+          }
+        : {}),
     }
   }
 

@@ -7,7 +7,7 @@ import { PathnameKey } from './components/layout/PathnameKey'
 import { Header } from './components/layout/Header'
 import { LanguageProvider } from '@/app/i18n/LanguageProvider'
 import { SiteFavicon } from './components/ui/SiteFavicon'
-import { generateMetadata as buildMetadata, getSiteSeoData } from '@/app/lib/metadata'
+import { generateMetadata as buildMetadata, getMetadataBase, getSiteSeoData } from '@/app/lib/metadata'
 import { Site } from '@/app/lib/types'
 import { fetchSiteRecord } from '@/app/lib/site-favicon'
 import { getGtmNoscriptInnerHtml } from '@/app/lib/integrations'
@@ -18,6 +18,8 @@ const fallbackMetadata: Metadata = {
   title: 'Web Builder Site',
   description: 'Generated site using Web Builder',
   icons: { icon: [{ url: '/icon' }] },
+  robots: { index: true, follow: true },
+  metadataBase: getMetadataBase(),
 }
 
 export async function generateMetadata(): Promise<Metadata> {

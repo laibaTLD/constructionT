@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { generateMetadata, getServiceSeoData } from '@/app/lib/metadata'
+import { generateMetadata as buildMetadata, getServiceSeoData } from '@/app/lib/metadata'
 import { Service, Site } from '@/app/lib/types'
 import api from '@/app/lib/fetch-api'
 import ServiceClient from './ServiceClient'
@@ -8,8 +8,8 @@ interface ServicePageProps {
   params: { serviceSlug: string }
 }
 
-export async function generateServiceMetadata({ params }: ServicePageProps): Promise<Metadata> {
-  const { serviceSlug } = params
+export async function generateMetadata({ params }: ServicePageProps): Promise<Metadata> {
+  const { serviceSlug } = await params
   
   try {
     // Fetch default site first
@@ -26,7 +26,7 @@ export async function generateServiceMetadata({ params }: ServicePageProps): Pro
         const service = services.find(s => s.slug === serviceSlug)
         
         if (service) {
-          return generateMetadata(getServiceSeoData(service), site)
+          return buildMetadata({ ...getServiceSeoData(service), canonicalPath: `/service/${serviceSlug}` }, site)
         }
       }
     }

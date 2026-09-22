@@ -17,6 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     {
       title: doc?.heading?.trim() || FALLBACK_TITLE,
       description: doc?.description?.trim() || FALLBACK_DESCRIPTION,
+      canonicalPath: '/terms-of-service',
     },
     site ?? undefined
   );

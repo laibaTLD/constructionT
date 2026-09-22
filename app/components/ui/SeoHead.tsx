@@ -32,7 +32,7 @@ export function SeoHead({
 
       {canonical ? <link rel="canonical" href={canonical} /> : null}
 
-      {noIndex ? <meta name="robots" content="noindex, nofollow" /> : null}
+      <meta name="robots" content={noIndex ? 'noindex, nofollow' : 'index, follow'} />
 
       {safeTitle ? <meta property="og:title" content={safeTitle} /> : null}
       {safeDescription ? <meta property="og:description" content={safeDescription} /> : null}
