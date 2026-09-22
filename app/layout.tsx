@@ -10,6 +10,9 @@ import { SiteFavicon } from './components/ui/SiteFavicon'
 import { generateMetadata as buildMetadata, getSiteSeoData } from '@/app/lib/metadata'
 import { Site } from '@/app/lib/types'
 import { fetchSiteRecord } from '@/app/lib/site-favicon'
+import { getGtmNoscriptInnerHtml } from '@/app/lib/integrations'
+import { GtmNoscript, SiteHeadIntegrations } from '@/app/components/SiteIntegrations'
+import { JsonLd } from '@/app/components/JsonLd'
 
 const fallbackMetadata: Metadata = {
   title: 'Web Builder Site',
@@ -44,10 +47,23 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  let site: Site | null = null
+  try {
+    site = (await fetchSiteRecord()) as Site | null
+  } catch (error) {
+    console.error('Error loading site integrations:', error)
+  }
+
+  const gtmNoscriptInnerHtml = getGtmNoscriptInnerHtml(site)
 
   return (
     <html lang="en">
+      <head>
+        <SiteHeadIntegrations site={site} />
+        <JsonLd schemaJson={site?.files?.schemaJson} />
+      </head>
       <body suppressHydrationWarning className="overflow-x-clip">
+        <GtmNoscript html={gtmNoscriptInnerHtml} />
         <ErrorBoundary>
           <WebBuilderProvider>
             <SiteFavicon />

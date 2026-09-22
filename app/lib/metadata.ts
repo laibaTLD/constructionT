@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
 import { getFaviconMimeType, getSiteFaviconUrl } from './favicon-url'
+import { extractGoogleVerificationToken } from './integrations'
 
 export { getSiteFaviconUrl } from './favicon-url'
 
@@ -68,6 +69,11 @@ export function generateMetadata(seoData: SEOData, site?: Site): Metadata {
         follow: false,
       },
     }
+  }
+
+  const googleToken = extractGoogleVerificationToken(site?.integrations?.searchConsoleVerification)
+  if (googleToken) {
+    metadata.verification = { google: googleToken }
   }
 
   return metadata

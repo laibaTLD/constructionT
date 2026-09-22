@@ -1,49 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiBaseUrl } from '@/app/lib/utils';
+import { getSiteOrigin } from '@/app/lib/seo';
+import { fetchSiteRecord } from '@/app/lib/site-favicon';
+import type { Site } from '@/app/lib/types';
+
+export const revalidate = 3600;
+
+const FILE_HEADERS = {
+  'Content-Type': 'text/plain; charset=utf-8',
+  'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+};
+
+function resolveOrigin(request: NextRequest): string {
+  const fromSite = getSiteOrigin();
+  if (fromSite) return fromSite.replace(/\/$/, '');
+
+  const fromBase = process.env.NEXT_PUBLIC_BASE_URL?.trim().replace(/\/$/, '');
+  if (fromBase) return fromBase;
+
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  if (host) {
+    const proto = request.headers.get('x-forwarded-proto') || 'http';
+    return `${proto}://${host}`;
+  }
+
+  return 'http://localhost:3000';
+}
+
+function fallbackRobots(origin: string): string {
+  return `User-Agent: *\nAllow: /\nDisallow: /api/\nDisallow: /_next/\nDisallow: /admin/\nDisallow: /private/\nSitemap: ${origin}/sitemap.xml\n`;
+}
 
 export async function GET(request: NextRequest) {
+  const origin = resolveOrigin(request);
+
   try {
-    // Fetch site data directly from backend API
-    const siteSlug = process.env.NEXT_PUBLIC_WEBBUILDER_SITE_SLUG;
-    if (!siteSlug) {
-      throw new Error('Site slug not configured');
-    }
-
-    const API_BASE_URL = getApiBaseUrl();
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-
-    // Fetch site data
-    const siteResponse = await fetch(`${API_BASE_URL}/public/sites/${siteSlug}`);
-    
-    if (!siteResponse.ok) {
-      throw new Error('Failed to fetch site data');
-    }
-
-    const siteData = await siteResponse.json();
-    const site = siteData.data?.data ?? siteData.data;
-    
-    // Use custom robots.txt from site files if available, otherwise use default
-    let robotsTxt = site.files?.robotsTxt || `User-agent: *
-Disallow:
-Sitemap: ${baseUrl}/sitemap.xml`;
-
-    // Replace placeholder sitemap URL with actual base URL
-    robotsTxt = robotsTxt.replace(/Sitemap:.*sitemap\.xml/, `Sitemap: ${baseUrl}/sitemap.xml`);
-
-    return new NextResponse(robotsTxt, {
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    });
+    const site = (await fetchSiteRecord()) as Site | null;
+    const body = (site?.files?.robotsTxt || '').trim();
+    return new NextResponse(body || fallbackRobots(origin), { headers: FILE_HEADERS });
   } catch (error) {
-    console.error('Error generating robots.txt:', error);
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    return new NextResponse(`User-agent: *\nDisallow:\nSitemap: ${baseUrl}/sitemap.xml`, {
-      status: 500,
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-    });
+    console.error('Error serving robots.txt:', error);
+    return new NextResponse(fallbackRobots(origin), { headers: FILE_HEADERS });
   }
 }

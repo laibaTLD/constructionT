@@ -8,6 +8,7 @@ import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import type { Page } from '@/app/lib/types';
 import { TiptapRenderer } from '@/app/components/ui/TiptapRenderer';
+import { hasLegalBody } from '@/app/lib/legal';
 import { tiptapToText } from '@/app/lib/seo';
 
 export const Footer: React.FC = () => {
@@ -79,16 +80,24 @@ export const Footer: React.FC = () => {
         .join(' · ')
     : '';
 
+  const renderedHrefs = new Set<string>([
+    ...publishedPages.map((page) => getPageHref(page)),
+    ...publishedServices.map((service) => `/service/${service.slug}`),
+    contactUrl,
+  ]);
+
   const legalPages = [
     {
       href: '/privacy-policy',
-      label: legal?.privacyPolicy?.heading || 'Privacy Policy',
+      label: legal?.privacyPolicy?.heading?.trim() || 'Privacy Policy',
+      doc: legal?.privacyPolicy,
     },
     {
       href: '/terms-of-service',
-      label: legal?.termsOfService?.heading || 'Terms of Service',
+      label: legal?.termsOfService?.heading?.trim() || 'Terms of Service',
+      doc: legal?.termsOfService,
     },
-  ];
+  ].filter((page) => hasLegalBody(page.doc) && !renderedHrefs.has(page.href));
 
   const linkClass =
     'block text-[11px] uppercase tracking-[0.18em] text-white/70 transition-colors hover:text-white';
@@ -225,19 +234,20 @@ export const Footer: React.FC = () => {
             </nav>
           </div>
 
-          {/* Legal pages */}
-          <div className="space-y-3">
-            <span className="block text-[9px] uppercase tracking-[0.35em] text-white/40">
-              Legal
-            </span>
-            <nav className="flex flex-col gap-2">
-              {legalPages.map((page) => (
-                <Link key={page.href} href={page.href} className={linkClass}>
-                  {page.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+          {legalPages.length > 0 ? (
+            <div className="space-y-3">
+              <span className="block text-[9px] uppercase tracking-[0.35em] text-white/40">
+                Legal
+              </span>
+              <nav className="flex flex-col gap-2">
+                {legalPages.map((page) => (
+                  <Link key={page.href} href={page.href} className={linkClass}>
+                    {page.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          ) : null}
         </div>
 
         {/* Copyright */}
