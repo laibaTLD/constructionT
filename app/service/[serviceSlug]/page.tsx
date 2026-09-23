@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
-import { generateMetadata as buildMetadata, getServiceSeoData } from '@/app/lib/metadata'
+import { generateSitifyPageMetadata } from '@/app/lib/metadata'
 import { Service, Site } from '@/app/lib/types'
 import api from '@/app/lib/fetch-api'
+import { fetchSiteRecord } from '@/app/lib/site-favicon'
 import ServiceClient from './ServiceClient'
 
 interface ServicePageProps {
@@ -12,11 +13,13 @@ export async function generateMetadata({ params }: ServicePageProps): Promise<Me
   const { serviceSlug } = await params
   
   try {
-    // Fetch default site first
-    const defaultSiteResponse = await api.get('/public/sites/default')
-    
-    if (defaultSiteResponse.success && defaultSiteResponse.data) {
-      const site: Site = defaultSiteResponse.data
+    const site = (await fetchSiteRecord()) as Site | null
+      ?? await (async () => {
+        const defaultSiteResponse = await api.get('/public/sites/default')
+        return defaultSiteResponse.success ? (defaultSiteResponse.data as Site) : null
+      })()
+
+    if (site?.slug) {
       
       // Fetch all services and find by slug
       const servicesResponse = await api.get(`/public/sites/${site.slug}/services`)
@@ -26,7 +29,10 @@ export async function generateMetadata({ params }: ServicePageProps): Promise<Me
         const service = services.find(s => s.slug === serviceSlug)
         
         if (service) {
-          return buildMetadata({ ...getServiceSeoData(service), canonicalPath: `/service/${serviceSlug}` }, site)
+          return generateSitifyPageMetadata(service.seo, site, {
+            fallbackTitle: service.name,
+            canonicalPath: `/service/${serviceSlug}`,
+          })
         }
       }
     }
@@ -41,6 +47,7 @@ export async function generateMetadata({ params }: ServicePageProps): Promise<Me
   }
 }
 
-export default function ServicePage({ params }: ServicePageProps) {
-  return <ServiceClient serviceSlug={params.serviceSlug} />
+export default async function ServicePage({ params }: ServicePageProps) {
+  const { serviceSlug } = await params
+  return <ServiceClient serviceSlug={serviceSlug} />
 }

@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
-import { generateMetadata as generatePageMetadata, getPageSeoData } from '@/app/lib/metadata'
+import { generateSitifyPageMetadata, serviceAreaVisibleTitle } from '@/app/lib/metadata'
 import { Site } from '@/app/lib/types'
 import api from '@/app/lib/fetch-api'
+import { fetchSiteRecord } from '@/app/lib/site-favicon'
 import ServiceAreaClient from './ServiceAreaClient'
 
 interface ServiceAreaPageProps {
@@ -12,21 +13,23 @@ export async function generateMetadata({ params }: ServiceAreaPageProps): Promis
   const { serviceSlug, citySlug } = await params
   
   try {
-    // Fetch default site first
-    const defaultSiteResponse = await api.get('/public/sites/default')
-    
-    if (defaultSiteResponse.success && defaultSiteResponse.data) {
-      const site: Site = defaultSiteResponse.data
+    const site = (await fetchSiteRecord()) as Site | null
+      ?? await (async () => {
+        const defaultSiteResponse = await api.get('/public/sites/default')
+        return defaultSiteResponse.success ? (defaultSiteResponse.data as Site) : null
+      })()
+
+    if (site?.slug) {
       
       // Fetch service area page by service and city
       const serviceAreaResponse = await api.get(`/public/sites/${site.slug}/service-areas/by-service/${serviceSlug}/${citySlug}`)
       
       if (serviceAreaResponse.success && serviceAreaResponse.data) {
         const serviceAreaPage = serviceAreaResponse.data
-        return generatePageMetadata(
-          { ...getPageSeoData(serviceAreaPage), canonicalPath: `/service/${serviceSlug}/service-areas/${citySlug}` },
-          site
-        )
+        return generateSitifyPageMetadata(serviceAreaPage.seo, site, {
+          fallbackTitle: serviceAreaVisibleTitle(serviceAreaPage),
+          canonicalPath: `/service/${serviceSlug}/service-areas/${citySlug}`,
+        })
       }
     }
   } catch (error: any) {

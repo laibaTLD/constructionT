@@ -1,0 +1,42 @@
+Update this existing Next.js template so each service detail page and each service area page publish the SEO fields stored in Sitify Studio. Change only metadata for those two page types. Do not change content, layout, styling, routes, data fetching, or any other page.
+
+Sitify already returns SEO on the objects these pages load. Do not add API routes, change request URLs, or strip fields.
+
+Service detail page
+- Find the existing route that renders one service (often something like app/.../services/[serviceSlug]/page.tsx). Do not rename it.
+- Read SEO from that service object: service.seo.
+- Fields: title (string), description (string), keywords (string[]), ogImageUrl (string), noIndex (boolean).
+- The list endpoint GET /api/public/sites/:siteSlug/services returns { success: true, data: Service[] } and each item includes seo. There is no public single-service endpoint. If this page already has the service, use it. Do not invent a new fetch.
+
+Service area page
+- Find the existing route that renders one service area page. Do not rename it.
+- Read SEO from that area page object: page.seo. Do not use the parent service's seo.
+- Same five fields as above.
+- Whichever of these the template already calls is fine:
+  - GET /api/public/sites/:siteSlug/service-area-pages
+  - GET /api/public/sites/:siteSlug/service-areas/:pageSlug
+  - GET /api/public/sites/:siteSlug/service-areas/by-service/:serviceSlug/:citySlug
+  Each returns { success: true, data } and data.seo is the source.
+
+Metadata rules
+- Keep this template's existing generateMetadata style, including whether params is a plain object or a Promise. If the page has no generateMetadata, add one only on these two routes, matching how this template already builds metadata for a normal CMS page.
+- Map fields like this, and only these fields:
+
+  title: seo.title, if non-empty. Otherwise keep the title this page already uses. If it has none, use service.name for a service, or the area page's current visible title for a service area page.
+  description: seo.description, if non-empty. Otherwise site.seo.description from the site payload this template already loads. If that is also empty, keep the existing description.
+  keywords: seo.keywords only when it is a non-empty array. Do not send an empty array.
+  openGraph.title / twitter.title: same title as above.
+  openGraph.description / twitter.description: same description as above.
+  openGraph.images / twitter.images: seo.ogImageUrl if non-empty, otherwise site.seo.ogImageUrl. Omit images when both are empty. Do not pass [undefined].
+  If ogImageUrl is relative (/uploads/... or /api/uploads/...), resolve it with the same image URL helper this template already uses. Do not add a new image pipeline.
+  robots: { index: seo.noIndex !== true, follow: true }. Missing noIndex means indexable.
+  Set twitter.card to summary_large_image only if this template already sets a Twitter card on other pages.
+
+- If a TypeScript type for Service or the service area page omits seo, add only:
+  seo?: { title?: string; description?: string; keywords?: string[]; ogImageUrl?: string; noIndex?: boolean }
+
+Do not
+- Do not edit the services index, home, about, contact, blog, projects, legal pages, root layout, favicon, analytics, or CMS page metadata.
+- Do not add JSON-LD, canonical tags, sitemaps, or new SEO fields.
+- Do not change section content, headings shown on the page, navigation, or forms.
+- One exception for an existing sitemap: if it already skips other entities when seo.noIndex is true, apply that same skip to services and service area pages. Do not otherwise edit the sitemap.

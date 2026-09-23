@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { Page, Site, Service, BlogPost, ServiceAreaPage } from './types'
 import { getFaviconMimeType, getSiteFaviconUrl } from './favicon-url'
 import { extractGoogleVerificationToken } from './integrations'
-import { buildCanonicalUrl, getSiteOrigin } from './seo'
+import { buildCanonicalUrl, getSiteOrigin, tiptapToText } from './seo'
+import { getImageSrc } from './utils'
 
 export { getSiteFaviconUrl } from './favicon-url'
 
@@ -135,12 +136,158 @@ export function getPageSeoData(page: Page | ServiceAreaPage): SEOData {
 
 export function getServiceSeoData(service: Service): SEOData {
   return {
-    title: service.seo?.title || service.name,
-    description: service.seo?.description,
-    keywords: service.seo?.keywords,
-    ogImageUrl: service.seo?.ogImageUrl,
-    noIndex: false, // Services don't have noIndex in their schema
+    title: nonEmptyString(service.seo?.title) || nonEmptyString(service.name),
+    description: nonEmptyString(service.seo?.description),
+    keywords: nonEmptyKeywords(service.seo?.keywords),
+    ogImageUrl: nonEmptyString(service.seo?.ogImageUrl),
+    noIndex: service.seo?.noIndex === true,
   }
+}
+
+/** SEO object stored on a service or service-area page in Sitify Studio. */
+export type SitifySeo = {
+  title?: string
+  description?: string
+  keywords?: string[]
+  ogImageUrl?: string
+  noIndex?: boolean
+}
+
+function nonEmptyString(value?: string | null): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function nonEmptyKeywords(keywords?: string[] | null): string[] | undefined {
+  if (!Array.isArray(keywords)) return undefined
+  const cleaned = keywords
+    .map((keyword) => (typeof keyword === 'string' ? keyword.trim() : ''))
+    .filter((keyword) => keyword.length > 0)
+  return cleaned.length > 0 ? cleaned : undefined
+}
+
+function resolveSeoImage(entityUrl?: string | null, siteUrl?: string | null): string | undefined {
+  const raw = nonEmptyString(entityUrl) || nonEmptyString(siteUrl)
+  if (!raw) return undefined
+  return nonEmptyString(getImageSrc(raw))
+}
+
+function originFromAbsoluteUrl(value?: string | null): string | undefined {
+  const raw = nonEmptyString(value)
+  if (!raw) return undefined
+  try {
+    return new URL(raw).origin
+  } catch {
+    return undefined
+  }
+}
+
+/** Public origin for canonical URLs: env site URL, then the origin already stored on the site. */
+function resolvePublicOrigin(site?: Site): string | undefined {
+  const fromEnv = getSiteOrigin()
+  if (fromEnv) return fromEnv.replace(/\/$/, '')
+
+  const sitemapLoc = site?.files?.sitemap?.match(/<loc>\s*(https?:\/\/[^<\s]+)/i)?.[1]
+  const fromSitemap = originFromAbsoluteUrl(sitemapLoc)
+  if (fromSitemap) return fromSitemap
+
+  const robotsSitemap = site?.files?.robotsTxt?.match(/Sitemap:\s*(https?:\/\/\S+)/i)?.[1]
+  const fromRobots = originFromAbsoluteUrl(robotsSitemap)
+  if (fromRobots) return fromRobots
+
+  const schemaUrl = site?.files?.schemaJson?.match(/"url"\s*:\s*"(https?:\/\/[^"]+)"/i)?.[1]
+  return originFromAbsoluteUrl(schemaUrl)
+}
+
+function absoluteCanonical(pathname: string, site?: Site): string {
+  const path = pathname.startsWith('/') ? pathname : `/${pathname}`
+  const origin = resolvePublicOrigin(site)
+  return origin ? `${origin}${path}` : buildCanonicalUrl(path)
+}
+
+/** On-page heading used when a service area page has no metadata title of its own. */
+export function serviceAreaVisibleTitle(page: {
+  hero?: { title?: unknown }
+}): string | undefined {
+  return nonEmptyString(tiptapToText(page.hero?.title))
+}
+
+/**
+ * Metadata for one service or one service-area page.
+ * Uses the shared generator for title suffix, canonical, favicon, and verification,
+ * then applies Sitify SEO field rules for these two page types only.
+ */
+export function generateSitifyPageMetadata(
+  seo: SitifySeo | null | undefined,
+  site?: Site,
+  options?: { fallbackTitle?: string; canonicalPath?: string }
+): Metadata {
+  const title = nonEmptyString(seo?.title) || nonEmptyString(options?.fallbackTitle)
+  const description = nonEmptyString(seo?.description) || nonEmptyString(site?.seo?.description)
+  const keywords = nonEmptyKeywords(seo?.keywords)
+  const image = resolveSeoImage(seo?.ogImageUrl, site?.seo?.ogImageUrl)
+  const indexable = seo?.noIndex !== true
+
+  const metadata = generateMetadata(
+    {
+      title,
+      description,
+      keywords,
+      ogImageUrl: image,
+      noIndex: !indexable,
+      canonicalPath: options?.canonicalPath,
+    },
+    site
+  )
+
+  // null clears keywords inherited from the root layout. An empty array would still emit a tag.
+  metadata.keywords = keywords ?? null
+
+  metadata.robots = {
+    index: indexable,
+    follow: true,
+    googleBot: { index: indexable, follow: true },
+  }
+
+  if (options?.canonicalPath) {
+    const canonical = absoluteCanonical(options.canonicalPath, site)
+    metadata.alternates = { canonical }
+    if (metadata.openGraph) {
+      metadata.openGraph.url = canonical
+    }
+  }
+
+  const resolvedTitle = typeof metadata.title === 'string' ? metadata.title : undefined
+  const resolvedDescription = typeof metadata.description === 'string' ? metadata.description : undefined
+
+  if (metadata.openGraph) {
+    metadata.openGraph = {
+      ...metadata.openGraph,
+      ...(resolvedTitle ? { title: resolvedTitle } : {}),
+      ...(resolvedDescription ? { description: resolvedDescription } : {}),
+    }
+    if (image) {
+      metadata.openGraph.images = [{ url: image, width: 1200, height: 630, alt: resolvedTitle }]
+    } else {
+      delete metadata.openGraph.images
+    }
+  } else if (image || resolvedTitle || resolvedDescription) {
+    metadata.openGraph = {
+      ...(resolvedTitle ? { title: resolvedTitle } : {}),
+      ...(resolvedDescription ? { description: resolvedDescription } : {}),
+      ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: resolvedTitle }] } : {}),
+    }
+  }
+
+  metadata.twitter = {
+    card: 'summary_large_image',
+    ...(resolvedTitle ? { title: resolvedTitle } : {}),
+    ...(resolvedDescription ? { description: resolvedDescription } : {}),
+    ...(image ? { images: [image] } : {}),
+  }
+
+  return metadata
 }
 
 export function getBlogPostSeoData(blogPost: BlogPost): SEOData {
